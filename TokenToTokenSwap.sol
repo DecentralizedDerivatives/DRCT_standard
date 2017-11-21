@@ -194,7 +194,8 @@ contract TokenToTokenSwap {
     //Require that all of the information of the swap was entered correctly by the entering party
     require(
       token_a_amount == _amount_a &&
-      token_b_amount == _amount_b
+      token_b_amount == _amount_b &&
+      token_a_party != msg.sender
     );
 
     token_b = ERC20_Interface(token_b_address);
@@ -377,13 +378,18 @@ contract TokenToTokenSwap {
     if (_is_long) {
       if (pay_to_long_a > 0)
         token_a.transfer(_receiver, _amount.mul(pay_to_long_a));
-      if (pay_to_long_b > 0)
+      if (pay_to_long_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_long_b));
+      }
+        factory.payToken(_receiver,true);
     } else {
+
       if (pay_to_short_a > 0)
         token_a.transfer(_receiver, _amount.mul(pay_to_short_a));
-      if (pay_to_short_b > 0)
+      if (pay_to_short_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_short_b));
+      }
+       factory.payToken(_receiver,false);
     }
   }
 
