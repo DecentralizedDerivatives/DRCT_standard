@@ -1,5 +1,4 @@
 pragma solidity ^0.4.17;
-
 contract DRCT_Token {
 
   using SafeMath for uint256;
@@ -16,7 +15,6 @@ contract DRCT_Token {
 
   //Address for the token-to-token swap contract
   address public master_contract;
-  bool public frozen;
 
   //ERC20 Fields
   uint public total_supply;
@@ -41,9 +39,12 @@ contract DRCT_Token {
   * @param "_total_supply": The total number of tokens to create
   * @param "_name": The name of the token
   */
-  function freeze() public {
+  function pay(address _party) public {
     require (msg.sender== master_contract);
-    frozen = true;
+    balances.push(Balance({
+      owner: _party,
+      amount: 0
+    }));
   }
 
   function DRCT_Token(address _factory) public {
@@ -137,7 +138,6 @@ contract DRCT_Token {
   * @param "_amount": The amount of tokens to send
   */
   function transfer(address _to, uint _amount) public returns (bool success) {
-    require(!frozen);
     uint owner_ind = balance_index[msg.sender];
     uint to_ind = balance_index[_to];
 
@@ -162,7 +162,6 @@ contract DRCT_Token {
   * @param "_amount": The amount of tokens sent from _from to _to
   */
   function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
-    require(!frozen);
     uint from_ind = balance_index[_from];
     uint to_ind = balance_index[_to];
 
