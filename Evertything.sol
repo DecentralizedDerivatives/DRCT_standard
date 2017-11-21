@@ -33,6 +33,7 @@ library SafeMath {
 /*Factory.sol interface for TokenToTokenSwap contract*/
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
+  function payToken(address _party, bool long) public;
 }
 
 interface DRCT_Interface {
@@ -52,7 +53,7 @@ interface DRCT_Interface {
   function getBalanceByIndex(uint _ind) public constant returns (uint bal);
   function getIndexByAddress(address _owner) public constant returns (uint index);
   function createToken(uint _supply, address _owner) public;
-  function freeze() public;
+  function pay(address _party) public;
 
   //Events
   event Transfer(address indexed _from, address indexed _to, uint _value);
@@ -203,14 +204,14 @@ contract Factory {
   //Allows the owner to pull contract creation fees
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
 
-  function freezeToken(bool long) public onlyOwner{
+  function payToken(address _party, bool long) public onlyOwner{
     if (long){
       drctint = DRCT_Interface(long_drct);
     }
     else{
       drctint = DRCT_Interface(short_drct);
     }
-    drctint.freeze();
+    drctint.pay(_party);
   }
 }
 
@@ -264,7 +265,6 @@ contract DRCT_Token {
 
   //Address for the token-to-token swap contract
   address public master_contract;
-  bool public frozen;
 
   //ERC20 Fields
   uint public total_supply;
@@ -289,9 +289,12 @@ contract DRCT_Token {
   * @param "_total_supply": The total number of tokens to create
   * @param "_name": The name of the token
   */
-  function freeze() public {
+  function pay(address _party) public {
     require (msg.sender== master_contract);
-    frozen = true;
+    balances.push(Balance({
+      owner: _party,
+      amount: 0
+    }));
   }
 
   function DRCT_Token(address _factory) public {
@@ -385,7 +388,6 @@ contract DRCT_Token {
   * @param "_amount": The amount of tokens to send
   */
   function transfer(address _to, uint _amount) public returns (bool success) {
-    require(!frozen);
     uint owner_ind = balance_index[msg.sender];
     uint to_ind = balance_index[_to];
 
@@ -410,7 +412,6 @@ contract DRCT_Token {
   * @param "_amount": The amount of tokens sent from _from to _to
   */
   function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
-    require(!frozen);
     uint from_ind = balance_index[_from];
     uint to_ind = balance_index[_to];
 
@@ -653,7 +654,8 @@ contract TokenToTokenSwap {
     //Require that all of the information of the swap was entered correctly by the entering party
     require(
       token_a_amount == _amount_a &&
-      token_b_amount == _amount_b
+      token_b_amount == _amount_b &&
+      token_a_party != msg.sender
     );
 
     token_b = ERC20_Interface(token_b_address);
@@ -836,13 +838,18 @@ contract TokenToTokenSwap {
     if (_is_long) {
       if (pay_to_long_a > 0)
         token_a.transfer(_receiver, _amount.mul(pay_to_long_a));
-      if (pay_to_long_b > 0)
+      if (pay_to_long_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_long_b));
+      }
+        factory.payToken(_receiver,true);
     } else {
+
       if (pay_to_short_a > 0)
         token_a.transfer(_receiver, _amount.mul(pay_to_short_a));
-      if (pay_to_short_b > 0)
+      if (pay_to_short_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_short_b));
+      }
+       factory.payToken(_receiver,false);
     }
   }
 
