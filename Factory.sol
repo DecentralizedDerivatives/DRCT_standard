@@ -127,7 +127,8 @@ contract Factory {
   //Allows the owner to pull contract creation fees
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
 
-  function payToken(address _party, bool long) public onlyOwner{
+  function payToken(address _party, bool long) public{
+    require (created_contracts[msg.sender] == true);
     if (long){
       drctint = DRCT_Interface(long_drct);
     }
@@ -136,39 +137,4 @@ contract Factory {
     }
     drctint.pay(_party);
   }
-}
-
-contract Oracle {
-
-  /*Variables*/
-
-  //Owner of the oracle
-  address private owner;
-
-  //Mapping of documents stored in the oracle
-  mapping(uint => uint) public oracle_values;
-
-  /*Events*/
-
-  event DocumentStored(uint _key, uint _value);
-
-  /*Functions*/
-
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
-  //Constructor - Sets owner
-  function Oracle() public {
-    owner = msg.sender;
-  }
-
-  //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
-  //represent underlying values at a specified date (key).
-  function StoreDocument(uint _key, uint _value) public onlyOwner() {
-    oracle_values[_key] = _value;
-    DocumentStored(_key, _value);
-  }
-
 }
