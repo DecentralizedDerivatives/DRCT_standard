@@ -427,9 +427,7 @@ contract TokenToTokenSwap {
         token_b.transfer(token_b_party, token_b.balanceOf(address(this)));
         token_a.transfer(token_a_party, token_a.balanceOf(address(this)));
         current_state = SwapState.ended;
-        token_a.transfer(token_a_party, token_a.balanceOf(address(this)));
-        token_b.transfer(token_b_party, token_b.balanceOf(address(this)));
-        current_state = SwapState.ended;
+        if (premium > 0) { creator.transfer(premium);}
       }
     } else if (msg.sender == operator){
         require (long_token.balanceOf(address(this)) == num_DRCT_longtokens &&
