@@ -290,10 +290,13 @@ contract TokenToTokenSwap {
       if (share_long >= 200000)
         share_short = 0;
       else
-        share_short = SafeMath.sub(200000,share_long);
+        share_short = 200000-share_long;
     } else {
       share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
-      share_long = SafeMath.sub(200000,share_short);
+       if (share_short >= 200000)
+        share_long = 0;
+      else
+        share_long = 200000- share_short;
     }
 
     //Calculate the payouts to long and short parties based on the short and long shares
