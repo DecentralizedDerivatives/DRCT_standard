@@ -232,6 +232,14 @@ contract TokenToTokenSwap {
     tokenize(long_party);
     tokenize(short_party);
     current_state = SwapState.tokenized;
+    if (premium > 0){
+      if (creator == long_party){
+      short_party.transfer(premium);
+      }
+      else {
+        long_party.transfer(premium);
+      }
+    }
   }
 
   /*
@@ -251,14 +259,6 @@ contract TokenToTokenSwap {
       (short_token_address,tokenratio) = factory.createToken(token_b_amount, _creator,false);
       short_token = DRCT_Interface(short_token_address);
       num_DRCT_shorttokens = token_b_amount.div(tokenratio);
-    }
-    if (premium > 0){
-      if (creator == long_party){
-      short_party.transfer(premium);
-      }
-      else {
-        long_party.transfer(premium);
-      }
     }
   }
 
@@ -319,13 +319,13 @@ contract TokenToTokenSwap {
       pay_to_short_b = 0;
       pay_to_long_a = 0;
     } else if (share_long > 100000) {
-      ratio = SafeMath.min(99999, (share_long).sub(100000));
+      ratio = SafeMath.min(100000, (share_long).sub(100000));
       pay_to_long_b = (token_b_amount).div(num_DRCT_shorttokens);
       pay_to_short_a = (SafeMath.sub(100000,ratio)).mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
       pay_to_long_a = ratio.mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
       pay_to_short_b = 0;
     } else {
-      ratio = SafeMath.min(99999, (share_short).sub(100000));
+      ratio = SafeMath.min(100000, (share_short).sub(100000));
       pay_to_short_a = (token_a_amount).div(num_DRCT_longtokens);
       pay_to_long_b = (SafeMath.sub(100000,ratio)).mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
       pay_to_short_b = ratio.mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
