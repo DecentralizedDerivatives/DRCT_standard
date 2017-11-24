@@ -76,11 +76,11 @@ contract Factory {
 
     }
 
-  function setStartDate(uint _start_date){
+  function setStartDate(uint _start_date) public onlyOwner() {
         start_date = _start_date;
   }
 
-  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier,address _token_a, address _token_b) public onlyOwner{
+  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier,address _token_a, address _token_b) public onlyOwner() {
 
     tokenratio1 = _token_ratio1;
     tokenratio2 = _token_ratio2;
