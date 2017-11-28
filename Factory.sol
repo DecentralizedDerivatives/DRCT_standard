@@ -3,6 +3,8 @@ pragma solidity ^0.4.17;
 import "./TokenToTokenSwap.sol";
 import "./DRCT_Interface.sol";
 
+
+
 contract Factory {
      using SafeMath for uint256;
   /*Variables*/
@@ -51,7 +53,7 @@ contract Factory {
   */
   function Factory(uint _fee, address _o_address,uint _duration, uint _multiplier,address _token_a, address _token_b) public {
     owner = msg.sender;
-    fee = _fee * 1e13;
+    fee = _fee;
     oracle_address = _o_address;
     tokenratio1 = 1e15; /*e.g. 1e15 (you get 1000 per eth)*/
     tokenratio2 = 1e15;
@@ -61,13 +63,8 @@ contract Factory {
     token_b = _token_b;
   }
 
-  /*
-  * Updates the fee amount, and emits a FeeChange event
-  *
-  * @param "_fee": The new fee amount in finney
-  */
   function setFee(uint _fee) public onlyOwner() {
-    fee = _fee * 1e13;
+    fee = _fee;
   }
 
   function settokens(address _longdrct, address _shortdrct) public onlyOwner() {
