@@ -206,7 +206,7 @@ contract Factory {
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
 
 
-  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date){
+  function getVariables() public returns(address _oracle_address,address _operator,uint _duration,uint _multiplier,address _token_a_address,address _token_b_address,uint _start_date){
     return (oracle_address,owner,duration,multiplier,token_a,token_b,start_date);
   }
 
