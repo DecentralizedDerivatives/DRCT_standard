@@ -35,7 +35,7 @@ interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
   function deployContract(address new_contract) payable public;
-  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date,uint fee);
+  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date);
 }
 
 interface Oracle_Interface{
@@ -164,16 +164,17 @@ contract Factory {
 
   }
   
-  function setBaseTokens(address _token_a, address _token_b){
+  function setBaseTokens(address _token_a, address _token_b)public onlyOwner() {
     token_a = _token_a;
     token_b = _token_b; 
   }
   //Allows a user to deploy a TokenToTokenSwap contract
-  function deployContract(address new_contract) public payable{
+  function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
+    address new_contract = new TokenToTokenSwap(address(this),msg.sender);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(new_contract);
+    return new_contract;
   }
 
   /*
@@ -205,8 +206,8 @@ contract Factory {
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
 
 
-  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date,uint fee){
-    return (oracle_address,owner,duration,multiplier,token_a,token_b,start_date,fee);
+  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date){
+    return (oracle_address,owner,duration,multiplier,token_a,token_b,start_date);
   }
 
   function payToken(address _party, bool long) public{
@@ -583,9 +584,10 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_factory": Address of the factory that created this contract
   */
-  function TokenToTokenSwap (address factory_address) public {
+  function TokenToTokenSwap (address _factory_address, address _creator) public {
     current_state = SwapState.created;
-    creator = msg.sender;
+    creator =_creator;
+    factory_address = _factory_address;
   }
 
   function showPrivateVars() public returns (address long_token_address, address short_token_address, address oracle_adress, address token_a_address, address token_b_address, uint multiplier, uint duration,uint start_date, uint end_date){
@@ -613,12 +615,10 @@ contract TokenToTokenSwap {
     //The Swap is meant to take place within 28 days
     require(
       msg.sender == creator
-      && msg.value >= fee
     );
     factory = Factory_Interface(factory_address);
-    factory.getVariables();
+    setVars();
     end_date = start_date.add(duration.mul(86400));
-    factory.deployContract.value(fee)(address(this));
     token_a_amount = _amount_a;
     token_b_amount = _amount_b;
 
@@ -630,6 +630,10 @@ contract TokenToTokenSwap {
     else
       short_party = msg.sender;
     current_state = SwapState.open;
+  }
+  
+  function setVars() internal{
+      (oracle_address,operator,duration,multiplier,token_a_address,token_b_address,start_date) = factory.getVariables();
   }
 
   /*
