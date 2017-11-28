@@ -128,7 +128,7 @@ contract Factory {
   */
   function Factory(uint _fee, address _o_address,uint _duration, uint _multiplier,address _token_a, address _token_b) public {
     owner = msg.sender;
-    fee = _fee * 1e13;
+    fee = _fee;
     oracle_address = _o_address;
     tokenratio1 = 1e15; /*e.g. 1e15 (you get 1000 per eth)*/
     tokenratio2 = 1e15;
@@ -144,7 +144,7 @@ contract Factory {
   * @param "_fee": The new fee amount in finney
   */
   function setFee(uint _fee) public onlyOwner() {
-    fee = _fee * 1e13;
+    fee = _fee;
   }
 
   function settokens(address _longdrct, address _shortdrct) public onlyOwner() {
@@ -153,11 +153,11 @@ contract Factory {
 
     }
 
-  function setStartDate(uint _start_date){
+  function setStartDate(uint _start_date) public onlyOwner() {
         start_date = _start_date;
   }
 
-  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier,address _token_a, address _token_b) public onlyOwner{
+  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier,address _token_a, address _token_b) public onlyOwner() {
 
     tokenratio1 = _token_ratio1;
     tokenratio2 = _token_ratio2;
@@ -204,7 +204,8 @@ contract Factory {
   //Allows the owner to pull contract creation fees
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
 
-  function payToken(address _party, bool long) public onlyOwner{
+  function payToken(address _party, bool long) public{
+    require (created_contracts[msg.sender] == true);
     if (long){
       drctint = DRCT_Interface(long_drct);
     }
@@ -692,6 +693,14 @@ contract TokenToTokenSwap {
     tokenize(long_party);
     tokenize(short_party);
     current_state = SwapState.tokenized;
+    if (premium > 0){
+      if (creator == long_party){
+      short_party.transfer(premium);
+      }
+      else {
+        long_party.transfer(premium);
+      }
+    }
   }
 
   /*
@@ -711,14 +720,6 @@ contract TokenToTokenSwap {
       (short_token_address,tokenratio) = factory.createToken(token_b_amount, _creator,false);
       short_token = DRCT_Interface(short_token_address);
       num_DRCT_shorttokens = token_b_amount.div(tokenratio);
-    }
-    if (premium > 0){
-      if (creator == long_party){
-      short_party.transfer(premium);
-      }
-      else {
-        long_party.transfer(premium);
-      }
     }
   }
 
@@ -750,10 +751,13 @@ contract TokenToTokenSwap {
       if (share_long >= 200000)
         share_short = 0;
       else
-        share_short = SafeMath.sub(200000,share_long);
+        share_short = 200000-share_long;
     } else {
       share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
-      share_long = SafeMath.sub(200000,share_short);
+       if (share_short >= 200000)
+        share_long = 0;
+      else
+        share_long = 200000- share_short;
     }
 
     //Calculate the payouts to long and short parties based on the short and long shares
@@ -776,13 +780,13 @@ contract TokenToTokenSwap {
       pay_to_short_b = 0;
       pay_to_long_a = 0;
     } else if (share_long > 100000) {
-      ratio = SafeMath.min(99999, (share_long).sub(100000));
+      ratio = SafeMath.min(100000, (share_long).sub(100000));
       pay_to_long_b = (token_b_amount).div(num_DRCT_shorttokens);
       pay_to_short_a = (SafeMath.sub(100000,ratio)).mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
       pay_to_long_a = ratio.mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
       pay_to_short_b = 0;
     } else {
-      ratio = SafeMath.min(99999, (share_short).sub(100000));
+      ratio = SafeMath.min(100000, (share_short).sub(100000));
       pay_to_short_a = (token_a_amount).div(num_DRCT_longtokens);
       pay_to_long_b = (SafeMath.sub(100000,ratio)).mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
       pay_to_short_b = ratio.mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
@@ -884,9 +888,7 @@ contract TokenToTokenSwap {
         token_b.transfer(token_b_party, token_b.balanceOf(address(this)));
         token_a.transfer(token_a_party, token_a.balanceOf(address(this)));
         current_state = SwapState.ended;
-        token_a.transfer(token_a_party, token_a.balanceOf(address(this)));
-        token_b.transfer(token_b_party, token_b.balanceOf(address(this)));
-        current_state = SwapState.ended;
+        if (premium > 0) { creator.transfer(premium);}
       }
     } else if (msg.sender == operator){
         require (long_token.balanceOf(address(this)) == num_DRCT_longtokens &&
