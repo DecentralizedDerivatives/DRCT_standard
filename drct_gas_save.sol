@@ -35,7 +35,7 @@ interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
   function deployContract(address new_contract) payable public;
-  function getVariables() public returns(address oracle_address,address operator,uint duration,uint multiplier,address token_a_address,address token_b_address,uint start_date);
+  function getVariables() public returns(address _oracle_address,address _operator,uint _duration,uint _multiplier,address _token_a_address,address _token_b_address,uint _start_date);
 }
 
 interface Oracle_Interface{
@@ -590,8 +590,8 @@ contract TokenToTokenSwap {
     factory_address = _factory_address;
   }
 
-  function showPrivateVars() public returns (address long_token_address, address short_token_address, address oracle_adress, address token_a_address, address token_b_address, uint multiplier, uint duration,uint start_date, uint end_date){
-    return (long_token_address,short_token_address, oracle_adress, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public returns (address _long_token_address, address _short_token_address, address _oracle_adress, address _token_a_address, address _token_b_address, uint _multiplier, uint _duration,uint _start_date, uint _end_date){
+    return (long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -741,13 +741,15 @@ contract TokenToTokenSwap {
 
     if (ratio == 100000) {
       share_long = share_short = ratio;
-    } else if (ratio > 100000) {
+    } 
+    else if (ratio > 100000) {
       share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
       if (share_long >= 200000)
         share_short = 0;
       else
         share_short = 200000-share_long;
-    } else {
+    } 
+    else {
       share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
        if (share_short >= 200000)
         share_long = 0;
