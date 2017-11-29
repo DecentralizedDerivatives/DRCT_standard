@@ -741,15 +741,13 @@ contract TokenToTokenSwap {
 
     if (ratio == 100000) {
       share_long = share_short = ratio;
-    } 
-    else if (ratio > 100000) {
+    } else if (ratio > 100000) {
       share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
       if (share_long >= 200000)
         share_short = 0;
       else
         share_short = 200000-share_long;
-    } 
-    else {
+    } else {
       share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
        if (share_short >= 200000)
         share_long = 0;
