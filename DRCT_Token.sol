@@ -1,4 +1,5 @@
 pragma solidity ^0.4.17;
+
 contract DRCT_Token {
 
   using SafeMath for uint256;
