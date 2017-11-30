@@ -30,6 +30,7 @@ library SafeMath {
   }
 }
 
+
 /*Factory.sol interface for TokenToTokenSwap contract*/
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
@@ -85,6 +86,47 @@ interface ERC20_Interface {
 
 }
 
+contract deployer {
+    address owner; 
+
+    function deployer(address _factory){
+      owner = _factory;
+    }
+
+    function newContract(address _party) public payable returns (address created) {
+        require(msg.sender == owner);
+        address new_contract = new TokenToTokenSwap(owner,_party);
+        return new_contract;
+  }
+
+
+}
+
+interface deployer_Interface{
+  function newContract(address _party) public payable returns (address created);
+}
+
+interface TokenToTokenSwap_Interface{
+
+}
+
+contract user_Contract{
+  TokenToTokenSwap_Interface swap;
+  ERC20_Interface token;
+  Factory_Interface factory; 
+
+  function Initiate(){
+    factory.deployContract();
+    swap.CreateSwap();
+    token.transfer();
+  }
+
+  function Enter(){
+    swap.EnterSwap();
+    token.transfer();
+  }
+}
+
 
 contract Factory {
      using SafeMath for uint256;
@@ -98,6 +140,8 @@ contract Factory {
   address public short_drct;
   address public token_a;
   address public token_b;
+  address deployer_address;
+  deployer_Interface deployer;
 
   //Swap creation amount in wei
   uint public fee;
@@ -145,6 +189,10 @@ contract Factory {
     fee = _fee;
   }
 
+    function setDeployer(address _deployer) public onlyOwner() {
+    deployer_address = _deployer;
+  }
+
   function settokens(address _longdrct, address _shortdrct) public onlyOwner() {
     long_drct = _longdrct;
     short_drct = _shortdrct;
@@ -171,7 +219,8 @@ contract Factory {
   //Allows a user to deploy a TokenToTokenSwap contract
   function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = new TokenToTokenSwap(address(this),msg.sender);
+    deployer = deployer_Interface(deployer_address);
+    address new_contract = deployer.newConract(msg.sender);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
     return new_contract;
@@ -473,6 +522,7 @@ contract DRCT_Token {
   //Returns the allowed amount _spender can spend of _owner's balance
   function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
 }
+
 contract TokenToTokenSwap {
 
   using SafeMath for uint256;
@@ -519,9 +569,8 @@ contract TokenToTokenSwap {
   //This is the amount that the change will be calculated on.  10% change in rate on 100 Ether notional is a 10 Ether change
   uint multiplier;
 
-  /*TODO description*/
-  uint public share_long;
-  uint public share_short;
+  uint share_long;
+  uint share_short;
 
   /*TODO description*/
   uint pay_to_short_a;
@@ -534,8 +583,8 @@ contract TokenToTokenSwap {
   address short_token_address;
 
   //Number of DRCT Tokens distributed to both parties
-  uint public num_DRCT_longtokens;
-  uint public num_DRCT_shorttokens;
+  uint num_DRCT_longtokens;
+  uint num_DRCT_shorttokens;
 
   //Addresses of ERC20 tokens used to enter the swap
   address token_a_address;
@@ -590,8 +639,8 @@ contract TokenToTokenSwap {
     factory_address = _factory_address;
   }
 
-  function showPrivateVars() public returns (address _long_token_address, address _short_token_address, address _oracle_adress, address _token_a_address, address _token_b_address, uint _multiplier, uint _duration,uint _start_date, uint _end_date){
-    return (long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public returns (uint num_DRCT_longtokens, uint numb_DRCT_shorttokens,uint _share_long, uint _share_short,address _long_token_address, address _short_token_address, address _oracle_adress, address _token_a_address, address _token_b_address, uint _multiplier, uint _duration,uint _start_date, uint _end_date){
+    return (num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -883,7 +932,6 @@ contract TokenToTokenSwap {
 
 
 }
-
 
 contract Wrapped_Ether {
 
