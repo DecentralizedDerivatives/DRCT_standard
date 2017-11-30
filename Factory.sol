@@ -4,7 +4,6 @@ import "./TokenToTokenSwap.sol";
 import "./DRCT_Interface.sol";
 
 
-
 contract Factory {
      using SafeMath for uint256;
   /*Variables*/
@@ -34,7 +33,7 @@ contract Factory {
   /*Events*/
 
   //Emitted when a Swap is created
-  event ContractCreation(address _created, uint _fee);
+  event ContractCreation(address _created);
 
   /*Modifiers*/
 
@@ -51,18 +50,15 @@ contract Factory {
   * @param "_fee": The contract creation fee, in finney
   * @param "_o_address": The oracle address
   */
-  function Factory(uint _fee, address _o_address,uint _duration, uint _multiplier,address _token_a, address _token_b) public {
+  function Factory() public {
     owner = msg.sender;
-    fee = _fee;
-    oracle_address = _o_address;
-    tokenratio1 = 1e15; /*e.g. 1e15 (you get 1000 per eth)*/
-    tokenratio2 = 1e15;
-    duration = _duration;
-    multiplier = _multiplier;
-    token_a = _token_a;
-    token_b = _token_b;
   }
 
+  /*
+  * Updates the fee amount, and emits a FeeChange event
+  *
+  * @param "_fee": The new fee amount in finney
+  */
   function setFee(uint _fee) public onlyOwner() {
     fee = _fee;
   }
@@ -77,22 +73,25 @@ contract Factory {
         start_date = _start_date;
   }
 
-  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier,address _token_a, address _token_b) public onlyOwner() {
-
+//10e15,10e15,7,2,"0x..","0x..."
+  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier) public onlyOwner() {
     tokenratio1 = _token_ratio1;
     tokenratio2 = _token_ratio2;
     duration = _duration;
     multiplier = _multiplier;
+
+  }
+  
+  function setBaseTokens(address _token_a, address _token_b)public onlyOwner() {
     token_a = _token_a;
-    token_b = _token_b;
+    token_b = _token_b; 
   }
   //Allows a user to deploy a TokenToTokenSwap contract
   function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = new TokenToTokenSwap(oracle_address, owner, msg.sender, address(this),duration, start_date,multiplier,token_a,token_b);
+    address new_contract = new TokenToTokenSwap(address(this),msg.sender);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(new_contract, fee);
     return new_contract;
   }
 
@@ -123,6 +122,11 @@ contract Factory {
 
   //Allows the owner to pull contract creation fees
   function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
+
+
+  function getVariables() public returns(address _oracle_address,address _operator,uint _duration,uint _multiplier,address _token_a_address,address _token_b_address,uint _start_date){
+    return (oracle_address,owner,duration,multiplier,token_a,token_b,start_date);
+  }
 
   function payToken(address _party, bool long) public{
     require (created_contracts[msg.sender] == true);
