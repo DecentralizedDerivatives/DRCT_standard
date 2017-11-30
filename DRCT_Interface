@@ -1,5 +1,3 @@
-pragma solidity ^0.4.17;
-
 interface DRCT_Interface {
 
   //ERC20 functions
@@ -17,7 +15,7 @@ interface DRCT_Interface {
   function getBalanceByIndex(uint _ind) public constant returns (uint bal);
   function getIndexByAddress(address _owner) public constant returns (uint index);
   function createToken(uint _supply, address _owner) public;
-  function freeze() public;
+  function pay(address _party) public;
 
   //Events
   event Transfer(address indexed _from, address indexed _to, uint _value);
@@ -25,3 +23,4 @@ interface DRCT_Interface {
   event StateChanged(bool _success, string _message);
 
 }
+
