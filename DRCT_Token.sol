@@ -16,7 +16,7 @@ contract DRCT_Token {
 
   /*Variables*/
 
-  //Address for the token-to-token swap contract
+  //Address for the factory contract
   address public master_contract;
 
   //ERC20 Fields
@@ -24,7 +24,7 @@ contract DRCT_Token {
 
   //ERC20 fields - allowed and balances
   //Balance is an array here so it can be iterated over from the forcePay function in the Swap contract
-  Balance[] public balances;
+  Balance[] balances;
   mapping(address => mapping (address => uint)) public allowed;
 
   //This mapping keeps track of where an address is in the balances array
@@ -38,12 +38,10 @@ contract DRCT_Token {
   /*Functions*/
 
   /*
-  * Constructor: called by the createTokens fucntion in the Swap contract
-  * @param "_total_supply": The total number of tokens to create
-  * @param "_name": The name of the token
+  * TODO
   */
   function pay(address _party) public {
-    require (msg.sender== master_contract);
+    require(msg.sender == master_contract);
     balances.push(Balance({
       owner: _party,
       amount: 0
