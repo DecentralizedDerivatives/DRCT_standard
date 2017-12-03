@@ -7,6 +7,7 @@ import "./WrappedEther.sol";
 import "./libraries/SafeMath.sol";
 
 
+
 contract UserContract{
   TokenToTokenSwap_Interface swap;
   Wrapped_Ether token;
@@ -30,6 +31,7 @@ contract UserContract{
     token = Wrapped_Ether(basetoken);
     token.CreateToken.value(msg.value)();
     token.transfer(_swapadd,msg.value);
+    swap.createTokens();
   }
 
   function setFactory(address _factory_address) public {
