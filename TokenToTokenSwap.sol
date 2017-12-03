@@ -6,6 +6,7 @@ import "./interfaces/Factory_Interface.sol";
 import "./interfaces/ERC20_Interface.sol";
 import "./libraries/SafeMath.sol";
 
+
 contract TokenToTokenSwap {
 
   using SafeMath for uint256;
@@ -326,9 +327,11 @@ contract TokenToTokenSwap {
   * If the Calculate function has not yet been called, this function will call it.
   * The function then pays every token holder of both the long and short DRCT tokens
   */
-  function forcePay() public onlyState(SwapState.tokenized) returns (bool) {
+  function forcePay(uint _begin, uint _end) public returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
-    Calculate();
+    if(current_state == SwapState.tokenized){
+      Calculate();
+    }
 
     //The state at this point should always be SwapState.ready
     require(current_state == SwapState.ready);
@@ -337,8 +340,9 @@ contract TokenToTokenSwap {
 
     token = DRCT_Token_Interface(long_token_address);
     uint count = token.addressCount();
+    uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = 1; i < count; i++) {
+    for(uint i = _begin; i < loop_count; i++) {
       address long_owner = token.getHolderByIndex(i);
       uint to_pay_long = token.getBalanceByIndex(i);
       assert(i == token.getIndexByAddress(long_owner));
@@ -347,18 +351,19 @@ contract TokenToTokenSwap {
 
     token = DRCT_Token_Interface(short_token_address);
     count = token.addressCount();
-    for(uint j = 1; j < count; j++) {
+    for(uint j = _begin; j < loop_count; j++) {
       address short_owner = token.getHolderByIndex(j);
       uint to_pay_short = token.getBalanceByIndex(j);
       assert(j == token.getIndexByAddress(short_owner));
       paySwap(short_owner, to_pay_short, false);
     }
 
-    token_a.transfer(operator, token_a.balanceOf(address(this)));
-    token_b.transfer(operator, token_b.balanceOf(address(this)));
-
-    PaidOut(long_token_address, short_token_address);
-    current_state = SwapState.ended;
+    if (loop_count == count){
+        token_a.transfer(operator, token_a.balanceOf(address(this)));
+        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        PaidOut(long_token_address, short_token_address);
+        current_state = SwapState.ended;
+      }
     return true;
   }
 
