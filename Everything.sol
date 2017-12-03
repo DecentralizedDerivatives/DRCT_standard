@@ -142,7 +142,7 @@ contract Factory {
   /*Events*/
 
   //Emitted when a Swap is created
-  event ContractCreation(address _created);
+  event ContractCreation(address _sender, address _created);
 
   /*Modifiers*/
 
@@ -224,6 +224,7 @@ contract Factory {
     address new_contract = deployer.newContract(msg.sender);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
+    ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
@@ -861,7 +862,7 @@ contract TokenToTokenSwap {
   * If the Calculate function has not yet been called, this function will call it.
   * The function then pays every token holder of both the long and short DRCT tokens
   */
-  function forcePay() public onlyState(SwapState.tokenized) returns (bool) {
+  function forcePay(uint _begin, uint _end) public onlyState(SwapState.tokenized) returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
     Calculate();
 
@@ -872,8 +873,9 @@ contract TokenToTokenSwap {
 
     token = DRCT_Token_Interface(long_token_address);
     uint count = token.addressCount();
+    uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = 1; i < count; i++) {
+    for(uint i = _begin; i < loop_count; i++) {
       address long_owner = token.getHolderByIndex(i);
       uint to_pay_long = token.getBalanceByIndex(i);
       assert(i == token.getIndexByAddress(long_owner));
@@ -882,7 +884,7 @@ contract TokenToTokenSwap {
 
     token = DRCT_Token_Interface(short_token_address);
     count = token.addressCount();
-    for(uint j = 1; j < count; j++) {
+    for(uint j = _begin; j < loop_count; j++) {
       address short_owner = token.getHolderByIndex(j);
       uint to_pay_short = token.getBalanceByIndex(j);
       assert(j == token.getIndexByAddress(short_owner));
