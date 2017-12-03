@@ -35,6 +35,8 @@ library SafeMath {
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
+   function deployContract(address swap_owner) public payable returns (address created);
+   function getBase() public view returns(address _base1, address base2);
   function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
 }
 
@@ -88,25 +90,48 @@ interface Deployer_Interface {
 interface TokenToTokenSwap_Interface {
   function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public payable;
   function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public;
+  function createTokens() public;
 }
 
-//TODO
-// contract UserContract{
-//   TokenToTokenSwap_Interface swap;
-//   ERC20_Interface token;
-//   Factory_Interface factory;
+contract UserContract{
+  TokenToTokenSwap_Interface swap;
+  Wrapped_Ether token;
+  Factory_Interface factory;
 
-//   function Initiate() public {
-//     factory.deployContract();
-//     swap.CreateSwap();
-//     token.transfer();
-//   }
+  address public factory_address;
 
-//   function Enter() public {
-//     swap.EnterSwap();
-//     token.transfer();
-//   }
-// }
+  function Initiate(uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (address) {
+    require(msg.value == _amounta);
+    address swap_contract = factory.deployContract(msg.sender);
+    swap = TokenToTokenSwap_Interface(swap_contract);
+    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong);
+    address token_a_address;
+    address token_b_address;
+    (token_a_address,token_b_address) = factory.getBase();
+    token = Wrapped_Ether(token_a_address);
+    token.CreateToken.value(msg.value)();
+    token.transfer(swap_contract,msg.value);
+    return swap_contract;
+  }
+
+  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public {
+    require(msg.value ==_amountb);
+    swap = TokenToTokenSwap_Interface(_swapadd);
+    swap.EnterSwap(_amounta, _amountb, _isLong);
+    address token_a_address;
+    address token_b_address;
+    (token_a_address,token_b_address) = factory.getBase();
+    token = Wrapped_Ether(token_b_address);
+    token.CreateToken.value(msg.value)();
+    token.transfer(_swapadd,msg.value);
+    swap.createTokens();
+  }
+
+  function setFactory(address _factory_address) public {
+    factory_address = _factory_address;
+    factory = Factory_Interface(factory_address);
+  }
+}
 
 contract Factory {
   using SafeMath for uint256;
@@ -175,6 +200,10 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+  function getBase() public view returns(address _base1, address base2){
+    return (token_a, token_b);
+  }
+
   /*
   * Sets the long and short DRCT token addresses
   * @param "_long_drct": The address of the long DRCT token
@@ -219,12 +248,12 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
-  function deployContract() public payable returns (address created) {
+  function deployContract(address swap_owner) public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender);
+    address new_contract = deployer.newContract(swap_owner);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(msg.sender,new_contract);
+    ContractCreation(swap_owner,new_contract);
     return new_contract;
   }
 
@@ -862,9 +891,11 @@ contract TokenToTokenSwap {
   * If the Calculate function has not yet been called, this function will call it.
   * The function then pays every token holder of both the long and short DRCT tokens
   */
-  function forcePay(uint _begin, uint _end) public onlyState(SwapState.tokenized) returns (bool) {
+  function forcePay(uint _begin, uint _end) public returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
-    Calculate();
+    if(current_state == SwapState.tokenized){
+      Calculate();
+    }
 
     //The state at this point should always be SwapState.ready
     require(current_state == SwapState.ready);
@@ -891,11 +922,12 @@ contract TokenToTokenSwap {
       paySwap(short_owner, to_pay_short, false);
     }
 
-    token_a.transfer(operator, token_a.balanceOf(address(this)));
-    token_b.transfer(operator, token_b.balanceOf(address(this)));
-
-    PaidOut(long_token_address, short_token_address);
-    current_state = SwapState.ended;
+    if (loop_count == count){
+        token_a.transfer(operator, token_a.balanceOf(address(this)));
+        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        PaidOut(long_token_address, short_token_address);
+        current_state = SwapState.ended;
+      }
     return true;
   }
 
