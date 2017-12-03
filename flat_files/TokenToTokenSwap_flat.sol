@@ -1,11 +1,69 @@
 pragma solidity ^0.4.17;
 
-import "./interfaces/Oracle_Interface.sol";
-import "./interfaces/DRCT_Token_Interface.sol";
-import "./interfaces/Factory_Interface.sol";
-import "./interfaces/ERC20_Interface.sol";
-import "./libraries/SafeMath.sol";
+//Slightly modified SafeMath library - includes a min function
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function min(uint a, uint b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+//ERC20 function interface
+interface ERC20_Interface {
+  function totalSupply() public constant returns (uint total_supply);
+  function balanceOf(address _owner) public constant returns (uint balance);
+  function transfer(address _to, uint _amount) public returns (bool success);
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
+  function approve(address _spender, uint _amount) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint amount);
+}
+
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
+  function payToken(address _party, bool long) public;
+  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
+}
+
+//DRCT_Token functions - descriptions can be found in DRCT_Token.sol
+interface DRCT_Token_Interface {
+  function addressCount() public constant returns (uint count);
+  function getHolderByIndex(uint _ind) public constant returns (address holder);
+  function getBalanceByIndex(uint _ind) public constant returns (uint bal);
+  function getIndexByAddress(address _owner) public constant returns (uint index);
+  function createToken(uint _supply, address _owner) public;
+  function pay(address _party) public;
+}
+
+//Swap Oracle functions - descriptions can be found in Oracle.sol
+interface Oracle_Interface{
+  function RetrieveData(uint _date) public view returns (uint data);
+}
+
+//Swap contract
 contract TokenToTokenSwap {
 
   using SafeMath for uint256;

@@ -1,5 +1,6 @@
 pragma solidity ^0.4.17;
 
+//Slightly modified SafeMath library - includes a min function
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -30,94 +31,82 @@ library SafeMath {
   }
 }
 
-/*Factory.sol interface for TokenToTokenSwap contract*/
+//Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
-  function deployContract(address new_contract) payable public;
-  function getVariables() public returns(address _oracle_address,address _operator,uint _duration,uint _multiplier,address _token_a_address,address _token_b_address,uint _start_date);
+  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
 }
 
+//Swap Oracle functions - descriptions can be found in Oracle.sol
 interface Oracle_Interface{
-  function RetrieveData(uint _date) public constant returns (uint data);
+  function RetrieveData(uint _date) public view returns (uint data);
 }
 
-interface DRCT_Interface {
-
-  //ERC20 functions
-  function totalSupply() public constant returns (uint total_supply);
-  function balanceOf(address _owner) public constant returns (uint balance);
-  function transfer(address _to, uint _amount) public returns (bool success);
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
-  function approve(address _spender, uint _amount) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint amount);
-
-
-  //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
+//DRCT_Token functions - descriptions can be found in DRCT_Token.sol
+interface DRCT_Token_Interface {
   function addressCount() public constant returns (uint count);
   function getHolderByIndex(uint _ind) public constant returns (address holder);
   function getBalanceByIndex(uint _ind) public constant returns (uint bal);
   function getIndexByAddress(address _owner) public constant returns (uint index);
   function createToken(uint _supply, address _owner) public;
   function pay(address _party) public;
-
 }
 
+//ERC20 function interface
 interface ERC20_Interface {
-
-    function totalSupply() public constant returns (uint total_supply);
-    function balanceOf(address _owner) public constant returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint remaining);
-
+  function totalSupply() public constant returns (uint total_supply);
+  function balanceOf(address _owner) public constant returns (uint balance);
+  function transfer(address _to, uint _amount) public returns (bool success);
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
+  function approve(address _spender, uint _amount) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint amount);
 }
 
-contract deployer {
-    address owner;
+//Swap Deployer Contract
+contract Deployer {
+  address owner;
 
-    function deployer(address _factory) public {
-      owner = _factory;
-    }
+  function Deployer(address _factory) public {
+    owner = _factory;
+  }
 
-    //TODO - payable?
-    function newContract(address _party) public payable returns (address created) {
-      require(msg.sender == owner);
-      address new_contract = new TokenToTokenSwap(owner,_party);
-      return address(new_contract);
-    }
-
+  //TODO - payable?
+  function newContract(address _party) public payable returns (address created) {
+    require(msg.sender == owner);
+    address new_contract = new TokenToTokenSwap(owner, _party);
+    return new_contract;
+  }
 }
 
-//TODO - payable?
-interface deployer_Interface {
+//Swap Deployer functions - descriptions can be found in Deployer.sol
+interface Deployer_Interface {
   function newContract(address _party) public payable returns (address created);
 }
 
+//Swap interface- descriptions can be found in TokenToTokenSwap.sol
+interface TokenToTokenSwap_Interface {
+  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public payable;
+  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public;
+}
+
 //TODO
-interface TokenToTokenSwap_Interface{
+// contract UserContract{
+//   TokenToTokenSwap_Interface swap;
+//   ERC20_Interface token;
+//   Factory_Interface factory;
 
-}
+//   function Initiate() public {
+//     factory.deployContract();
+//     swap.CreateSwap();
+//     token.transfer();
+//   }
 
-//TODO - format
-contract user_Contract{
-  TokenToTokenSwap_Interface swap;
-  ERC20_Interface token;
-  Factory_Interface factory;
-
-  function Initiate() {
-    factory.deployContract();
-    swap.CreateSwap();
-    token.transfer();
-  }
-
-  function Enter() {
-    swap.EnterSwap();
-    token.transfer();
-  }
-}
-
+//   function Enter() public {
+//     swap.EnterSwap();
+//     token.transfer();
+//   }
+// }
 
 contract Factory {
   using SafeMath for uint256;
@@ -126,11 +115,11 @@ contract Factory {
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
-  DRCT_Interface drct_interface;
+  DRCT_Token_Interface drct_interface;
 
   //Address of the deployer contract
   address deployer_address;
-  deployer_Interface deployer_interface;
+  Deployer_Interface deployer;
 
   address public long_drct;
   address public short_drct;
@@ -183,7 +172,7 @@ contract Factory {
   */
   function setDeployer(address _deployer) public onlyOwner() {
     deployer_address = _deployer;
-    deployer_interface = deployer_Interface(_deployer);
+    deployer = Deployer_Interface(_deployer);
   }
 
   /*
@@ -249,11 +238,11 @@ contract Factory {
   function createToken(uint _supply, address _party, bool _long) public returns (address created, uint token_ratio) {
     require(created_contracts[msg.sender] == true);
     if (_long) {
-      drct_interface = DRCT_Interface(long_drct);
+      drct_interface = DRCT_Token_Interface(long_drct);
       drct_interface.createToken(_supply.div(token_ratio1), _party);
       return (long_drct, token_ratio1);
     } else {
-      drct_interface = DRCT_Interface(short_drct);
+      drct_interface = DRCT_Token_Interface(short_drct);
       drct_interface.createToken(_supply.div(token_ratio2), _party);
       return (short_drct, token_ratio2);
     }
@@ -278,7 +267,7 @@ contract Factory {
   * @returns "token_b_address": The address of token b
   * @returns "start_date": The start date of the swap
   */
-  function getVariables() public returns (address oracle_address, address operator, uint duration, uint multiplier, address token_a_address, address token_b_address, uint start_date){
+  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date){
     return (oracle_address, owner, duration, multiplier, token_a, token_b, start_date);
   }
 
@@ -291,11 +280,11 @@ contract Factory {
     require(created_contracts[msg.sender] == true);
     //TODO why is this being changed every call
     if (_long) {
-      drctint = DRCT_Interface(long_drct);
+      drct_interface = DRCT_Token_Interface(long_drct);
     } else {
-      drctint = DRCT_Interface(short_drct);
+      drct_interface = DRCT_Token_Interface(short_drct);
     }
-    drctint.pay(_party);
+    drct_interface.pay(_party);
   }
 }
 
@@ -307,7 +296,7 @@ contract Oracle {
   address private owner;
 
   //Mapping of documents stored in the oracle
-  mapping(uint => uint) public oracle_values;
+  mapping(uint => uint) oracle_values;
 
   /*Events*/
 
@@ -334,10 +323,8 @@ contract Oracle {
 
   //Allows for the viewing of oracle data
   function RetrieveData(uint _date) public constant returns (uint data) {
-    uint value = oracle_values[_date];
-    return value;
+    return oracle_values[_date];
   }
-
 }
 
 contract DRCT_Token {
@@ -637,7 +624,7 @@ contract TokenToTokenSwap {
 
   uint duration;
   uint fee;
-  DRCT_Interface token;
+  DRCT_Token_Interface token;
 
   /*Events*/
 
@@ -670,7 +657,7 @@ contract TokenToTokenSwap {
     factory_address = _factory_address;
   }
 
-  function showPrivateVars() public returns (uint num_DRCT_longtokens, uint numb_DRCT_shorttokens,uint _share_long, uint _share_short,address _long_token_address, address _short_token_address, address _oracle_adress, address _token_a_address, address _token_b_address, uint _multiplier, uint _duration,uint _start_date, uint _end_date){
+  function showPrivateVars() public view returns (uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
     return (num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
@@ -787,7 +774,7 @@ contract TokenToTokenSwap {
   * @param "_creator": The creator of the DRCT tokens
   */
   function tokenize(address _creator) internal {
-    //Uses the factory to deploy a DRCT Token contract, which we cast to the DRCT_Interface
+    //Uses the factory to deploy a DRCT Token contract, which we cast to the DRCT_Token_Interface
     uint tokenratio = 1;
     if (_creator == long_party) {
       (long_token_address,tokenratio) = factory.createToken(token_a_amount, _creator,true);
@@ -883,7 +870,7 @@ contract TokenToTokenSwap {
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
-    token = DRCT_Interface(long_token_address);
+    token = DRCT_Token_Interface(long_token_address);
     uint count = token.addressCount();
     //Indexing begins at 1 for DRCT_Token balances
     for(uint i = 1; i < count; i++) {
@@ -893,7 +880,7 @@ contract TokenToTokenSwap {
       paySwap(long_owner, to_pay_long, true);
     }
 
-    token = DRCT_Interface(short_token_address);
+    token = DRCT_Token_Interface(short_token_address);
     count = token.addressCount();
     for(uint j = 1; j < count; j++) {
       address short_owner = token.getHolderByIndex(j);
@@ -960,8 +947,6 @@ contract TokenToTokenSwap {
       }
     }
   }
-
-
 }
 
 contract Wrapped_Ether {
@@ -1057,6 +1042,5 @@ contract Wrapped_Ether {
   }
 
   //Returns the remaining allowance of tokens granted to the _spender from the _owner
-  function allowance(address _owner, address _spender) constant public returns (uint remaining) { return allowed[_owner][_spender]; }
-
+  function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
 }
