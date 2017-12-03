@@ -72,6 +72,10 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+  function getBase() public view returns(address _base1, address base2){
+    return (token_a, token_b);
+  }
+
   /*
   * Sets the long and short DRCT token addresses
   * @param "_long_drct": The address of the long DRCT token
@@ -116,12 +120,12 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
-  function deployContract() public payable returns (address created) {
+  function deployContract(address swap_owner) public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender);
+    address new_contract = deployer.newContract(swap_owner);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(msg.sender,new_contract);
+    ContractCreation(swap_owner,new_contract);
     return new_contract;
   }
 
