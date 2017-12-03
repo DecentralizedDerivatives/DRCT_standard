@@ -4,6 +4,7 @@ import "./interfaces/Deployer_Interface.sol";
 import "./interfaces/DRCT_Token_Interface.sol";
 import "./libraries/SafeMath.sol";
 
+
 contract Factory {
   using SafeMath for uint256;
   /*Variables*/
@@ -38,7 +39,7 @@ contract Factory {
   /*Events*/
 
   //Emitted when a Swap is created
-  event ContractCreation(address _created);
+  event ContractCreation(address _sender, address _created);
 
   /*Modifiers*/
 
@@ -120,6 +121,7 @@ contract Factory {
     address new_contract = deployer.newContract(msg.sender);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
+    ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
