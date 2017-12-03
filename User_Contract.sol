@@ -15,20 +15,28 @@ contract UserContract{
 
   address public factory_address;
 
-  function Initiate(uint _amounta, uint _amountb, bool _isLong, address basetoken) payable public {
-    factory = Factory_Interface(factory_address);
-    address swap_contract = factory.deployContract();
+  function Initiate(uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (address) {
+    require(msg.value == _amounta);
+    address swap_contract = factory.deployContract(msg.sender);
     swap = TokenToTokenSwap_Interface(swap_contract);
-    swap.CreateSwap(_amounta, _amountb, _isLong);
-    token = Wrapped_Ether(basetoken);
+    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong);
+    address token_a_address;
+    address token_b_address;
+    (token_a_address,token_b_address) = factory.getBase();
+    token = Wrapped_Ether(token_a_address);
     token.CreateToken.value(msg.value)();
     token.transfer(swap_contract,msg.value);
+    return swap_contract;
   }
 
-  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd, address basetoken) payable public {
+  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public {
+    require(msg.value ==_amountb);
     swap = TokenToTokenSwap_Interface(_swapadd);
     swap.EnterSwap(_amounta, _amountb, _isLong);
-    token = Wrapped_Ether(basetoken);
+    address token_a_address;
+    address token_b_address;
+    (token_a_address,token_b_address) = factory.getBase();
+    token = Wrapped_Ether(token_b_address);
     token.CreateToken.value(msg.value)();
     token.transfer(_swapadd,msg.value);
     swap.createTokens();
@@ -36,5 +44,6 @@ contract UserContract{
 
   function setFactory(address _factory_address) public {
     factory_address = _factory_address;
+    factory = Factory_Interface(factory_address);
   }
 }
