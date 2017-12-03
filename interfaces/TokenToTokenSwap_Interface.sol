@@ -1,7 +1,9 @@
 pragma solidity ^0.4.17;
 
 //Swap interface- descriptions can be found in TokenToTokenSwap.sol
-interface TokenToTokenSwap_Interface {
-  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public payable;
-  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public;
+interface Factory_Interface {
+  function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
+  function payToken(address _party, bool long) public;
+   function deployContract() public payable returns (address created);
+  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
 }
