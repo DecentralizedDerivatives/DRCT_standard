@@ -4,6 +4,7 @@ pragma solidity ^0.4.17;
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
-   function deployContract() public payable returns (address created);
+   function deployContract(address swap_owner) public payable returns (address created);
+   function getBase() public view returns(address _base1, address base2);
   function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
 }
