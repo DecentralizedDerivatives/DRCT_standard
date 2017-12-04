@@ -74,22 +74,22 @@ contract Deployer {
   }
 
   //TODO - payable?
-  function newContract(address _party) public payable returns (address created) {
+  function newContract(address _party, address user_contract) public returns (address created) {
     require(msg.sender == owner);
-    address new_contract = new TokenToTokenSwap(owner, _party);
+    address new_contract = new TokenToTokenSwap(owner, _party, user_contract);
     return new_contract;
   }
 }
 
 //Swap Deployer functions - descriptions can be found in Deployer.sol
 interface Deployer_Interface {
-  function newContract(address _party) public payable returns (address created);
+  function newContract(address _party, address user_contract) public payable returns (address created);
 }
 
 //Swap interface- descriptions can be found in TokenToTokenSwap.sol
 interface TokenToTokenSwap_Interface {
-  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public payable;
-  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long) public;
+  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public payable;
+  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
   function createTokens() public;
 }
 
@@ -99,35 +99,43 @@ contract UserContract{
   Factory_Interface factory;
 
   address public factory_address;
+  address owner;
+  
+  function UserContract(){
+      owner = msg.sender;
+  }
 
-  function Initiate(uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (address) {
-    require(msg.value == _amounta);
-    address swap_contract = factory.deployContract(msg.sender);
-    swap = TokenToTokenSwap_Interface(swap_contract);
-    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong);
+  function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
+    require(msg.value == _amounta + _premium);
+    swap = TokenToTokenSwap_Interface(_swapadd);
+    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
     address token_a_address;
     address token_b_address;
     (token_a_address,token_b_address) = factory.getBase();
     token = Wrapped_Ether(token_a_address);
     token.CreateToken.value(msg.value)();
-    token.transfer(swap_contract,msg.value);
-    return swap_contract;
+    bool success = token.transfer(_swapadd,msg.value);
+    return success;
   }
 
-  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public {
+  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public returns(bool){
     require(msg.value ==_amountb);
     swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.EnterSwap(_amounta, _amountb, _isLong);
+    swap.EnterSwap(_amounta, _amountb, _isLong,msg.sender);
     address token_a_address;
     address token_b_address;
     (token_a_address,token_b_address) = factory.getBase();
     token = Wrapped_Ether(token_b_address);
     token.CreateToken.value(msg.value)();
-    token.transfer(_swapadd,msg.value);
+    bool success = token.transfer(_swapadd,msg.value);
     swap.createTokens();
+    return success;
+    
   }
+ 
 
   function setFactory(address _factory_address) public {
+      require (msg.sender == owner);
     factory_address = _factory_address;
     factory = Factory_Interface(factory_address);
   }
@@ -140,6 +148,7 @@ contract Factory {
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
+  address public user_contract;
   DRCT_Token_Interface drct_interface;
 
   //Address of the deployer contract
@@ -200,6 +209,11 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+    function setUserContract(address _userContract) public onlyOwner() {
+    user_contract = _userContract;
+  }
+
+
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
   }
@@ -248,12 +262,12 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
-  function deployContract(address swap_owner) public payable returns (address created) {
+  function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(swap_owner);
+    address new_contract = deployer.newContract(msg.sender, user_contract);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(swap_owner,new_contract);
+    ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
@@ -355,6 +369,7 @@ contract Oracle {
   function RetrieveData(uint _date) public constant returns (uint data) {
     return oracle_values[_date];
   }
+  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 }
 
 contract DRCT_Token {
@@ -655,6 +670,7 @@ contract TokenToTokenSwap {
   uint duration;
   uint fee;
   DRCT_Token_Interface token;
+  address userContract;
 
   /*Events*/
 
@@ -681,14 +697,15 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_factory": Address of the factory that created this contract
   */
-  function TokenToTokenSwap (address _factory_address, address _creator) public {
+  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
     current_state = SwapState.created;
     creator =_creator;
     factory_address = _factory_address;
+    userContract = _userContract;
   }
 
-  function showPrivateVars() public view returns (uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
-    return (num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
+    return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -706,12 +723,13 @@ contract TokenToTokenSwap {
   function CreateSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) payable public onlyState(SwapState.created) {
 
     //The Swap is meant to take place within 28 days
     require(
-      msg.sender == creator
+      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
     );
     factory = Factory_Interface(factory_address);
     setVars();
@@ -721,11 +739,11 @@ contract TokenToTokenSwap {
 
     premium = this.balance;
     token_a = ERC20_Interface(token_a_address);
-    token_a_party = msg.sender;
+    token_a_party = _senderAdd;
     if (_sender_is_long)
-      long_party = msg.sender;
+      long_party = _senderAdd;
     else
-      short_party = msg.sender;
+      short_party = _senderAdd;
     current_state = SwapState.open;
   }
 
@@ -743,26 +761,27 @@ contract TokenToTokenSwap {
   function EnterSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) public onlyState(SwapState.open) {
 
     //Require that all of the information of the swap was entered correctly by the entering party
     require(
       token_a_amount == _amount_a &&
       token_b_amount == _amount_b &&
-      token_a_party != msg.sender
+      token_a_party != _senderAdd
     );
 
     token_b = ERC20_Interface(token_b_address);
-    token_b_party = msg.sender;
+    token_b_party = _senderAdd;
 
     //Set the entering party as the short or long party
     if (_sender_is_long) {
       require(long_party == 0);
-      long_party = msg.sender;
+      long_party = _senderAdd;
     } else {
       require(short_party == 0);
-      short_party = msg.sender;
+      short_party = _senderAdd;
     }
 
     SwapCreation(token_a_address, token_b_address, start_date, end_date, token_b_party);
@@ -898,7 +917,7 @@ contract TokenToTokenSwap {
     }
 
     //The state at this point should always be SwapState.ready
-    require(current_state == SwapState.ready);
+    require(msg.sender == operator && current_state == SwapState.ready);
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
@@ -1078,3 +1097,41 @@ contract Wrapped_Ether {
   //Returns the remaining allowance of tokens granted to the _spender from the _owner
   function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
 }
+
+contract Tester {
+    address oracleAddress;
+    address baseToken1;
+    address baseToken2;
+    address factory_address;
+    address drct1;
+    address drct2;
+    Factory factory;
+    Oracle oracle;
+
+    
+    function InitialCreate() public returns(address){
+        oracleAddress = new Oracle();
+        baseToken1 = new Wrapped_Ether();
+        baseToken2 = new Wrapped_Ether();
+        factory_address = new Factory();
+        drct1 = new DRCT_Token(factory_address);
+        drct2 = new DRCT_Token(factory_address);
+        return factory_address;
+    }
+    
+    function setVars(address test2, uint _startval, uint _endval) public {
+        factory = Factory(factory_address);
+        oracle = Oracle(oracleAddress);
+        factory.setStartDate(1543881600);
+        factory.setVariables(1000000000000000,1000000000000000,7,2);
+        factory.setBaseTokens(baseToken1,baseToken2);
+        factory.setOracleAddress(oracleAddress);
+        factory.settokens(drct1,drct2);
+        oracle.StoreDocument(1543881600, _startval);
+        oracle.StoreDocument(1544486400,_endval);
+        oracle.setOwner(msg.sender);
+         factory.setOwner(test2);
+    }
+}
+
+
