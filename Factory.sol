@@ -12,6 +12,7 @@ contract Factory {
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
+  address public user_contract;
   DRCT_Token_Interface drct_interface;
 
   //Address of the deployer contract
@@ -72,6 +73,11 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+    function setUserContract(address _userContract) public onlyOwner() {
+    user_contract = _userContract;
+  }
+
+
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
   }
@@ -120,12 +126,12 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
-  function deployContract(address swap_owner) public payable returns (address created) {
+  function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(swap_owner);
+    address new_contract = deployer.newContract(msg.sender, user_contract);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
-    ContractCreation(swap_owner,new_contract);
+    ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
