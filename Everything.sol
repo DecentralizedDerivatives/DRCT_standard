@@ -1119,7 +1119,7 @@ contract Tester {
         return factory_address;
     }
     
-    function setVars(address test2, uint _startval, uint _endval) public {
+    function setVars(uint _startval, uint _endval) public {
         factory = Factory(factory_address);
         oracle = Oracle(oracleAddress);
         factory.setStartDate(1543881600);
@@ -1130,7 +1130,7 @@ contract Tester {
         oracle.StoreDocument(1543881600, _startval);
         oracle.StoreDocument(1544486400,_endval);
         oracle.setOwner(msg.sender);
-         factory.setOwner(test2);
+         factory.setOwner(msg.sender);
     }
 }
 
