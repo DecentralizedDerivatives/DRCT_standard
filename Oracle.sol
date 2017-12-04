@@ -5,7 +5,7 @@ contract Oracle {
   /*Variables*/
 
   //Owner of the oracle
-  address owner;
+  address private owner;
 
   //Mapping of documents stored in the oracle
   mapping(uint => uint) oracle_values;
@@ -37,4 +37,5 @@ contract Oracle {
   function RetrieveData(uint _date) public constant returns (uint data) {
     return oracle_values[_date];
   }
+  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 }
