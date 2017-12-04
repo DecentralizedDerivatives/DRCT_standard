@@ -91,6 +91,7 @@ contract TokenToTokenSwap {
   uint duration;
   uint fee;
   DRCT_Token_Interface token;
+  address userContract;
 
   /*Events*/
 
@@ -117,14 +118,15 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_factory": Address of the factory that created this contract
   */
-  function TokenToTokenSwap (address _factory_address, address _creator) public {
+  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
     current_state = SwapState.created;
     creator =_creator;
     factory_address = _factory_address;
+    userContract = _userContract;
   }
 
-  function showPrivateVars() public view returns (uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
-    return (num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
+    return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -142,12 +144,13 @@ contract TokenToTokenSwap {
   function CreateSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) payable public onlyState(SwapState.created) {
 
     //The Swap is meant to take place within 28 days
     require(
-      msg.sender == creator
+      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
     );
     factory = Factory_Interface(factory_address);
     setVars();
@@ -157,11 +160,11 @@ contract TokenToTokenSwap {
 
     premium = this.balance;
     token_a = ERC20_Interface(token_a_address);
-    token_a_party = msg.sender;
+    token_a_party = _senderAdd;
     if (_sender_is_long)
-      long_party = msg.sender;
+      long_party = _senderAdd;
     else
-      short_party = msg.sender;
+      short_party = _senderAdd;
     current_state = SwapState.open;
   }
 
@@ -179,26 +182,27 @@ contract TokenToTokenSwap {
   function EnterSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) public onlyState(SwapState.open) {
 
     //Require that all of the information of the swap was entered correctly by the entering party
     require(
       token_a_amount == _amount_a &&
       token_b_amount == _amount_b &&
-      token_a_party != msg.sender
+      token_a_party != _senderAdd
     );
 
     token_b = ERC20_Interface(token_b_address);
-    token_b_party = msg.sender;
+    token_b_party = _senderAdd;
 
     //Set the entering party as the short or long party
     if (_sender_is_long) {
       require(long_party == 0);
-      long_party = msg.sender;
+      long_party = _senderAdd;
     } else {
       require(short_party == 0);
-      short_party = msg.sender;
+      short_party = _senderAdd;
     }
 
     SwapCreation(token_a_address, token_b_address, start_date, end_date, token_b_party);
@@ -334,7 +338,7 @@ contract TokenToTokenSwap {
     }
 
     //The state at this point should always be SwapState.ready
-    require(current_state == SwapState.ready);
+    require(msg.sender == operator && current_state == SwapState.ready);
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
