@@ -9,6 +9,7 @@ import "./libraries/SafeMath.sol";
 
 
 contract UserContract{
+  using SafeMath for uint256;
   TokenToTokenSwap_Interface swap;
   Wrapped_Ether token;
   Factory_Interface factory;
@@ -21,7 +22,7 @@ contract UserContract{
   }
 
   function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
-    require(msg.value == _amounta + _premium);
+    require(msg.value == _amounta.add(_premium));
     swap = TokenToTokenSwap_Interface(_swapadd);
     swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
     address token_a_address;
