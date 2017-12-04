@@ -45,8 +45,11 @@ interface ERC20_Interface {
 interface Factory_Interface {
   function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
   function payToken(address _party, bool long) public;
+   function deployContract(address swap_owner) public payable returns (address created);
+   function getBase() public view returns(address _base1, address base2);
   function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
 }
+
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {
@@ -65,7 +68,7 @@ interface Oracle_Interface{
 
 //Swap Deployer functions - descriptions can be found in Deployer.sol
 interface Deployer_Interface {
-  function newContract(address _party) public payable returns (address created);
+  function newContract(address _party, address user_contract) public payable returns (address created);
 }
 
 //Swap contract
@@ -153,6 +156,7 @@ contract TokenToTokenSwap {
   uint duration;
   uint fee;
   DRCT_Token_Interface token;
+  address userContract;
 
   /*Events*/
 
@@ -179,14 +183,15 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_factory": Address of the factory that created this contract
   */
-  function TokenToTokenSwap (address _factory_address, address _creator) public {
+  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
     current_state = SwapState.created;
     creator =_creator;
     factory_address = _factory_address;
+    userContract = _userContract;
   }
 
-  function showPrivateVars() public view returns (uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
-    return (num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
+    return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -204,12 +209,13 @@ contract TokenToTokenSwap {
   function CreateSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) payable public onlyState(SwapState.created) {
 
     //The Swap is meant to take place within 28 days
     require(
-      msg.sender == creator
+      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
     );
     factory = Factory_Interface(factory_address);
     setVars();
@@ -219,11 +225,11 @@ contract TokenToTokenSwap {
 
     premium = this.balance;
     token_a = ERC20_Interface(token_a_address);
-    token_a_party = msg.sender;
+    token_a_party = _senderAdd;
     if (_sender_is_long)
-      long_party = msg.sender;
+      long_party = _senderAdd;
     else
-      short_party = msg.sender;
+      short_party = _senderAdd;
     current_state = SwapState.open;
   }
 
@@ -241,26 +247,27 @@ contract TokenToTokenSwap {
   function EnterSwap(
     uint _amount_a,
     uint _amount_b,
-    bool _sender_is_long
+    bool _sender_is_long,
+    address _senderAdd
     ) public onlyState(SwapState.open) {
 
     //Require that all of the information of the swap was entered correctly by the entering party
     require(
       token_a_amount == _amount_a &&
       token_b_amount == _amount_b &&
-      token_a_party != msg.sender
+      token_a_party != _senderAdd
     );
 
     token_b = ERC20_Interface(token_b_address);
-    token_b_party = msg.sender;
+    token_b_party = _senderAdd;
 
     //Set the entering party as the short or long party
     if (_sender_is_long) {
       require(long_party == 0);
-      long_party = msg.sender;
+      long_party = _senderAdd;
     } else {
       require(short_party == 0);
-      short_party = msg.sender;
+      short_party = _senderAdd;
     }
 
     SwapCreation(token_a_address, token_b_address, start_date, end_date, token_b_party);
@@ -389,19 +396,22 @@ contract TokenToTokenSwap {
   * If the Calculate function has not yet been called, this function will call it.
   * The function then pays every token holder of both the long and short DRCT tokens
   */
-  function forcePay() public onlyState(SwapState.tokenized) returns (bool) {
+  function forcePay(uint _begin, uint _end) public returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
-    Calculate();
+    if(current_state == SwapState.tokenized){
+      Calculate();
+    }
 
     //The state at this point should always be SwapState.ready
-    require(current_state == SwapState.ready);
+    require(msg.sender == operator && current_state == SwapState.ready);
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
     token = DRCT_Token_Interface(long_token_address);
     uint count = token.addressCount();
+    uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = 1; i < count; i++) {
+    for(uint i = _begin; i < loop_count; i++) {
       address long_owner = token.getHolderByIndex(i);
       uint to_pay_long = token.getBalanceByIndex(i);
       assert(i == token.getIndexByAddress(long_owner));
@@ -410,18 +420,19 @@ contract TokenToTokenSwap {
 
     token = DRCT_Token_Interface(short_token_address);
     count = token.addressCount();
-    for(uint j = 1; j < count; j++) {
+    for(uint j = _begin; j < loop_count; j++) {
       address short_owner = token.getHolderByIndex(j);
       uint to_pay_short = token.getBalanceByIndex(j);
       assert(j == token.getIndexByAddress(short_owner));
       paySwap(short_owner, to_pay_short, false);
     }
 
-    token_a.transfer(operator, token_a.balanceOf(address(this)));
-    token_b.transfer(operator, token_b.balanceOf(address(this)));
-
-    PaidOut(long_token_address, short_token_address);
-    current_state = SwapState.ended;
+    if (loop_count == count){
+        token_a.transfer(operator, token_a.balanceOf(address(this)));
+        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        PaidOut(long_token_address, short_token_address);
+        current_state = SwapState.ended;
+      }
     return true;
   }
 
@@ -485,6 +496,7 @@ contract Factory {
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
+  address public user_contract;
   DRCT_Token_Interface drct_interface;
 
   //Address of the deployer contract
@@ -512,7 +524,7 @@ contract Factory {
   /*Events*/
 
   //Emitted when a Swap is created
-  event ContractCreation(address _created);
+  event ContractCreation(address _sender, address _created);
 
   /*Modifiers*/
 
@@ -543,6 +555,15 @@ contract Factory {
   function setDeployer(address _deployer) public onlyOwner() {
     deployer_address = _deployer;
     deployer = Deployer_Interface(_deployer);
+  }
+
+    function setUserContract(address _userContract) public onlyOwner() {
+    user_contract = _userContract;
+  }
+
+
+  function getBase() public view returns(address _base1, address base2){
+    return (token_a, token_b);
   }
 
   /*
@@ -591,9 +612,10 @@ contract Factory {
   //Allows a user to deploy a new swap contract, if they pay the fee
   function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender);
+    address new_contract = deployer.newContract(msg.sender, user_contract);
     contracts.push(new_contract);
     created_contracts[new_contract] = true;
+    ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
