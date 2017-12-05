@@ -104,7 +104,7 @@ contract TokenToTokenSwap {
   address public short_party;
 
   //Enum state of the swap
-  SwapState current_state;
+  SwapState public current_state;
 
   //Start and end dates of the swaps - format is the same as block.timestamp
   uint start_date;
