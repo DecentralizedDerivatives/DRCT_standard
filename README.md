@@ -1,4 +1,3 @@
-# DRCT_standard
 
 Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates.
 
