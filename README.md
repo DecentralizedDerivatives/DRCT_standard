@@ -8,7 +8,9 @@ If you have questions, ask us on Slack: https://deriveth.slack.com/
 
 Factory Contracts on Ropsten:
 
-  ETH/USD:0x4870a9da5999209e03a70f48ec4eca924d3f6fe2
+  ETH/USD:0xf373cc4295047356dcaf74cd04521d403672c4ea
+  
+  
 Oracle Methodology can be found at: https://github.com/DecentralizedDerivatives/Oracles
 
 
