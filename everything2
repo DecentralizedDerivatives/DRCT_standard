@@ -420,18 +420,19 @@ contract Factory {
   * The function then pays every token holder of both the long and short DRCT tokens
   */
 
+
   uint swapamount;
-  function changeContract(uint _num,bool _long){
+  function changeContract(uint _num,bool _short){
     address swapcontract = contracts[_num];
     swap = TokenToTokenSwap_Interface(swapcontract);
     if swapcontract.swap_state() != tokenized{
       swapcontract.createTokens();
     }
-    if (_long){
-      swapamount = Wrapped_Ether1.balanceOf(swapcontract);
+    if (_short){
+      swapamount.mul(995).div(1000) = Wrapped_Ether1.balanceOf(swapcontract);
       } 
     else{
-      swapamount = Wrapped_Ether1.balanceOf(swapcontract);
+      swapamount.mul(995.div(1000) = Wrapped_Ether1.balanceOf(swapcontract);
     }
   }
 
@@ -439,15 +440,15 @@ contract Factory {
   uint contract_num;
   TokenToTokenSwap_Interface swap;
   function forcePay(uint _begin, uint _end) public returns (bool) {
-    //Calls the Calculate function first to calculate short and long shares
-    if (share_long + share_short == 0)
+    //Calls the Calculate function first to calculate short and short shares
+    if (share_short + share_short == 0)
     {
       Calculate();
     }
     //The state at this point should always be SwapState.ready
     require(msg.sender == owner);
-    //Loop through the owners of long and short DRCT tokens and pay them
-    token = DRCT_Token_Interface(long_token_address);
+    //Loop through the owners of short and short DRCT tokens and pay them
+    token = DRCT_Token_Interface(short_token_address);
     uint count = token.addressCount();
 
     }
@@ -455,29 +456,29 @@ contract Factory {
     uint swapamount;
     //Indexing begins at 1 for DRCT_Token balances
     for(uint i = _begin; i < loop_count; i++) {
-      address long_owner = token.getHolderByIndex(i);
-      uint to_pay_long = token.getBalanceByIndex(i);
+      address short_owner = token.getHolderByIndex(i);
+      uint to_pay_short = token.getBalanceByIndex(i);
       uint k;
       while(k<1) {
-            uint to_pay_long = token.getBalanceByIndex(i);
-            if (to_pay_long > swapamount){
-            to_pay_long = swapamount;
+            uint to_pay_short = token.getBalanceByIndex(i);
+            if (to_pay_short > swapamount){
+            to_pay_short = swapamount;
             }
             else{
               k = 1;
             }
-            assert(i == token.getIndexByAddress(long_owner));
-            if (to_pay_long > 0){
-              if (pay_to_long_a>0){
-                swap.paySwap(long_owner, to_pay_long.mul(pay_to_long_a), true);
+            assert(i == token.getIndexByAddress(short_owner));
+            if (to_pay_short > 0){
+              if (pay_to_short_a>0){
+                swap.paySwap(short_owner, to_pay_short.mul(pay_to_short_a), true);
               }
-              if (to_pay_long_b>0){
-                swap.paySwap(long_owner, to_pay_long.mul(pay_to_long_b), false);
+              if (to_pay_short_b>0){
+                swap.paySwap(short_owner, to_pay_short.mul(pay_to_short_b), false);
               }
-              payToken(long_owner,to_pay_long,true);
+              payToken(short_owner,to_pay_short,true);
             }
             if(k==0){
-              swapamount -= to_pay_long;
+              swapamount -= to_pay_short;
               while (swapamount=0){
                 contract_num += 1;
                 changeContract(contract_num,true);
@@ -495,25 +496,25 @@ contract Factory {
       assert(j == token.getIndexByAddress(short_owner));
       uint k = 0;
       while(k<1) {
-            uint to_pay_long = token.getBalanceByIndex(i);
-            if (to_pay_long > swapamount){
-            to_pay_long = swapamount;
+            uint to_pay_short = token.getBalanceByIndex(i);
+            if (to_pay_short > swapamount){
+            to_pay_short = swapamount;
             }
             else{
               k = 1;
             }
-            assert(i == token.getIndexByAddress(long_owner));
-            if (to_pay_long > 0){
-              if (pay_to_long_a>0){
-                swap.paySwap(long_owner, to_pay_long.mul(pay_to_long_a), true);
+            assert(j == token.getIndexByAddress(short_owner));
+            if (to_pay_short > 0){
+              if (pay_to_short_a>0){
+                swap.paySwap(short_owner, to_pay_short.mul(pay_to_short_a), true);
               }
-              if (to_pay_long_b>0){
-                swap.paySwap(long_owner, to_pay_long.mul(pay_to_long_b), false);
+              if (to_pay_short_b>0){
+                swap.paySwap(short_owner, to_pay_short.mul(pay_to_short_b), false);
               }
-              payToken(long_owner,to_pay_long,true);
+              payToken(short_owner,to_pay_short,true);
             }
             if(k==0){
-              swapamount -= to_pay_long;
+              swapamount -= to_pay_short;
               while (swapamount=0){
                 contract_num += 1;
                 changeContract(contract_num,true);
@@ -524,10 +525,10 @@ contract Factory {
     //How do I get paid? Loop through last swaps once everyone else is paid out
 
     if (loop_count == count){
-        token_a.transfer(operator, token_a.balanceOf(address(this)));
-        token_b.transfer(operator, token_b.balanceOf(address(this)));
-        PaidOut(long_token_address, short_token_address);
-        current_state = SwapState.ended;
+      contract_num = 0;
+      for (uint x = 0; x < num_contracts; x++)
+        changeContract(0);
+        swapContract.endSwap();
       }
     return true;
   }
@@ -830,22 +831,9 @@ contract TokenToTokenSwap {
   //This is the amount that the change will be calculated on.  10% change in rate on 100 Ether notional is a 10 Ether change
   uint multiplier;
 
-  uint share_long;
-  uint share_short;
-
-  /*TODO description*/
-  uint pay_to_short_a;
-  uint pay_to_long_a;
-  uint pay_to_long_b;
-  uint pay_to_short_b;
-
   //Address of created long and short DRCT tokens
   address long_token_address;
   address short_token_address;
-
-  //Number of DRCT Tokens distributed to both parties
-  uint num_DRCT_longtokens;
-  uint num_DRCT_shorttokens;
 
   //Addresses of ERC20 tokens used to enter the swap
   address token_a_address;
@@ -1025,10 +1013,8 @@ contract TokenToTokenSwap {
     uint tokenratio = 1;
     if (_creator == long_party) {
       (long_token_address,tokenratio) = factory.createToken(token_a_amount, _creator,true);
-      num_DRCT_longtokens = token_a_amount.div(tokenratio);
     } else if (_creator == short_party) {
       (short_token_address,tokenratio) = factory.createToken(token_b_amount, _creator,false);
-      num_DRCT_shorttokens = token_b_amount.div(tokenratio);
     }
   }
 
@@ -1042,13 +1028,14 @@ contract TokenToTokenSwap {
     }
   }
 
+
       function endSwap() public {
-        require(msg.sender == factory_address);
-        PaidOut();
+        require(msg.sender == operator);
+        token_a.transfer(operator, token_a.balanceOf(address(this)));
+        token_b.transfer(operator, token_b.balanceOf(address(this)));
         current_state = SwapState.ended;
-
-
       }
+
 
 
   /*
