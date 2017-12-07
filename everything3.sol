@@ -51,8 +51,8 @@ interface DRCT_Token_Interface {
   function getHolderByIndex(uint _ind) public constant returns (address holder);
   function getBalanceByIndex(uint _ind) public constant returns (uint bal);
   function getIndexByAddress(address _owner) public constant returns (uint index);
-  function createToken(uint _supply, address _owner, address _swap) public;
-  function pay(address _party, address _swap) public;
+  function createToken(uint _supply, address _owner) public;
+  function pay(address _party) public;
 }
 
 //ERC20 function interface
@@ -283,11 +283,11 @@ contract Factory {
     require(created_contracts[msg.sender] == true);
     if (_long) {
       drct_interface = DRCT_Token_Interface(long_drct);
-      drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
+      drct_interface.createToken(_supply.div(token_ratio1), _party);
       return (long_drct, token_ratio1);
     } else {
       drct_interface = DRCT_Token_Interface(short_drct);
-      drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
+      drct_interface.createToken(_supply.div(token_ratio2), _party);
       return (short_drct, token_ratio2);
     }
   }
@@ -408,6 +408,12 @@ contract DRCT_Token {
   //This mapping keeps track of where an address is in the balances array
   mapping(address => uint) public balance_index;
   mapping(address => mapping(address => uint)) public deep_index;
+  SwapList[] swaps;
+
+  SwapList{
+    address swap_address;
+    address[] parties;
+  }
   /*Events*/
 
   event Transfer(address indexed _from, address indexed _to, uint _value);
@@ -419,41 +425,38 @@ contract DRCT_Token {
   function updatedeepBalances(address short_party, address long_party, uint _amount) internal{
       address swap_address;
         //loop backwards and drain each swap of amount when transfering
-      uint ind = balance_index[short_party];
-      for (uint i=balances[ind].deepBalance.length; i >0; i--){
-          uint amount2 =_amount;
+      for (uint i=balances[short_party].deepBalance.length; i >0; i--){
+          uint amount2 +_amount;
           while (amount2>0){
-            if (balances[ind].deepBalance[i].amount > amount2){
-              balances[ind].deepBalance[i].amount -= amount2;
-              swap_address = balances[ind].deepBalance[i].swap;
-              amount2 == 0;
+            if (balances[short_party].deepBalance[i].amount > _amount2){
+              balances[short_party].deepBalance[i].amount -= _amount2;
+              swap_address = balances[short_party].deepBalance[i].swap;
+              _amount2 == 0;
             }
             else{
-              amount2 -= balances[ind].deepBalance[i].amount;
-              swap_address = balances[ind].deepBalance[i].swap;
-              delete balances[ind].deepBalance[i];
-              delete deep_index[short_party][swap_address];
+              _amount2 -= balances[short_party].deepBalance[i].amount;
+              swap_address = balances[short_party].deepBalance[i].swap;
+              delete balances[short_party].deepBalance[i];
+              delete deep_index[short_paryt][swap_address];
             }
           }
       }
-      ind = balance_index[short_party];
         if (deep_index[long_party][swap_address]>0){
-        balances[ind].deepBalance[deep_index[long_party][swap_address]].amount = _amount;
+        balances[long_party].deepBalance[deep_index[long_party][swap_address]].amount = _amount;
       }
       else{
-        uint newlen = balances[ind].deepBalance.length + 1;
-        balances[ind].deepBalance[newlen].amount = _amount;
-        balances[ind].deepBalance[newlen].swap = swap_address;
+        uint newlen = balances[long_party].deepBalance.length + 1;
+        balances[long_party].deepBalance[newlen].amount = _amount;
+        balances[long_party].deepBalance[newlen].swap = swap_address;
         deep_index[long_party][swap_address] = newlen;
       }
   }
   //Called by the factory contract, and pays out to a _party
   function pay(address _party, address _swap) public {
     require(msg.sender == master_contract);
-    uint ind_num = deep_index[_party][_swap];
-    uint ind = balance_index[_party];
-    balances[ind].amount = balances[ind].amount.sub(balances[ind].deepBalance[ind_num].amount);
-    delete balances[ind].deepBalance[ind_num];
+    balances[_party].amount = balances[_party].amount.sub(_amount);
+    uint ind_num = deep_index[long_party][swap_address];
+    delete balances[_party].deepBalance[ind_num];
     delete deep_index[_party][_swap];
   }
 
@@ -463,8 +466,10 @@ contract DRCT_Token {
     master_contract = _factory;
     //Sets the balance index for the _owner, pushes a '0' index to balances, and pushes
     //the _owner to balances, giving them the _total_supply
-    balances[0].owner = 0;
-    balances[0].amount = 0;
+    balances.push(Balance({
+      owner: 0,
+      amount: 0
+    }));
   }
 
   /*
@@ -472,14 +477,14 @@ contract DRCT_Token {
   * @param "_supply": The amount of tokens to give to the new owner
   * @param "_owner": The address to give the tokens to
   */
-  function createToken(uint _supply, address _owner, address _swap) public{
+  function createToken(uint _supply, address _owner) public{
     require(msg.sender == master_contract);
     total_supply = total_supply.add(_supply);
     balance_index[_owner] = balances.length;
-    balances[balances.length].owner = _owner;
-    balances[balances.length].amount = _supply;
-    balances[balances.length].deepBalance[1].amount = _supply;
-    balances[balances.length].deepBalance[1].swap = _swap;
+    balances.push(Balance({
+      owner: _owner,
+      amount: _supply
+    }));
   }
 
   //Returns the balance of _owner
@@ -514,8 +519,10 @@ contract DRCT_Token {
         delete balance_index[_from];
       } else {
         balance_index[_to] = balances.length;
-        balances[balances.length].owner = _to;
-        balances[balances.length].amount = _amount;
+        balances.push(Balance({
+          owner: _to,
+          amount: _amount
+        }));
         balances[_owner_ind].amount = balances[_owner_ind].amount.sub(_amount);
       }
     //The recipient already has tokens
@@ -1265,7 +1272,6 @@ contract TestParty1 {
   address wrapped_long;
   address wrapped_short;
   address user3;
-  address drct;
   UserContract usercontract;
   Tester_Interface tester;
   Factory factory;
@@ -1290,7 +1296,7 @@ function createSwap() public payable returns(address) {
 
     function transfers() public {
     drct = tester.getDRCT(true);
-    dtoken = ERC20_Interface(drct);
+    dtoken = ERC20_Interface(dtoken);
     dtoken.transfer(user3,5000);
   }
 
@@ -1328,9 +1334,9 @@ contract TestParty2 {
     user4 = new newTester();
   }
 
-    function transfers() public {
-    drct = tester.getDRCT(true);
-    dtoken = ERC20_Interface(drct);
+  function transfers() public {
+    drct = tester.getDRCT(false);
+    dtoken = ERC20_Interface(dtoken);
     dtoken.transfer(user4,5000);
   }
 
