@@ -407,14 +407,13 @@ contract DRCT_Token {
 
   //This mapping keeps track of where an address is in the balances array
   mapping(address => uint) public balance_index;
-  mapping(address => mapping(address => uint)) public deep_index;
-    mapping(address => mapping(address => bool)) public swap_index;
-  SwapList[] swaps;
-
+  mapping(address => mapping(address => uint)) deep_index;
+  mapping(address => mapping(address => uint)) public swap_index;
+  mapping(address => SwapList) swaps;
   struct SwapList{
-    address base_address;
     address[] parties;
   }
+
 
   event Transfer(address indexed _from, address indexed _to, uint _value);
   event Approval(address indexed _owner, address indexed _spender, uint _value);
@@ -439,7 +438,8 @@ contract DRCT_Token {
               swap_address = balances[ind].deepBalance[i].swap;
               delete balances[ind].deepBalance[i];
               delete deep_index[short_party][swap_address];
-              delete SwapList[swap_address].parties[swap_index[swap_address][short_party]];
+              delete swaps[swap_address].parties[swap_index[swap_address][short_party]];
+              delete swap_index[swap_address][short_party];
             }
           }
       }
@@ -452,6 +452,9 @@ contract DRCT_Token {
         balances[ind].deepBalance[newlen].amount = _amount;
         balances[ind].deepBalance[newlen].swap = swap_address;
         deep_index[long_party][swap_address] = newlen;
+        swap_index[swap_address][long_party] = swaps[swap_address].parties.length + 1;
+        uint _ind2 = swap_index[swaps[swap_address].parties.length + 1];
+        swaps[swap_address].parties[_ind2] = long_party;
       }
   }
   //Called by the factory contract, and pays out to a _party
@@ -462,6 +465,8 @@ contract DRCT_Token {
     balances[ind].amount = balances[ind].amount.sub(balances[ind].deepBalance[ind_num].amount);
     delete balances[ind].deepBalance[ind_num];
     delete deep_index[_party][_swap];
+    delete swaps[_swap].parties[swap_index[_swap][_party]];
+    delete swap_index[_swap][_party];
   }
 
   //Constructor
@@ -487,6 +492,8 @@ contract DRCT_Token {
     balances[balances.length].amount = _supply;
     balances[balances.length].deepBalance[1].amount = _supply;
     balances[balances.length].deepBalance[1].swap = _swap;
+    swaps[_swap].parties[1] = _owner;
+    swap_index[_swap][_owner] = 1;
   }
 
   //Returns the balance of _owner
@@ -626,6 +633,15 @@ contract DRCT_Token {
 
   //Returns the index associated with the _owner address
   function getIndexByAddress(address _owner) public constant returns (uint index) { return balance_index[_owner]; }
+
+  function partyCount(address _swap) public constant returns(uint count){
+    return swaps[_swap].parties.length;
+  }
+  function getDeepHolderByIndex(uint _ind, address _swap) public constant returns (address holder) { return swaps[_swap].parties[_ind]; }
+
+  //Returns the balance associated with a particular index in balance_index
+  function getDeepBalance(uint _ind, address _party, address _swap) public constant returns (uint bal) { return balances[_ind].deepBalance[deep_index[_party][_swap]].amount; }
+
 
   //Returns the allowed amount _spender can spend of _owner's balance
   function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
@@ -967,22 +983,21 @@ contract TokenToTokenSwap {
     //Loop through the owners of long and short DRCT tokens and pay them
 
     token = DRCT_Token_Interface(long_token_address);
-    uint count = token.addressCount();
+    uint count = token.partyCount(address(this));
     uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
     for(uint i = _begin; i < loop_count; i++) {
-      address long_owner = token.getHolderByIndex(i);
-      uint to_pay_long = token.getBalanceByIndex(i);
-      assert(i == token.getIndexByAddress(long_owner));
+      address long_owner = token.getDeepHolderByIndex(i);
+      uint to_pay_long = token.getDeepBalance(i,long_owner,address(this));
       paySwap(long_owner, to_pay_long, true);
     }
 
     token = DRCT_Token_Interface(short_token_address);
-    count = token.addressCount();
+    count = token.partyCount(address(this));
+    loop_count = count < _end ? count : _end;
     for(uint j = _begin; j < loop_count; j++) {
-      address short_owner = token.getHolderByIndex(j);
-      uint to_pay_short = token.getBalanceByIndex(j);
-      assert(j == token.getIndexByAddress(short_owner));
+      address short_owner = token.getDeepHolderByIndex(address(this));
+      uint to_pay_short = token.getDeepBalanceByIndex(address(this));
       paySwap(short_owner, to_pay_short, false);
     }
 
