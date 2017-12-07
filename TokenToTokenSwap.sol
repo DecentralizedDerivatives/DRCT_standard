@@ -157,7 +157,7 @@ contract TokenToTokenSwap {
     end_date = start_date.add(duration.mul(86400));
     token_a_amount = _amount_a;
     token_b_amount = _amount_b;
-
+    //@audit TODO
     premium = this.balance;
     token_a = ERC20_Interface(token_a_address);
     token_a_party = _senderAdd;
