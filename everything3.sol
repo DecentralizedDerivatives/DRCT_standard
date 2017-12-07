@@ -1163,6 +1163,10 @@ contract Wrapped_Ether {
   function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
 }
 
+interface Test_Interface2{
+    function forcePay(uint _begin, uint _end) public returns (bool);
+    function StoreDocument(uint _key, uint _date) public returns (bool);
+}
 contract Tester {
     address oracleAddress;
     address baseToken1;
@@ -1172,9 +1176,8 @@ contract Tester {
     address swapAddress;
     address drct1;
     address drct2;
-    TokenToTokenSwap swap;
+    Test_Interface2 tc;
     Factory factory;
-    Oracle oracle;
 
     
     function StartTest() public returns(address){
@@ -1189,14 +1192,14 @@ contract Tester {
     
     function setVars(uint _startval, uint _endval) public {
         factory = Factory(factory_address);
-        oracle = Oracle(oracleAddress);
+        tc = Test_Interface2(oracleAddress);
         factory.setStartDate(1543881600);
         factory.setVariables(1000000000000000,1000000000000000,7,2);
         factory.setBaseTokens(baseToken1,baseToken2);
         factory.setOracleAddress(oracleAddress);
         factory.settokens(drct1,drct2);
-        oracle.StoreDocument(1543881600, _startval);
-        oracle.StoreDocument(1544486400,_endval);
+        tc.StoreDocument(1543881600, _startval);
+        tc.StoreDocument(1544486400,_endval);
     }
 
     function getFactory() public returns (address){
@@ -1239,16 +1242,10 @@ contract Tester {
     function paySwap() public returns(uint,uint){
       for(uint i=0; i < factory.getCount(); i++){
         var x = factory.contracts(i);
-          swap = TokenToTokenSwap(x);
-          swap.forcePay(1,100);
+          tc = Test_Interface2(x);
+          tc.forcePay(1,100);
 
       }
-      
-    Wrapped_Ether wrapped = Wrapped_Ether(baseToken1);
-    uint balance_long = wrapped.balanceOf(address(this));
-    wrapped = Wrapped_Ether(baseToken2);
-    uint balance_short = wrapped.balanceOf(address(this));
-    return (balance_long, balance_short);
     }
 }
 
