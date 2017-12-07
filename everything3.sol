@@ -49,10 +49,15 @@ interface Oracle_Interface{
 interface DRCT_Token_Interface {
   function addressCount() public constant returns (uint count);
   function getHolderByIndex(uint _ind) public constant returns (address holder);
+  function getDeepHolderByIndex(uint _ind, address _swap) public constant returns (address holder);
+
+  function getDeepBalance(uint _ind, address _party, address _swap) public constant returns (uint bal);
+
   function getBalanceByIndex(uint _ind) public constant returns (uint bal);
   function getIndexByAddress(address _owner) public constant returns (uint index);
   function createToken(uint _supply, address _owner, address _swap) public;
   function pay(address _party, address _swap) public;
+  function partyCount(address _swap) public constant returns(uint count);
 }
 
 //ERC20 function interface
@@ -453,7 +458,7 @@ contract DRCT_Token {
         balances[ind].deepBalance[newlen].swap = swap_address;
         deep_index[long_party][swap_address] = newlen;
         swap_index[swap_address][long_party] = swaps[swap_address].parties.length + 1;
-        uint _ind2 = swap_index[swaps[swap_address].parties.length + 1];
+        uint _ind2 = swaps[swap_address].parties.length + 1;
         swaps[swap_address].parties[_ind2] = long_party;
       }
   }
@@ -987,7 +992,7 @@ contract TokenToTokenSwap {
     uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
     for(uint i = _begin; i < loop_count; i++) {
-      address long_owner = token.getDeepHolderByIndex(i);
+      address long_owner = token.getDeepHolderByIndex(i,address(this));
       uint to_pay_long = token.getDeepBalance(i,long_owner,address(this));
       paySwap(long_owner, to_pay_long, true);
     }
@@ -996,8 +1001,8 @@ contract TokenToTokenSwap {
     count = token.partyCount(address(this));
     loop_count = count < _end ? count : _end;
     for(uint j = _begin; j < loop_count; j++) {
-      address short_owner = token.getDeepHolderByIndex(address(this));
-      uint to_pay_short = token.getDeepBalanceByIndex(address(this));
+      address short_owner = token.getDeepHolderByIndex(j,address(this));
+      uint to_pay_short = token.getDeepBalance(j,short_owner,address(this));
       paySwap(short_owner, to_pay_short, false);
     }
 
