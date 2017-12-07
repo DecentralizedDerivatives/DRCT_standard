@@ -328,7 +328,7 @@ contract Factory {
     } else {
       drct_interface = DRCT_Token_Interface(short_drct);
     }
-    drct_interface.pay(_party);
+    drct_interface.pay(_party, msg.sender);
   }
   
   function getCount() public constant returns(uint count) {
@@ -416,7 +416,7 @@ contract DRCT_Token {
   /*Functions*/
 
 
-  function updatedeepBalances(address long_party, address short_party, uint _amount) internal{
+  function updatedeepBalances(address short_party, address long_party, uint _amount) internal{
       address swap_address;
         //loop backwards and drain each swap of amount when transfering
       for (uint i=balances[short_party].deepBalance.length; i >0; i--){
@@ -446,10 +446,12 @@ contract DRCT_Token {
       }
   }
   //Called by the factory contract, and pays out to a _party
-  function pay(address _party, uint _amount) public {
+  function pay(address _party, address _swap) public {
     require(msg.sender == master_contract);
     balances[_party].amount = balances[_party].amount.sub(_amount);
-    update
+    uint ind_num = deep_index[long_party][swap_address];
+    delete balances[_party].deepBalance[ind_num];
+    delete deep_index[_party][_swap];
   }
 
   //Constructor
@@ -539,6 +541,7 @@ contract DRCT_Token {
       }
     }
     Transfer(_from, _to, _amount);
+    updatedeepBalances(_from,_to,_amount);
 
   }
 
