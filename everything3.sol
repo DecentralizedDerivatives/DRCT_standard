@@ -439,7 +439,7 @@ contract DRCT_Token {
               swap_address = balances[ind].deepBalance[i].swap;
               delete balances[ind].deepBalance[i];
               delete deep_index[short_party][swap_address];
-                            SwapList[swap_address].parties[swap_index[swap_address][short_party]];
+              delete SwapList[swap_address].parties[swap_index[swap_address][short_party]];
             }
           }
       }
