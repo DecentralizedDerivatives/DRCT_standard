@@ -105,8 +105,8 @@ contract UserContract{
 
   address public factory_address;
   address owner;
-  
-  function UserContract(){
+
+  function UserContract() public {
       owner = msg.sender;
   }
 
@@ -135,9 +135,9 @@ contract UserContract{
     bool success = token.transfer(_swapadd,msg.value);
     swap.createTokens();
     return success;
-    
+
   }
- 
+
 
   function setFactory(address _factory_address) public {
       require (msg.sender == owner);
@@ -335,7 +335,7 @@ contract Factory {
     }
     drct_interface.pay(_party, msg.sender);
   }
-  
+
   function getCount() public constant returns(uint count) {
     return contracts.length;
 }
@@ -1179,7 +1179,7 @@ contract Tester {
     Test_Interface2 tc;
     Factory factory;
 
-    
+
     function StartTest() public returns(address){
         oracleAddress = new Oracle();
         baseToken1 = new Wrapped_Ether();
@@ -1189,7 +1189,7 @@ contract Tester {
         drct2 = new DRCT_Token(factory_address);
         return factory_address;
     }
-    
+
     function setVars(uint _startval, uint _endval) public {
         factory = Factory(factory_address);
         tc = Test_Interface2(oracleAddress);
@@ -1202,11 +1202,11 @@ contract Tester {
         tc.StoreDocument(1544486400,_endval);
     }
 
-    function getFactory() public returns (address){
+    function getFactory() public view returns (address){
       return factory_address;
     }
 
-   function getUC() public returns (address){
+   function getUC() public view returns (address){
       return usercontract_address;
     }
 
@@ -1224,11 +1224,11 @@ contract Tester {
       usercontract_address = _userContract;
     }
 
-    function getWrapped() public returns(address,address){
+    function getWrapped() public view returns(address,address){
       return (baseToken1,baseToken2);
     }
 
-    function getDRCT(bool _isLong) public returns(address){
+    function getDRCT(bool _isLong) public view returns(address){
       address drct;
       if(_isLong){
         drct = drct1;
@@ -1267,14 +1267,14 @@ contract Tester2 {
   Tester_Interface tester;
 
 
-  function Tester2(address _tester) {
+  function Tester2(address _tester) public {
     tester = Tester_Interface(_tester);
     factory_address = tester.getFactory();
     deployer_address = new Deployer(factory_address);
     usercontract_address = new UserContract();
   }
 
-  function setLastVars(){
+  function setLastVars() public {
     tester.setVars2(deployer_address,usercontract_address);
     usercontract = UserContract(usercontract_address);
     usercontract.setFactory(factory_address);
