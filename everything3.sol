@@ -1159,10 +1159,10 @@ contract Wrapped_Ether {
   function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
 }
 
-interface Test_Interface2{
+interface swap_interface{
     function forcePay(uint _begin, uint _end) public returns (bool);
-    function StoreDocument(uint _key, uint _date) public returns (bool);
 }
+
 contract Tester {
     address oracleAddress;
     address baseToken1;
@@ -1172,37 +1172,43 @@ contract Tester {
     address swapAddress;
     address drct1;
     address drct2;
-    Test_Interface2 tc;
+    swap_interface swap;
     Factory factory;
+    Oracle oracle;
+    event Print(string _string, uint _value);
 
-
+    
     function StartTest() public returns(address){
         oracleAddress = new Oracle();
         baseToken1 = new Wrapped_Ether();
         baseToken2 = new Wrapped_Ether();
         factory_address = new Factory();
-        drct1 = new DRCT_Token(factory_address);
-        drct2 = new DRCT_Token(factory_address);
         return factory_address;
     }
-
+    
     function setVars(uint _startval, uint _endval) public {
         factory = Factory(factory_address);
-        tc = Test_Interface2(oracleAddress);
+        oracle = Oracle(oracleAddress);
         factory.setStartDate(1543881600);
         factory.setVariables(1000000000000000,1000000000000000,7,2);
         factory.setBaseTokens(baseToken1,baseToken2);
         factory.setOracleAddress(oracleAddress);
+        oracle.StoreDocument(1543881600, _startval);
+        oracle.StoreDocument(1544486400,_endval);
+        Print('Start Value : ',_startval);
+        Print('End Value " ',_endval);
+    }
+    
+    function setTokens(address _drct1,address _drct2){
+        drct1 = _drct1; drct2 = _drct2;
         factory.settokens(drct1,drct2);
-        tc.StoreDocument(1543881600, _startval);
-        tc.StoreDocument(1544486400,_endval);
     }
 
-    function getFactory() public view returns (address){
+    function getFactory() public returns (address){
       return factory_address;
     }
 
-   function getUC() public view returns (address){
+   function getUC() public returns (address){
       return usercontract_address;
     }
 
@@ -1220,11 +1226,11 @@ contract Tester {
       usercontract_address = _userContract;
     }
 
-    function getWrapped() public view returns(address,address){
+    function getWrapped() public returns(address,address){
       return (baseToken1,baseToken2);
     }
 
-    function getDRCT(bool _isLong) public view returns(address){
+    function getDRCT(bool _isLong) public returns(address){
       address drct;
       if(_isLong){
         drct = drct1;
@@ -1238,10 +1244,16 @@ contract Tester {
     function paySwap() public returns(uint,uint){
       for(uint i=0; i < factory.getCount(); i++){
         var x = factory.contracts(i);
-          tc = Test_Interface2(x);
-          tc.forcePay(1,100);
+          swap = swap_interface(x);
+          swap.forcePay(1,100);
 
       }
+      
+    Wrapped_Ether wrapped = Wrapped_Ether(baseToken1);
+    uint balance_long = wrapped.balanceOf(address(this));
+    wrapped = Wrapped_Ether(baseToken2);
+    uint balance_short = wrapped.balanceOf(address(this));
+    return (balance_long, balance_short);
     }
 }
 
@@ -1253,6 +1265,7 @@ interface Tester_Interface {
   function swapAdd(address _swap, bool _isSwap) public returns(address);
   function getWrapped() public returns(address,address);
   function getDRCT(bool _isLong) public returns(address);
+  function setTokens(address _drct1,address _drct2);
 }
 
 contract Tester2 {
@@ -1263,17 +1276,20 @@ contract Tester2 {
   Tester_Interface tester;
 
 
-  function Tester2(address _tester) public {
+  function Tester2(address _tester) {
     tester = Tester_Interface(_tester);
     factory_address = tester.getFactory();
     deployer_address = new Deployer(factory_address);
     usercontract_address = new UserContract();
   }
 
-  function setLastVars() public {
+  function setLastVars(){
     tester.setVars2(deployer_address,usercontract_address);
     usercontract = UserContract(usercontract_address);
     usercontract.setFactory(factory_address);
+    address drct1 = new DRCT_Token(factory_address);
+    address drct2 = new DRCT_Token(factory_address);
+    tester.setTokens(drct1,drct2);
   }
 
 }
@@ -1291,6 +1307,8 @@ contract TestParty1 {
   Factory factory;
   Wrapped_Ether wrapped;
   ERC20_Interface dtoken;
+  event Print(string _string, uint _value);
+  event Print2(string _string, address _value);
 
   function TestParty1(address _tester) public{
     tester = Tester_Interface(_tester);
@@ -1299,13 +1317,13 @@ contract TestParty1 {
     swap_address = factory.deployContract();
 }
 
-function createSwap() public payable returns(address) {
+function createSwap() public payable{
     usercontract_address = tester.getUC();
     usercontract = UserContract(usercontract_address);
     usercontract.Initiate.value(msg.value)(swap_address,10000000000000000000,10000000000000000000,0,true );
     tester.swapAdd(swap_address,true);
     user3 = new newTester();
-    return swap_address;
+    Print2('New Swap : ',swap_address);
   }
 
     function transfers() public {
@@ -1322,6 +1340,10 @@ function createSwap() public payable returns(address) {
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short3 = wrapped.balanceOf(user3);
+    Print('Long Balance : ',balance_long);
+    Print('Transferred Long Balance : ', balance_long3);
+    Print('Short Balance : ', balance_short);
+    Print('Transferred Short Balance : ', balance_short3);
     return (balance_long, balance_long3, balance_short, balance_short3);
   }
 }
