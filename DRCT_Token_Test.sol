@@ -70,36 +70,6 @@ contract DRCT_Token {
 
   /*Functions*/
 
-  //Called by the factory contract, and pays out to a _party
-  function pay(address _party, address _swap) public onlyMaster() {
-    uint party_balance_index = swap_balances_index[_swap][_party];
-    uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
-
-    user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
-    total_supply = total_supply.sub(party_swap_balance);
-    //Remove party from swap balances
-    removeFromSwapBalances(_party, _swap);
-    //Remove swap from party swap list
-    removeFromUserSwaps(_party, _swap);
-  }
-
-  function giveTokens(address _to, address _swap, uint _amount) public {
-    user_total_balances[_to] += _amount;
-    total_supply += _amount;
-    if (addressInSwap(_swap, _to)) {
-      uint ind = swap_balances_index[_swap][_to];
-      swap_balances[_swap][ind].amount += _amount;
-    } else {
-      swap_balances_index[_swap][_to] = swap_balances[_swap].length;
-      swap_balances[_swap].push(Balance({
-        owner: _to,
-        amount: _amount
-      }));
-      user_swaps_index[_to][_swap] = user_swaps[_to].length;
-      user_swaps[_to].push(_swap);
-    }
-  }
-
   //Constructor
   function DRCT_Token(address _factory) public {
     //Sets values for token name and token supply, as well as the master_contract, the swap.
@@ -131,6 +101,19 @@ contract DRCT_Token {
       owner: _owner,
       amount: _supply
     }));
+  }
+
+  //Called by the factory contract, and pays out to a _party
+  function pay(address _party, address _swap) public onlyMaster() {
+    uint party_balance_index = swap_balances_index[_swap][_party];
+    uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
+
+    user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
+    total_supply = total_supply.sub(party_swap_balance);
+    //Remove party from swap balances
+    removeFromSwapBalances(_party, _swap);
+    //Remove swap from party swap list
+    removeFromUserSwaps(_party, _swap);
   }
 
   //TODO - description
@@ -312,8 +295,4 @@ contract DRCT_Token {
 
   //Returns the allowed amount _spender can spend of _owner's balance
   function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
-
-  /*function partyCount(address _swap) public constant returns(uint count){
-    return swaps[_swap].parties.length;
-  }*/
 }
