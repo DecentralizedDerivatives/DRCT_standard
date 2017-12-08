@@ -20,7 +20,7 @@ contract DRCT_Token {
   address public master_contract;
 
   //ERC20 Fields
-  uint public total_supply;
+  uint total_supply;
 
   //ERC20 fields - allowed and balances
   //Balance is an array here so it can be iterated over from the forcePay function in the Swap contract

@@ -74,7 +74,7 @@ contract DRCT_Token {
   function pay(address _party, address _swap) public onlyMaster() {
     uint party_balance_index = swap_balances_index[_swap][_party];
     uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
-    
+
     user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
     total_supply = total_supply.sub(party_swap_balance);
     //Remove party from swap balances
@@ -182,7 +182,7 @@ contract DRCT_Token {
     address[] memory from_swaps = user_swaps[_from];
 
     //Iterate over sender's swaps in reverse order until enough tokens have been transferred
-    for (uint i = from_swaps.length; i > 0; i--) {
+    for (uint i = from_swaps.length.sub(1); i > 0; i--) {
       //Get the index of the sender's balance for the current swap
       uint from_swap_user_index = swap_balances_index[from_swaps[i]][_from];
       Balance memory from_user_bal = swap_balances[from_swaps[i]][from_swap_user_index];
@@ -205,7 +205,10 @@ contract DRCT_Token {
           removeFromSwapBalances(_from, from_swaps[i]);
         } else {
           //Prepare to add a new swap by assigning the swap an index for _to
-          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+          if (user_swaps[_to].length == 0)
+            user_swaps_index[_to][from_swaps[i]] = 1;
+          else
+            user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
           //Add the new swap to _to
           user_swaps[_to].push(from_swaps[i]);
           //Give the reciever the sender's balance for this swap
@@ -226,8 +229,11 @@ contract DRCT_Token {
           //Because both addresses are in this swap, and neither will be removed, we simply update both swap balances
           swap_balances[from_swaps[i]][to_swap_balance_index].amount = swap_balances[from_swaps[i]][to_swap_balance_index].amount.add(_amount);
         } else {
-          //_to is not in this swap, so we give _to a new swap index
-          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+          //Prepare to add a new swap by assigning the swap an index for _to
+          if (user_swaps[_to].length == 0)
+            user_swaps_index[_to][from_swaps[i]] = 1;
+          else
+            user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
           //And push the new swap
           user_swaps[_to].push(from_swaps[i]);
           //_to is not in this swap, so we give this swap a new balance index for _to
