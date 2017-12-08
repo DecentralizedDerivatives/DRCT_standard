@@ -296,6 +296,7 @@ contract Factory {
       return (short_drct, token_ratio2);
     }
   }
+  
 
   //Allows the owner to set a new oracle address
   function setOracleAddress(address _new_oracle_address) public onlyOwner() { oracle_address = _new_oracle_address; }
@@ -426,9 +427,8 @@ contract DRCT_Token {
     //Sets values for token name and token supply, as well as the master_contract, the swap.
     master_contract = _factory;
   }
-
-  //TODO - description
-  function createTokenTest(uint _supply, address _owner, address _swap) public onlyMaster() {
+  //Token Creator - This function is called by the factory contract and creates new tokens for the user
+  function createToken(uint _supply, address _owner, address _swap) public onlyMaster() {
     //Update total supply of DRCT Tokens
     total_supply = total_supply.add(_supply);
     //Update the total balance of the owner
