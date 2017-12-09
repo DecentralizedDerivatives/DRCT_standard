@@ -73,16 +73,23 @@ interface ERC20_Interface {
 //Swap Deployer Contract
 contract Deployer {
   address owner;
+  address factory;
 
   function Deployer(address _factory) public {
-    owner = _factory;
+    factory = _factory;
+    owner = msg.sender;
   }
 
-  //This deploys the new contract
   function newContract(address _party, address user_contract) public returns (address created) {
-    require(msg.sender == owner);
-    address new_contract = new TokenToTokenSwap(owner, _party, user_contract);
+    require(msg.sender == factory);
+    address new_contract = new TokenToTokenSwap(factory, _party, user_contract);
     return new_contract;
+  }
+
+   function setVars(address _factory, address _owner) public {
+    require (msg.sender == owner);
+    factory = _factory;
+    owner = _owner;
   }
 }
 
