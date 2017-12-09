@@ -9,20 +9,19 @@ import "./libraries/SafeMath.sol";
 
 
 contract UserContract{
-  using SafeMath for uint256;
   TokenToTokenSwap_Interface swap;
   Wrapped_Ether token;
   Factory_Interface factory;
 
   address public factory_address;
   address owner;
-  
-  function UserContract(){
+
+  function UserContract() public {
       owner = msg.sender;
   }
 
   function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
-    require(msg.value == _amounta.add(_premium));
+    require(msg.value == _amounta + _premium);
     swap = TokenToTokenSwap_Interface(_swapadd);
     swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
     address token_a_address;
@@ -46,6 +45,7 @@ contract UserContract{
     bool success = token.transfer(_swapadd,msg.value);
     swap.createTokens();
     return success;
+
   }
 
 
@@ -53,10 +53,5 @@ contract UserContract{
       require (msg.sender == owner);
     factory_address = _factory_address;
     factory = Factory_Interface(factory_address);
-  }
-
-  function setOwner(address _new_owner) public{ 
-    require (msg.sender == owner); 
-    owner = _new_owner; 
   }
 }
