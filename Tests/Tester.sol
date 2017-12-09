@@ -40,7 +40,7 @@ contract Tester {
         Print('End Value " ',_endval);
     }
     
-    function setTokens(address _drct1,address _drct2){
+    function setTokens(address _drct1,address _drct2) public{
         drct1 = _drct1; drct2 = _drct2;
         factory.settokens(drct1,drct2);
     }
@@ -181,9 +181,9 @@ function createSwap() public payable{
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short3 = wrapped.balanceOf(user3);
-    Print('Long Balance : ',balance_long);
+    Print('Long Balance1 : ',balance_long);
     Print('Transferred Long Balance : ', balance_long3);
-    Print('Short Balance : ', balance_short);
+    Print('Short Balance1 : ', balance_short);
     Print('Transferred Short Balance : ', balance_short3);
     return (balance_long, balance_long3, balance_short, balance_short3);
   }
@@ -201,6 +201,7 @@ contract TestParty2 {
   address user4;
   Wrapped_Ether wrapped;
   ERC20_Interface dtoken;
+  event Print(string _string, uint _value);
 
   function EnterSwap(address _tester) public payable{
     tester = Tester_Interface(_tester);
@@ -212,7 +213,7 @@ contract TestParty2 {
   }
 
     function transfers() public {
-    drct = tester.getDRCT(true);
+    drct = tester.getDRCT(false);
     dtoken = ERC20_Interface(drct);
     dtoken.transfer(user4,5000);
   }
@@ -225,6 +226,10 @@ contract TestParty2 {
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short4 = wrapped.balanceOf(user4);
+    Print('Long Balance : ',balance_long);
+    Print('Transferred Long Balance : ', balance_long4);
+    Print('Short Balance : ', balance_short);
+    Print('Transferred Short Balance : ', balance_short4);
     return (balance_long, balance_long4, balance_short, balance_short4);
   }
 
