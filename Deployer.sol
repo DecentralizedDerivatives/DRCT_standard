@@ -12,7 +12,6 @@ contract Deployer {
     owner = msg.sender;
   }
 
-  //TODO - payable?
   function newContract(address _party, address user_contract) public returns (address created) {
     require(msg.sender == factory);
     address new_contract = new TokenToTokenSwap(factory, _party, user_contract);
