@@ -52,12 +52,17 @@ interface Factory_Interface {
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {
-  function addressCount() public constant returns (uint count);
-  function getHolderByIndex(uint _ind) public constant returns (address holder);
-  function getBalanceByIndex(uint _ind) public constant returns (uint bal);
-  function getIndexByAddress(address _owner) public constant returns (uint index);
-  function createToken(uint _supply, address _owner) public;
-  function pay(address _party) public;
+  function addressCount(address _swap) public constant returns (uint count);
+  function getHolderByIndex(uint _ind, address _swap) public constant returns (address holder);
+  /*function getDeepHolderByIndex(uint _ind, address _swap) public constant returns (address holder);*/
+
+  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint bal);
+
+  /*function getBalanceByIndex(uint _ind) public constant returns (uint bal);*/
+  function getIndexByAddress(address _owner, address _swap) public constant returns (uint index);
+  function createToken(uint _supply, address _owner, address _swap) public;
+  function pay(address _party, address _swap) public;
+  function partyCount(address _swap) public constant returns(uint count);
 }
 
 //Swap Oracle functions - descriptions can be found in Oracle.sol
@@ -322,6 +327,7 @@ contract TokenToTokenSwap {
   */
   function Calculate() internal {
     //require(now >= end_date);
+    //should it be end_date + 1? so the oracle can update?
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
     uint end_value = oracle.RetrieveData(end_date);
@@ -403,22 +409,21 @@ contract TokenToTokenSwap {
     //Loop through the owners of long and short DRCT tokens and pay them
 
     token = DRCT_Token_Interface(long_token_address);
-    uint count = token.addressCount();
+    uint count = token.addressCount(address(this));
     uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = _begin; i < loop_count; i++) {
-      address long_owner = token.getHolderByIndex(i);
-      uint to_pay_long = token.getBalanceByIndex(i);
-      assert(i == token.getIndexByAddress(long_owner));
+    for(uint i = loop_count-1; i >= _begin ; i--) {
+      address long_owner = token.getHolderByIndex(i, address(this));
+      uint to_pay_long = token.getBalanceByIndex(i, address(this));
       paySwap(long_owner, to_pay_long, true);
     }
 
     token = DRCT_Token_Interface(short_token_address);
-    count = token.addressCount();
-    for(uint j = _begin; j < loop_count; j++) {
-      address short_owner = token.getHolderByIndex(j);
-      uint to_pay_short = token.getBalanceByIndex(j);
-      assert(j == token.getIndexByAddress(short_owner));
+    count = token.addressCount(address(this));
+    loop_count = count < _end ? count : _end;
+    for(uint j = loop_count-1; j >= _begin ; j--) {
+      address short_owner = token.getHolderByIndex(j, address(this));
+      uint to_pay_short = token.getBalanceByIndex(j, address(this));
       paySwap(short_owner, to_pay_short, false);
     }
 
