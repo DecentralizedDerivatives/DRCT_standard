@@ -5,6 +5,7 @@ import "./interfaces/DRCT_Token_Interface.sol";
 import "./libraries/SafeMath.sol";
 
 
+
 contract Factory {
   using SafeMath for uint256;
   /*Variables*/
@@ -147,14 +148,15 @@ contract Factory {
     require(created_contracts[msg.sender] == true);
     if (_long) {
       drct_interface = DRCT_Token_Interface(long_drct);
-      drct_interface.createToken(_supply.div(token_ratio1), _party);
+      drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
       return (long_drct, token_ratio1);
     } else {
       drct_interface = DRCT_Token_Interface(short_drct);
-      drct_interface.createToken(_supply.div(token_ratio2), _party);
+      drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
       return (short_drct, token_ratio2);
     }
   }
+  
 
   //Allows the owner to set a new oracle address
   function setOracleAddress(address _new_oracle_address) public onlyOwner() { oracle_address = _new_oracle_address; }
@@ -192,6 +194,10 @@ contract Factory {
     } else {
       drct_interface = DRCT_Token_Interface(short_drct);
     }
-    drct_interface.pay(_party);
+    drct_interface.pay(_party, msg.sender);
   }
+
+  function getCount() public constant returns(uint count) {
+    return contracts.length;
+}
 }
