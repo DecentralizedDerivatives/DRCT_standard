@@ -462,9 +462,10 @@ contract DRCT_Token {
     user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
     total_supply = total_supply.sub(party_swap_balance);
     //Remove party from swap balances
-    removeFromSwapBalances(_party, _swap);
+    //removeFromSwapBalances(_party, _swap);
+    swap_balances[_swap][party_balance_index].amount = 0;
     //Remove swap from party swap list
-    removeFromUserSwaps(_party, _swap);
+    //removeFromUserSwaps(_party, _swap);
   }
 
   //TODO - description
@@ -478,8 +479,9 @@ contract DRCT_Token {
     return user_swaps_index[_owner][_swap] != 0;
   }
 
-  //TODO - description
-  function removeFromUserSwaps(address _user, address _swap) internal {
+  // This function removes the user from the list of addresses in that swap
+  //does the reordering ruin the looping trhough backwards?
+  /*function removeFromUserSwaps(address _user, address _swap) internal {
     uint last_address_index = user_swaps[_user].length.sub(1);
     address last_address = user_swaps[_user][last_address_index];
     if (last_address != _swap) {
@@ -490,7 +492,7 @@ contract DRCT_Token {
     delete user_swaps_index[_user][_swap];
     user_swaps[_user].length = user_swaps[_user].length.sub(1);
   }
-
+*/
   //Removes the address from the swap balances for a swap, and moves the last address in the swap into their place
   function removeFromSwapBalances(address _remove, address _swap) internal {
     uint last_address_index = swap_balances[_swap].length.sub(1);
@@ -509,7 +511,7 @@ contract DRCT_Token {
     swap_balances[_swap].length = swap_balances[_swap].length.sub(1);
   }
 
-  //TODO - description
+  // This is the main function to update the mappings when a transfer happens
   //TODO - split this function into helpers
   function transferHelper(address _from, address _to, uint _amount) internal {
     //Get memory copies of the swap arrays for the sender and reciever
@@ -903,6 +905,7 @@ contract TokenToTokenSwap {
   */
   function Calculate() internal {
     //require(now >= end_date);
+    //should it be end_date + 1? so the oracle can update?
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
     uint end_value = oracle.RetrieveData(end_date);
@@ -987,7 +990,7 @@ contract TokenToTokenSwap {
     uint count = token.addressCount(address(this));
     uint loop_count = count < _end ? count : _end;
     //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = _begin; i < loop_count; i++) {
+    for(uint i = loop_count-1; i >= _begin ; i--) {
       address long_owner = token.getHolderByIndex(i, address(this));
       uint to_pay_long = token.getBalanceByIndex(i, address(this));
       paySwap(long_owner, to_pay_long, true);
@@ -996,7 +999,7 @@ contract TokenToTokenSwap {
     token = DRCT_Token_Interface(short_token_address);
     count = token.addressCount(address(this));
     loop_count = count < _end ? count : _end;
-    for(uint j = _begin; j < loop_count; j++) {
+    for(uint j = loop_count-1; j >= _begin ; j--) {
       address short_owner = token.getHolderByIndex(j, address(this));
       uint to_pay_short = token.getBalanceByIndex(j, address(this));
       paySwap(short_owner, to_pay_short, false);
@@ -1199,7 +1202,7 @@ contract Tester {
         Print('End Value " ',_endval);
     }
     
-    function setTokens(address _drct1,address _drct2){
+    function setTokens(address _drct1,address _drct2) public{
         drct1 = _drct1; drct2 = _drct2;
         factory.settokens(drct1,drct2);
     }
@@ -1340,9 +1343,9 @@ function createSwap() public payable{
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short3 = wrapped.balanceOf(user3);
-    Print('Long Balance : ',balance_long);
+    Print('Long Balance1 : ',balance_long);
     Print('Transferred Long Balance : ', balance_long3);
-    Print('Short Balance : ', balance_short);
+    Print('Short Balance1 : ', balance_short);
     Print('Transferred Short Balance : ', balance_short3);
     return (balance_long, balance_long3, balance_short, balance_short3);
   }
@@ -1360,6 +1363,7 @@ contract TestParty2 {
   address user4;
   Wrapped_Ether wrapped;
   ERC20_Interface dtoken;
+  event Print(string _string, uint _value);
 
   function EnterSwap(address _tester) public payable{
     tester = Tester_Interface(_tester);
@@ -1371,7 +1375,7 @@ contract TestParty2 {
   }
 
     function transfers() public {
-    drct = tester.getDRCT(true);
+    drct = tester.getDRCT(false);
     dtoken = ERC20_Interface(drct);
     dtoken.transfer(user4,5000);
   }
@@ -1384,6 +1388,10 @@ contract TestParty2 {
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short4 = wrapped.balanceOf(user4);
+    Print('Long Balance : ',balance_long);
+    Print('Transferred Long Balance : ', balance_long4);
+    Print('Short Balance : ', balance_short);
+    Print('Transferred Short Balance : ', balance_short4);
     return (balance_long, balance_long4, balance_short, balance_short4);
   }
 
