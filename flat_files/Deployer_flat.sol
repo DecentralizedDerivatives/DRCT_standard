@@ -486,3 +486,17 @@ contract TokenToTokenSwap {
     }
   }
 }
+
+contract Deployer {
+  address owner;
+
+  function Deployer(address _factory) public {
+    owner = _factory;
+  }
+
+  function newContract(address _party, address user_contract) public returns (address created) {
+    require(msg.sender == owner);
+    address new_contract = new TokenToTokenSwap(owner, _party, user_contract);
+    return new_contract;
+  }
+}
