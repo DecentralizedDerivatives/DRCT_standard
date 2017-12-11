@@ -1,5 +1,7 @@
 pragma solidity ^0.4.17;
 
+
+// All code below here is for the Testing the above contracts.  The Tester contracts are still under development. 
 interface swap_interface{
     function forcePay(uint _begin, uint _end) public returns (bool);
 }
