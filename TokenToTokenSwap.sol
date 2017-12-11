@@ -220,7 +220,6 @@ contract TokenToTokenSwap {
 
     //Ensure the contract has been funded by tokens a and b
     require(
-      now <= start_date &&
       token_a.balanceOf(address(this)) >= token_a_amount &&
       token_b.balanceOf(address(this)) >= token_b_amount
     );
