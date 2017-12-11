@@ -94,6 +94,8 @@ contract Tester {
     uint balance_long = wrapped.balanceOf(address(this));
     wrapped = Wrapped_Ether(baseToken2);
     uint balance_short = wrapped.balanceOf(address(this));
+    Print('Factory Long', balance_long);
+    Print('Factory Short',balance_short);
     return (balance_long, balance_short);
     }
 }
@@ -107,6 +109,7 @@ interface Tester_Interface {
   function getWrapped() public returns(address,address);
   function getDRCT(bool _isLong) public returns(address);
   function setTokens(address _drct1,address _drct2);
+  function paySwap() public returns(uint,uint);
 }
 
 contract Tester2 {
@@ -150,6 +153,7 @@ contract TestParty1 {
   ERC20_Interface dtoken;
   event Print(string _string, uint _value);
   event Print2(string _string, address _value);
+    event Print3(string _string, bool _bool);
 
   function TestParty1(address _tester) public{
     tester = Tester_Interface(_tester);
@@ -158,19 +162,21 @@ contract TestParty1 {
     swap_address = factory.deployContract();
 }
 
-function createSwap() public payable{
+function createSwap() public payable returns (address){
     usercontract_address = tester.getUC();
     usercontract = UserContract(usercontract_address);
     usercontract.Initiate.value(msg.value)(swap_address,10000000000000000000,10000000000000000000,0,true );
     tester.swapAdd(swap_address,true);
     user3 = new newTester();
     Print2('New Swap : ',swap_address);
+    return user3;
   }
 
     function transfers() public {
     drct = tester.getDRCT(true);
     dtoken = ERC20_Interface(drct);
-    dtoken.transfer(user3,5000);
+    bool success = dtoken.transfer(user3,5000);
+    Print3('Succesful Transfer: ',success);
   }
 
   function cashOut() public returns(uint, uint,uint,uint){
@@ -181,10 +187,6 @@ function createSwap() public payable{
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short3 = wrapped.balanceOf(user3);
-    Print('Long Balance1 : ',balance_long);
-    Print('Transferred Long Balance : ', balance_long3);
-    Print('Short Balance1 : ', balance_short);
-    Print('Transferred Short Balance : ', balance_short3);
     return (balance_long, balance_long3, balance_short, balance_short3);
   }
 }
@@ -203,13 +205,16 @@ contract TestParty2 {
   ERC20_Interface dtoken;
   event Print(string _string, uint _value);
 
+  function TestParty2() public {
+    user4 = new newTester();
+
+  }
   function EnterSwap(address _tester) public payable{
     tester = Tester_Interface(_tester);
     usercontract_address = tester.getUC();
     usercontract = UserContract(usercontract_address);
     swap_address = tester.swapAdd(msg.sender,false);
     usercontract.Enter.value(msg.value)(10000000000000000000,10000000000000000000,false,swap_address);
-    user4 = new newTester();
   }
 
     function transfers() public {
@@ -226,15 +231,78 @@ contract TestParty2 {
     wrapped = Wrapped_Ether(wrapped_short);
     uint balance_short = wrapped.balanceOf(address(this));
     uint balance_short4 = wrapped.balanceOf(user4);
-    Print('Long Balance : ',balance_long);
-    Print('Transferred Long Balance : ', balance_long4);
-    Print('Short Balance : ', balance_short);
-    Print('Transferred Short Balance : ', balance_short4);
     return (balance_long, balance_long4, balance_short, balance_short4);
   }
 
 }
 
 contract newTester{
+
+}
+
+contract PartyDeployer{
+
+TestParty1 tp1;
+TestParty2 tp2;
+Tester_Interface factory;
+address tester_address;
+address party1;
+address party2;
+address party5;
+address party6;
+event Print(string _string, uint _value);
+uint res1;
+uint res2;
+uint res3;
+uint res4;
+
+
+function PartyDeployer(address _tester) public {
+  tester_address = _tester;
+}
+function deployParties() {
+  party1 = new TestParty1(tester_address);
+  party2 = new TestParty2();
+  party5 = new TestParty1(tester_address);
+  party6 = new TestParty2();
+}
+
+//enter value 40
+function nextStep() payable public {
+  tp1 = TestParty1(party1);
+  tp1.createSwap.value(10 ether)();
+  tp2 = TestParty2(party2);
+  tp2.EnterSwap.value(10 ether)(tester_address);
+  tp1.transfers();
+  tp2.transfers();
+  tp1 = TestParty1(party5);
+  tp1.createSwap.value(10 ether)();
+  tp2 = TestParty2(party6);
+  tp2.EnterSwap.value(10 ether)(tester_address);
+  tp1.transfers();
+  tp2.transfers();
+}
+
+function EndStep() {
+  factory = Tester_Interface(tester_address);
+  (res1,res2) = factory.paySwap();
+  Print('Factory gains',res1+res2);
+  tp1 = TestParty1(party1);
+  (res1,res2,res3,res4) = tp1.cashOut();
+  Print('Party1 Balance',res1+res3);
+  Print('Party3 Balance',res4 + res2);
+  tp2 = TestParty2(party2);
+  (res1,res2,res3,res4) = tp2.cashOut();
+  Print('Party2 Balance',res1+res3);
+  Print('Party4 Balance',res4 + res2);
+  tp1 = TestParty1(party5);
+  (res1,res2,res3,res4) = tp1.cashOut();
+    Print('Party5 Balance',res1+res3);
+  Print('Party7 Balance',res4 + res2);
+  tp2 = TestParty2(party6);
+  (res1,res2,res3,res4) = tp2.cashOut();
+    Print('Party6 Balance',res1+res3);
+  Print('Party8 Balance',res4 + res2);
+}
 
 }
