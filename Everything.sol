@@ -668,6 +668,8 @@ contract DRCT_Token {
   function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
 }
 
+
+//This contract is the specific DRCT base contract that holds the funds of the contract and redistributes them based upon the change in the underlying values
 contract TokenToTokenSwap {
 
   using SafeMath for uint256;
