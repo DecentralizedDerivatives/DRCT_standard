@@ -1,20 +1,16 @@
 pragma solidity ^0.4.17;
 
+//The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is updated by an off chain calculation by DDA.  Methodology can be found at www.github.com/DecentralizedDerivatives/Oracles
 contract Oracle {
 
   /*Variables*/
-
   //Owner of the oracle
   address private owner;
-
   //Mapping of documents stored in the oracle
   mapping(uint => uint) oracle_values;
 
   /*Events*/
-
   event DocumentStored(uint _key, uint _value);
-
-  /*Functions*/
 
   modifier onlyOwner {
     require(msg.sender == owner);
@@ -37,5 +33,7 @@ contract Oracle {
   function RetrieveData(uint _date) public constant returns (uint data) {
     return oracle_values[_date];
   }
+
+  //set a new owner of the contract
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 }
