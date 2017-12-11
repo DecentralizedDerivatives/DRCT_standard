@@ -2,7 +2,7 @@ pragma solidity ^0.4.17;
 
 import "./TokenToTokenSwap.sol";
 
-//Swap Deployer Contract
+//Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
 contract Deployer {
   address owner;
   address factory;
