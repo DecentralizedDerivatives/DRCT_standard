@@ -2,20 +2,23 @@ pragma solidity ^0.4.17;
 
 import "./libraries/SafeMath.sol";
 
+
+//The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract specified in the Factory contract
+//Each Factory contract is specified one DRCT Token and the token address can contain many different swap contracts that are standardized at the Factory level
 contract DRCT_Token {
 
   using SafeMath for uint256;
 
   /*Structs */
-
   //Keeps track of balance amounts in the balances array
   struct Balance {
     address owner;
     uint amount;
   }
 
+  //This is the factory contract that the token is standardized at
   address public master_contract;
-
+  //Total supply of outstanding tokens in the contract
   uint public total_supply;
 
   //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
@@ -32,6 +35,7 @@ contract DRCT_Token {
   //Mapping from: owner -> spender -> amount allowed
   mapping(address => mapping(address => uint)) allowed;
 
+  //events for transfer and approvals
   event Transfer(address indexed _from, address indexed _to, uint _value);
   event Approval(address indexed _owner, address indexed _spender, uint _value);
 
@@ -41,7 +45,6 @@ contract DRCT_Token {
   }
 
   /*Functions*/
-
   //Constructor
   function DRCT_Token(address _factory) public {
     //Sets values for token name and token supply, as well as the master_contract, the swap.
@@ -78,20 +81,18 @@ contract DRCT_Token {
   function pay(address _party, address _swap) public onlyMaster() {
     uint party_balance_index = swap_balances_index[_swap][_party];
     uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
-
+    //reduces the users totals balance by the amount in that swap
     user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
+    //reduces the total supply by the amount of that users in that swap
     total_supply = total_supply.sub(party_swap_balance);
-    //Remove party from swap balances
-    //removeFromSwapBalances(_party, _swap);
+    //sets the partys balance to zero for that specific swaps party balances
     swap_balances[_swap][party_balance_index].amount = 0;
-    //Remove swap from party swap list
-    //removeFromUserSwaps(_party, _swap);
   }
 
-  //TODO - description
+  //Returns the users total balance (sum of tokens in all swaps the user has tokens in)
   function balanceOf(address _owner) public constant returns (uint balance) { return user_total_balances[_owner]; }
 
-  //TODO - description
+  //Getter for the total_supply of tokens in the contract
   function totalSupply() public constant returns (uint _total_supply) { return total_supply; }
 
   //Checks whether an address is in a specified swap. If they are, the user_swaps_index for that user and swap will be non-zero
@@ -99,20 +100,6 @@ contract DRCT_Token {
     return user_swaps_index[_owner][_swap] != 0;
   }
 
-  // This function removes the user from the list of addresses in that swap
-  //does the reordering ruin the looping trhough backwards?
-  /*function removeFromUserSwaps(address _user, address _swap) internal {
-    uint last_address_index = user_swaps[_user].length.sub(1);
-    address last_address = user_swaps[_user][last_address_index];
-    if (last_address != _swap) {
-      uint remove_index = user_swaps_index[_user][_swap];
-      user_swaps_index[_user][last_address] = remove_index;
-      user_swaps[_user][remove_index] = user_swaps[_user][last_address_index];
-    }
-    delete user_swaps_index[_user][_swap];
-    user_swaps[_user].length = user_swaps[_user].length.sub(1);
-  }
-*/
   //Removes the address from the swap balances for a swap, and moves the last address in the swap into their place
   function removeFromSwapBalances(address _remove, address _swap) internal {
     uint last_address_index = swap_balances[_swap].length.sub(1);
@@ -208,7 +195,12 @@ contract DRCT_Token {
     }
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant transfer function
+    @param - _to: Address to send funds to
+    @param - _amount: Amount of token to send
+    returns true for successful
+  */
   function transfer(address _to, uint _amount) public returns (bool success) {
     uint balance_owner = user_total_balances[msg.sender];
 
@@ -226,7 +218,13 @@ contract DRCT_Token {
     return true;
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant transferFrom function
+    @param - _from: Address to send funds from (must be allowed, see approve function)
+    @param - _to: Address to send funds to
+    @param - _amount: Amount of token to send
+    returns true for successful
+  */
   function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
     uint balance_owner = user_total_balances[_from];
     uint sender_allowed = allowed[_from][msg.sender];
@@ -247,7 +245,12 @@ contract DRCT_Token {
     return true;
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant approve function
+    @param - _spender: Party that msg.sender approves for transferring funds
+    @param - _amount: Amount of token to approve for sending
+    returns true for successful
+  */
   function approve(address _spender, uint _amount) public returns (bool success) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
