@@ -49,11 +49,7 @@ interface Oracle_Interface{
 interface DRCT_Token_Interface {
   function addressCount(address _swap) public constant returns (uint count);
   function getHolderByIndex(uint _ind, address _swap) public constant returns (address holder);
-  /*function getDeepHolderByIndex(uint _ind, address _swap) public constant returns (address holder);*/
-
   function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint bal);
-
-  /*function getBalanceByIndex(uint _ind) public constant returns (uint bal);*/
   function getIndexByAddress(address _owner, address _swap) public constant returns (uint index);
   function createToken(uint _supply, address _owner, address _swap) public;
   function pay(address _party, address _swap) public;
@@ -70,7 +66,19 @@ interface ERC20_Interface {
   function allowance(address _owner, address _spender) public constant returns (uint amount);
 }
 
-//Swap Deployer Contract
+//Swap Deployer functions - descriptions can be found in Deployer.sol
+interface Deployer_Interface {
+  function newContract(address _party, address user_contract) public payable returns (address created);
+}
+
+//Swap interface- descriptions can be found in TokenToTokenSwap.sol
+interface TokenToTokenSwap_Interface {
+  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public payable;
+  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
+  function createTokens() public;
+}
+
+//Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
 contract Deployer {
   address owner;
   address factory;
@@ -93,18 +101,7 @@ contract Deployer {
   }
 }
 
-//Swap Deployer functions - descriptions can be found in Deployer.sol
-interface Deployer_Interface {
-  function newContract(address _party, address user_contract) public payable returns (address created);
-}
-
-//Swap interface- descriptions can be found in TokenToTokenSwap.sol
-interface TokenToTokenSwap_Interface {
-  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public payable;
-  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
-  function createTokens() public;
-}
-
+//The User Contract enables the entering of a deployed swap along with the wrapping of Ether.  This contract was specifically made for drct.decentralizedderivatives.org to simplify user metamask calls
 contract UserContract{
   TokenToTokenSwap_Interface swap;
   Wrapped_Ether token;
@@ -116,6 +113,12 @@ contract UserContract{
   function UserContract() public {
       owner = msg.sender;
   }
+
+  //The _swapAdd is the address of the deployed contract created from the Factory contract.  
+  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.  
+  //_premium is a base payment to the other party for taking the other side of the swap
+  // _isLong refers to whether the sender is long or short the reference rate
+  //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
 
   function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
     require(msg.value == _amounta + _premium);
@@ -153,13 +156,14 @@ contract UserContract{
   }
 }
 
+//The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
 contract Factory {
   using SafeMath for uint256;
-  /*Variables*/
-
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
+
+  //Address of the user contract
   address public user_contract;
   DRCT_Token_Interface drct_interface;
 
@@ -172,12 +176,16 @@ contract Factory {
   address public token_a;
   address public token_b;
 
-  //Swap creation amount in wei
+  //A fee for creating a swap in wei.  Plan is for this to be zero, however can be raised to prevent spam
   uint public fee;
+  //Duration of swap contract in days
   uint public duration;
+  //Multiplier of reference rate.  2x refers to a 50% move generating a 100% move in the contract payout values
   uint public multiplier;
+  //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
   uint public token_ratio1;
   uint public token_ratio2;
+  //Unix timestamp for the start date of the contract.  The end date is the start date + duration and the capped value is the value at the start date +- (start value/ multiplier)
   uint public start_date;
 
 
@@ -185,20 +193,16 @@ contract Factory {
   address[] public contracts;
   mapping(address => bool) public created_contracts;
 
-  /*Events*/
-
   //Emitted when a Swap is created
   event ContractCreation(address _sender, address _created);
 
   /*Modifiers*/
-
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
   /*Functions*/
-
   // Constructor - Sets owner
   function Factory() public {
     owner = msg.sender;
@@ -220,12 +224,17 @@ contract Factory {
     deployer_address = _deployer;
     deployer = Deployer_Interface(_deployer);
   }
-
-    function setUserContract(address _userContract) public onlyOwner() {
+  /*
+  * Sets the user_contract address
+  * @param "_userContract": The new userContract address
+  */
+  function setUserContract(address _userContract) public onlyOwner() {
     user_contract = _userContract;
   }
 
-
+  /*
+  * A getter to retrieve the base tokens
+  */
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
   }
@@ -274,6 +283,7 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
+  //returns the newly created swap address and calls event 'ContractCreation'
   function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
     address new_contract = deployer.newContract(msg.sender, user_contract);
@@ -335,7 +345,6 @@ contract Factory {
   */
   function payToken(address _party, bool _long) public {
     require(created_contracts[msg.sender] == true);
-    //TODO why is this being changed every call
     if (_long) {
       drct_interface = DRCT_Token_Interface(long_drct);
     } else {
@@ -344,26 +353,23 @@ contract Factory {
     drct_interface.pay(_party, msg.sender);
   }
 
-  function getCount() public constant returns(uint count) {
-    return contracts.length;
-}
+  //Returns the number of contracts created by this factory
+    function getCount() public constant returns(uint count) {
+      return contracts.length;
+  }
 }
 
+//The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is updated by an off chain calculation by DDA.  Methodology can be found at www.github.com/DecentralizedDerivatives/Oracles
 contract Oracle {
 
   /*Variables*/
-
   //Owner of the oracle
   address private owner;
-
   //Mapping of documents stored in the oracle
   mapping(uint => uint) oracle_values;
 
   /*Events*/
-
   event DocumentStored(uint _key, uint _value);
-
-  /*Functions*/
 
   modifier onlyOwner {
     require(msg.sender == owner);
@@ -386,23 +392,28 @@ contract Oracle {
   function RetrieveData(uint _date) public constant returns (uint data) {
     return oracle_values[_date];
   }
+
+  //set a new owner of the contract
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 }
 
+
+//The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract specified in the Factory contract
+//Each Factory contract is specified one DRCT Token and the token address can contain many different swap contracts that are standardized at the Factory level
 contract DRCT_Token {
 
   using SafeMath for uint256;
 
   /*Structs */
-
   //Keeps track of balance amounts in the balances array
   struct Balance {
     address owner;
     uint amount;
   }
 
+  //This is the factory contract that the token is standardized at
   address public master_contract;
-
+  //Total supply of outstanding tokens in the contract
   uint public total_supply;
 
   //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
@@ -419,6 +430,7 @@ contract DRCT_Token {
   //Mapping from: owner -> spender -> amount allowed
   mapping(address => mapping(address => uint)) allowed;
 
+  //events for transfer and approvals
   event Transfer(address indexed _from, address indexed _to, uint _value);
   event Approval(address indexed _owner, address indexed _spender, uint _value);
 
@@ -428,7 +440,6 @@ contract DRCT_Token {
   }
 
   /*Functions*/
-
   //Constructor
   function DRCT_Token(address _factory) public {
     //Sets values for token name and token supply, as well as the master_contract, the swap.
@@ -465,20 +476,18 @@ contract DRCT_Token {
   function pay(address _party, address _swap) public onlyMaster() {
     uint party_balance_index = swap_balances_index[_swap][_party];
     uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
-
+    //reduces the users totals balance by the amount in that swap
     user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
+    //reduces the total supply by the amount of that users in that swap
     total_supply = total_supply.sub(party_swap_balance);
-    //Remove party from swap balances
-    //removeFromSwapBalances(_party, _swap);
+    //sets the partys balance to zero for that specific swaps party balances
     swap_balances[_swap][party_balance_index].amount = 0;
-    //Remove swap from party swap list
-    //removeFromUserSwaps(_party, _swap);
   }
 
-  //TODO - description
+  //Returns the users total balance (sum of tokens in all swaps the user has tokens in)
   function balanceOf(address _owner) public constant returns (uint balance) { return user_total_balances[_owner]; }
 
-  //TODO - description
+  //Getter for the total_supply of tokens in the contract
   function totalSupply() public constant returns (uint _total_supply) { return total_supply; }
 
   //Checks whether an address is in a specified swap. If they are, the user_swaps_index for that user and swap will be non-zero
@@ -486,20 +495,6 @@ contract DRCT_Token {
     return user_swaps_index[_owner][_swap] != 0;
   }
 
-  // This function removes the user from the list of addresses in that swap
-  //does the reordering ruin the looping trhough backwards?
-  /*function removeFromUserSwaps(address _user, address _swap) internal {
-    uint last_address_index = user_swaps[_user].length.sub(1);
-    address last_address = user_swaps[_user][last_address_index];
-    if (last_address != _swap) {
-      uint remove_index = user_swaps_index[_user][_swap];
-      user_swaps_index[_user][last_address] = remove_index;
-      user_swaps[_user][remove_index] = user_swaps[_user][last_address_index];
-    }
-    delete user_swaps_index[_user][_swap];
-    user_swaps[_user].length = user_swaps[_user].length.sub(1);
-  }
-*/
   //Removes the address from the swap balances for a swap, and moves the last address in the swap into their place
   function removeFromSwapBalances(address _remove, address _swap) internal {
     uint last_address_index = swap_balances[_swap].length.sub(1);
@@ -595,7 +590,12 @@ contract DRCT_Token {
     }
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant transfer function
+    @param - _to: Address to send funds to
+    @param - _amount: Amount of token to send
+    returns true for successful
+  */
   function transfer(address _to, uint _amount) public returns (bool success) {
     uint balance_owner = user_total_balances[msg.sender];
 
@@ -613,7 +613,13 @@ contract DRCT_Token {
     return true;
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant transferFrom function
+    @param - _from: Address to send funds from (must be allowed, see approve function)
+    @param - _to: Address to send funds to
+    @param - _amount: Amount of token to send
+    returns true for successful
+  */
   function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
     uint balance_owner = user_total_balances[_from];
     uint sender_allowed = allowed[_from][msg.sender];
@@ -634,7 +640,12 @@ contract DRCT_Token {
     return true;
   }
 
-  //TODO - description
+  /*
+    ERC20 compliant approve function
+    @param - _spender: Party that msg.sender approves for transferring funds
+    @param - _amount: Amount of token to approve for sending
+    returns true for successful
+  */
   function approve(address _spender, uint _amount) public returns (bool success) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
@@ -662,7 +673,6 @@ contract TokenToTokenSwap {
   using SafeMath for uint256;
 
   /*Enums*/
-
   //Describes various states of the Swap
   enum SwapState {
     created,
@@ -703,10 +713,11 @@ contract TokenToTokenSwap {
   //This is the amount that the change will be calculated on.  10% change in rate on 100 Ether notional is a 10 Ether change
   uint multiplier;
 
+  //This is the calculated share for the long and short side of the swap (200,000 is a fully capped move)
   uint share_long;
   uint share_short;
 
-  /*TODO description*/
+  // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
   uint pay_to_short_a;
   uint pay_to_long_a;
   uint pay_to_long_b;
@@ -738,8 +749,10 @@ contract TokenToTokenSwap {
   address token_a_party;
   address token_b_party;
 
+  //Duration of the swap,pulled from the Factory contract
   uint duration;
-  uint fee;
+  //Date by which the contract must be funded
+  uint enterDate;
   DRCT_Token_Interface token;
   address userContract;
 
@@ -763,10 +776,9 @@ contract TokenToTokenSwap {
   /*
   * Constructor - Run by the factory at contract creation
   *
-  * @param "_o_address": Oracle address
-  * @param "_operator": Address of the operator
+  * @param "_factory_address": Address of the factory that created this contract
   * @param "_creator": Address of the person who created the contract
-  * @param "_factory": Address of the factory that created this contract
+  * @param "_userContract": Address of the _userContract that is authorized to interact with this contract
   */
   function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
     current_state = SwapState.created;
@@ -775,21 +787,18 @@ contract TokenToTokenSwap {
     userContract = _userContract;
   }
 
+
+  //A getter function for retriving standardized variables from the factory contract
   function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
     return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
   }
 
   /*
   * Allows the sender to create the terms for the swap
-  *
-  * @param "token_a_address": Address of ERC20 token A used as notional
-  * @param "token_b_address": Address of ERC20 token B used as notional
   * @param "_amount_a": Amount of Token A that should be deposited for the notional
   * @param "_amount_b": Amount of Token B that should be deposited for the notional
-  * @param "_multiplier": Integer multiplier representing amount of leverage on the underlying reference rate
-  * @param "_start_date": Start date of the swap. Should be after the current block.timestamp
-  * @param "_end_date": End date of the swap. Should be after the start date of the swap and no more than 28 days after the start date
   * @param "_sender_is_long": Denotes whether the sender is set as the short or long party
+  * @param "_senderAdd": States the owner of this side of the contract (does not have to be msg.sender)
   */
   function CreateSwap(
     uint _amount_a,
@@ -798,7 +807,6 @@ contract TokenToTokenSwap {
     address _senderAdd
     ) payable public onlyState(SwapState.created) {
 
-    //The Swap is meant to take place within 28 days
     require(
       msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
     );
@@ -836,7 +844,7 @@ contract TokenToTokenSwap {
     address _senderAdd
     ) public onlyState(SwapState.open) {
 
-    //Require that all of the information of the swap was entered correctly by the entering party
+    //Require that all of the information of the swap was entered correctly by the entering party.  Prevents partyA from exiting and changing details
     require(
       token_a_amount == _amount_a &&
       token_b_amount == _amount_b &&
@@ -856,6 +864,7 @@ contract TokenToTokenSwap {
     }
 
     SwapCreation(token_a_address, token_b_address, start_date, end_date, token_b_party);
+    enterDate = now;
     current_state = SwapState.started;
   }
 
@@ -863,12 +872,12 @@ contract TokenToTokenSwap {
   * This function creates the DRCT tokens for the short and long parties, and ensures the short and long parties
   * have funded the contract with the correct amount of the ERC20 tokens A and B
   *
-  * @param: "_tokens": Amount of DRCT Tokens to be created
   */
   function createTokens() public onlyState(SwapState.started){
 
-    //Ensure the contract has been funded by tokens a and b
+    //Ensure the contract has been funded by tokens a and b within 1 day
     require(
+      now < (enterDate + 86400) &&
       token_a.balanceOf(address(this)) >= token_a_amount &&
       token_b.balanceOf(address(this)) >= token_b_amount
     );
@@ -887,9 +896,8 @@ contract TokenToTokenSwap {
   }
 
   /*
-  * Creates DRCT tokens equal to the passed in _total_supply which credits them all to the _creator
-  *
-  * @param "_total_supply": The number of DRCT tokens that will be created
+  * Creates DRCT tokens
+  *The amount of DRCT tokens recieved is based upon the contract specifications in the Factory contract
   * @param "_creator": The creator of the DRCT tokens
   */
   function tokenize(address _creator) internal {
@@ -949,7 +957,7 @@ contract TokenToTokenSwap {
   }
 
   /*
-  * Calculates the amount paid to the short and long parties TODO
+  * Calculates the amount paid to the short and long parties per token
   */
   function calculatePayout() internal {
     uint ratio;
@@ -1049,7 +1057,7 @@ contract TokenToTokenSwap {
 
   /*
   * This function allows both parties to exit. If only the creator has entered the swap, then the swap can be cancelled and the details modified
-  * Once two parties enter the swap, the contract is null after cancelled.
+  * Once two parties enter the swap, the contract is null after cancelled. Once tokenized however, the contract cannot be ended.
   */
   function Exit() public {
    if (current_state == SwapState.open && msg.sender == token_a_party) {
@@ -1072,6 +1080,9 @@ contract TokenToTokenSwap {
   }
 }
 
+
+//This is the basic wrapped Ether contract. 
+//All money deposited is transformed into ERC20 tokens at the rate of 1 wei = 1 token
 contract Wrapped_Ether {
 
   using SafeMath for uint256;
@@ -1168,6 +1179,8 @@ contract Wrapped_Ether {
   function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
 }
 
+
+// All code below here is for the Testing the above contracts.  The Tester contracts are still under development. 
 interface swap_interface{
     function forcePay(uint _begin, uint _end) public returns (bool);
 }
