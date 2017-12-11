@@ -2,6 +2,9 @@ pragma solidity ^0.4.17;
 
 import "./libraries/SafeMath.sol";
 
+
+//This is the basic wrapped Ether contract. 
+//All money deposited is transformed into ERC20 tokens at the rate of 1 wei = 1 token
 contract Wrapped_Ether {
 
   using SafeMath for uint256;
