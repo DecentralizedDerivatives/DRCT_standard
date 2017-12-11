@@ -148,7 +148,6 @@ contract DRCT_Token {
   }
 
   // This is the main function to update the mappings when a transfer happens
-  //TODO - split this function into helpers
   function transferHelper(address _from, address _to, uint _amount) internal {
     //Get memory copies of the swap arrays for the sender and reciever
     address[] memory from_swaps = user_swaps[_from];
@@ -301,4 +300,3 @@ contract DRCT_Token {
   //Returns the allowed amount _spender can spend of _owner's balance
   function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
 }
-
