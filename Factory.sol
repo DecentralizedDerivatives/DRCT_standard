@@ -5,14 +5,14 @@ import "./interfaces/DRCT_Token_Interface.sol";
 import "./libraries/SafeMath.sol";
 
 
-
+//The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
 contract Factory {
   using SafeMath for uint256;
-  /*Variables*/
-
   //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
+
+  //Address of the user contract
   address public user_contract;
   DRCT_Token_Interface drct_interface;
 
@@ -25,12 +25,16 @@ contract Factory {
   address public token_a;
   address public token_b;
 
-  //Swap creation amount in wei
+  //A fee for creating a swap in wei.  Plan is for this to be zero, however can be raised to prevent spam
   uint public fee;
+  //Duration of swap contract in days
   uint public duration;
+  //Multiplier of reference rate.  2x refers to a 50% move generating a 100% move in the contract payout values
   uint public multiplier;
+  //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
   uint public token_ratio1;
   uint public token_ratio2;
+  //Unix timestamp for the start date of the contract.  The end date is the start date + duration and the capped value is the value at the start date +- (start value/ multiplier)
   uint public start_date;
 
 
@@ -38,20 +42,16 @@ contract Factory {
   address[] public contracts;
   mapping(address => bool) public created_contracts;
 
-  /*Events*/
-
   //Emitted when a Swap is created
   event ContractCreation(address _sender, address _created);
 
   /*Modifiers*/
-
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
   /*Functions*/
-
   // Constructor - Sets owner
   function Factory() public {
     owner = msg.sender;
@@ -73,12 +73,17 @@ contract Factory {
     deployer_address = _deployer;
     deployer = Deployer_Interface(_deployer);
   }
-
-    function setUserContract(address _userContract) public onlyOwner() {
+  /*
+  * Sets the user_contract address
+  * @param "_userContract": The new userContract address
+  */
+  function setUserContract(address _userContract) public onlyOwner() {
     user_contract = _userContract;
   }
 
-
+  /*
+  * A getter to retrieve the base tokens
+  */
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
   }
@@ -127,6 +132,7 @@ contract Factory {
   }
 
   //Allows a user to deploy a new swap contract, if they pay the fee
+  //returns the newly created swap address and calls event 'ContractCreation'
   function deployContract() public payable returns (address created) {
     require(msg.value >= fee);
     address new_contract = deployer.newContract(msg.sender, user_contract);
@@ -188,7 +194,6 @@ contract Factory {
   */
   function payToken(address _party, bool _long) public {
     require(created_contracts[msg.sender] == true);
-    //TODO why is this being changed every call
     if (_long) {
       drct_interface = DRCT_Token_Interface(long_drct);
     } else {
@@ -197,7 +202,8 @@ contract Factory {
     drct_interface.pay(_party, msg.sender);
   }
 
-  function getCount() public constant returns(uint count) {
-    return contracts.length;
-}
+  //Returns the number of contracts created by this factory
+    function getCount() public constant returns(uint count) {
+      return contracts.length;
+  }
 }
