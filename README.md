@@ -5,9 +5,7 @@ Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for tradi
 If you have questions, ask us on Slack: https://deriveth.slack.com/
 
 
-Factory Contracts on Ropsten:
-
-      ETH/USD:0xf373cc4295047356dcaf74cd04521d403672c4ea
+DAPP:  https://drct.decentralizedderivatives.org
   
   
 Oracle Methodology can be found at: https://github.com/DecentralizedDerivatives/Oracles
