@@ -13,3 +13,7 @@ Oracle Methodology can be found at: https://github.com/DecentralizedDerivatives/
 
 
 Documentation - https://github.com/DecentralizedDerivatives/DRCT_standard/wiki/Documentation
+
+Ropsten Deployment (Factory):
+
+          0xc99CC3CeD3208A5637bdb52cD2aD03550A62F71C
