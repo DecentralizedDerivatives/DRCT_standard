@@ -1,0 +1,1 @@
+/*testing exiting contracts at all stages of the contract*/
