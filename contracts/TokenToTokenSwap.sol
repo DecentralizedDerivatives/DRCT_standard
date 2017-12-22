@@ -222,8 +222,8 @@ contract TokenToTokenSwap {
       token_b.balanceOf(address(this)) >= token_b_amount
     );
 
-    tokenize(long_party);
-    tokenize(short_party);
+   tokenize(long_party);
+   tokenize(short_party);
     current_state = SwapState.tokenized;
     if (premium > 0){
       if (creator == long_party){
