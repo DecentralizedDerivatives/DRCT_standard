@@ -19,9 +19,9 @@ contract Factory {
   //Address of the deployer contract
   address deployer_address;
   Deployer_Interface deployer;
+  Deployer_Interface tokenDeployer;
+  address token_deployer_address;
 
-  address public long_drct;
-  address public short_drct;
   address public token_a;
   address public token_b;
 
@@ -34,13 +34,13 @@ contract Factory {
   //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
   uint public token_ratio1;
   uint public token_ratio2;
-  //Unix timestamp for the start date of the contract.  The end date is the start date + duration and the capped value is the value at the start date +- (start value/ multiplier)
-  uint public start_date;
 
 
   //Array of deployed contracts
   address[] public contracts;
-  mapping(address => bool) public created_contracts;
+  mapping(address => uint) public created_contracts;
+  mapping(uint => address) public long_tokens;
+  mapping(uint => address) public short_tokens;
 
   //Emitted when a Swap is created
   event ContractCreation(address _sender, address _created);
@@ -73,6 +73,11 @@ contract Factory {
     deployer_address = _deployer;
     deployer = Deployer_Interface(_deployer);
   }
+
+  function settokenDeployer(address _tdeployer) public onlyOwner() {
+    token_deployer_address = _tdeployer;
+    tokenDeployer = Deployer_Interface(_tdeployer);
+  }
   /*
   * Sets the user_contract address
   * @param "_userContract": The new userContract address
@@ -88,23 +93,6 @@ contract Factory {
     return (token_a, token_b);
   }
 
-  /*
-  * Sets the long and short DRCT token addresses
-  * @param "_long_drct": The address of the long DRCT token
-  * @param "_short_drct": The address of the short DRCT token
-  */
-  function settokens(address _long_drct, address _short_drct) public onlyOwner() {
-    long_drct = _long_drct;
-    short_drct = _short_drct;
-  }
-
-  /*
-  * Sets the start date of a swap
-  * @param "_start_date": The new start date
-  */
-  function setStartDate(uint _start_date) public onlyOwner() {
-    start_date = _start_date;
-  }
 
   /*
   * Sets token ratio, swap duration, and multiplier variables for a swap
@@ -133,11 +121,11 @@ contract Factory {
 
   //Allows a user to deploy a new swap contract, if they pay the fee
   //returns the newly created swap address and calls event 'ContractCreation'
-  function deployContract() public payable returns (address created) {
+  function deployContract(uint _start_date) public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender, user_contract);
+    address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
     contracts.push(new_contract);
-    created_contracts[new_contract] = true;
+    created_contracts[new_contract] = _start_date;
     ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
@@ -150,16 +138,29 @@ contract Factory {
   * @returns "created": The address of the created DRCT token
   * @returns "token_ratio": The ratio of the created DRCT token
   */
-  function createToken(uint _supply, address _party, bool _long) public returns (address created, uint token_ratio) {
-    require(created_contracts[msg.sender] == true);
+
+  function deployTokenContract(uint _start_date) public returns(address _long, address _short) {
+    address newlongtoken = tokenDeployer.newToken();
+    address newshorttoken = tokenDeployer.newToken();
+    long_tokens[_start_date] = newlongtoken;
+    short_tokens[_start_date] = newshorttoken;
+    return (newlongtoken, newlongtoken);
+  }
+
+
+  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
+    require(created_contracts[msg.sender] > 0);
+    address ltoken = long_tokens[_start_date];
+    require(ltoken != address(0));
     if (_long) {
-      drct_interface = DRCT_Token_Interface(long_drct);
+      drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
-      return (long_drct, token_ratio1);
+      return (ltoken, token_ratio1);
     } else {
-      drct_interface = DRCT_Token_Interface(short_drct);
+      address stoken =short_tokens[_start_date];
+      drct_interface = DRCT_Token_Interface(stoken);
       drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
-      return (short_drct, token_ratio2);
+      return (stoken, token_ratio2);
     }
   }
   
@@ -183,8 +184,8 @@ contract Factory {
   * @returns "token_b_address": The address of token b
   * @returns "start_date": The start date of the swap
   */
-  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date){
-    return (oracle_address, owner, duration, multiplier, token_a, token_b, start_date);
+  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
+    return (oracle_address, owner, duration, multiplier, token_a, token_b);
   }
 
   /*
@@ -192,13 +193,9 @@ contract Factory {
   * @param "_party": The address being paid
   * @param "_long": Whether the _party is long or not
   */
-  function payToken(address _party, bool _long) public {
-    require(created_contracts[msg.sender] == true);
-    if (_long) {
-      drct_interface = DRCT_Token_Interface(long_drct);
-    } else {
-      drct_interface = DRCT_Token_Interface(short_drct);
-    }
+  function payToken(address _party, address _token_add) public {
+    require(created_contracts[msg.sender] > 0);
+    drct_interface = DRCT_Token_Interface(_token_add);
     drct_interface.pay(_party, msg.sender);
   }
 
