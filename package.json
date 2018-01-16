@@ -1,0 +1,30 @@
+{
+  "name": "drct_standard",
+  "version": "1.0.0",
+  "description": "Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates.",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "bip39": "^2.5.0",
+    "ethereumjs-wallet": "^0.6.0",
+    "truffle-hdwallet-provider": "0.0.3",
+    "web3": "^1.0.0-beta.27",
+    "web3-provider-engine": "^13.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DecentralizedDerivatives/DRCT_standard.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DecentralizedDerivatives/DRCT_standard/issues"
+  },
+  "homepage": "https://github.com/DecentralizedDerivatives/DRCT_standard#readme"
+}
