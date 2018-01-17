@@ -57,6 +57,10 @@ contract Factory {
     owner = msg.sender;
   }
 
+  function getTokens(uint _date) public view returns(address _ltoken, address _stoken){
+    return(long_tokens[_date],short_tokens[_date]);
+  }
+
   /*
   * Updates the fee amount
   * @param "_fee": The new fee amount
@@ -131,21 +135,24 @@ contract Factory {
   }
 
   /*
-  * Deploys a DRCT_Token contract, sent from an already-deployed swap contract
+  * Deploys a DRCT_Token contract
   * @param "_supply": The number of tokens to create
   * @param "_party": The address to send the tokens to
   * @param "_long": Whether the party is long or short
   * @returns "created": The address of the created DRCT token
   * @returns "token_ratio": The ratio of the created DRCT token
   */
-
-  function deployTokenContract(uint _start_date) public returns(address _long, address _short) {
-    address newlongtoken = tokenDeployer.newToken();
-    address newshorttoken = tokenDeployer.newToken();
-    long_tokens[_start_date] = newlongtoken;
-    short_tokens[_start_date] = newshorttoken;
-    return (newlongtoken, newlongtoken);
+  function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
+    address token = tokenDeployer.newToken();
+    if (_long){
+      long_tokens[_start_date] = token;
+    }
+    else{
+    short_tokens[_start_date] = token;
+    }
+    return token;
   }
+
 
 
   function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {

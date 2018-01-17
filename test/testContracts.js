@@ -53,7 +53,8 @@ contract('Contracts', function(accounts) {
   	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
   	await oracle.StoreDocument(o_startdate,1000);
     await oracle.StoreDocument(o_enddate,1500);
-    await factory.deployTokenContract(o_startdate);
+    await factory.deployTokenContract(o_startdate,true);
+    await factory.deployTokenContract(o_startdate,false);
     long_token_add =await factory.long_tokens(o_startdate);
     short_token_add =await factory.short_tokens(o_startdate);
     long_token =await DRCT_Token.at(long_token_add);
@@ -87,19 +88,22 @@ contract('Contracts', function(accounts) {
 	});
 
   it("Down Move", async function(){
-  	await oracle.StoreDocument(1515628800,1000);
-    await oracle.StoreDocument(1516233600,500);
-    await factory.deployTokenContract(1515628800);
-    long_token_add =await factory.long_tokens(1515628800);
-    short_token_add =await factory.short_tokens(1515628800);
+  	var o_startdate = 1515628800;
+    var o_enddate = 1516233600;
+  	await oracle.StoreDocument(o_startdate,1000);
+    await oracle.StoreDocument(o_enddate,500);
+    await factory.deployTokenContract(o_startdate,true);
+    await factory.deployTokenContract(o_startdate,false);
+    long_token_add =await factory.long_tokens(o_startdate);
+    short_token_add =await factory.short_tokens(o_startdate);
     long_token =await DRCT_Token.at(long_token_add);
     short_token = await DRCT_Token.at(short_token_add);
     var balance1 = await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0));
   	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
-    assert.equal(await oracle.RetrieveData(1515628800),1000,"Result should equal end value");
-    assert.equal(await oracle.RetrieveData(1516233600),500,"Result should equal start value");
+    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
+    assert.equal(await oracle.RetrieveData(o_enddate),500,"Result should equal start value");
 	console.log("Contracts deployed successfully")
-	  	var receipt = await factory.deployContract(1515628800,{from: account_two, gas:4000000});
+	  	var receipt = await factory.deployContract(o_startdate,{from: account_two, gas:4000000});
 	  	swap_add = receipt.logs[0].args._created;
 	  	await userContract.Initiate(swap_add,10000000000000000000,10000000000000000000,0,true,{value: web3.toWei(10,'ether'), from: account_two});
 	  	swap = TokenToTokenSwap.at(swap_add);
@@ -128,7 +132,8 @@ contract('Contracts', function(accounts) {
     it("Big Up Move", async function(){
     var o_startdate = 1545091200;
     var o_enddate = 1545696000;
-    await factory.deployTokenContract(o_startdate);
+    await factory.deployTokenContract(o_startdate,true);
+    await factory.deployTokenContract(o_startdate,false);
     long_token_add =await factory.long_tokens(o_startdate);
     short_token_add =await factory.short_tokens(o_startdate);
     long_token =await DRCT_Token.at(long_token_add);
@@ -166,20 +171,21 @@ contract('Contracts', function(accounts) {
 	assert(balance1 >= newbal && balance1 <= newbal + 1 ,"Balance1 should change correctly");
 	});
 	it("Big Down Move", async function(){
-	var o_startdate = 1545696000;
-    var o_enddate = 1546300800;
-  	await oracle.StoreDocument(o_startdate,1000);
-    await oracle.StoreDocument(o_enddate,0);
-    await factory.deployTokenContract(o_startdate);
-    long_token_add =await factory.long_tokens(o_startdate);
-    short_token_add =await factory.short_tokens(o_startdate);
-    long_token =await DRCT_Token.at(long_token_add);
-    short_token = await DRCT_Token.at(short_token_add);
-    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_four), 'ether').toFixed(0));
-  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_five), 'ether').toFixed(0));
-    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
-    assert.equal(await oracle.RetrieveData(o_enddate),0,"Result should equal start value");
-	console.log("Contracts deployed successfully")
+		var o_startdate = 1545696000;
+	    var o_enddate = 1546300800;
+	  	await oracle.StoreDocument(o_startdate,1000);
+	    await oracle.StoreDocument(o_enddate,0);
+	    await factory.deployTokenContract(o_startdate,true);
+	    await factory.deployTokenContract(o_startdate,false);
+	    long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+	    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_four), 'ether').toFixed(0));
+	  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_five), 'ether').toFixed(0));
+	    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
+	    assert.equal(await oracle.RetrieveData(o_enddate),0,"Result should equal start value");
+		console.log("Contracts deployed successfully")
 	  	var receipt = await factory.deployContract(o_startdate,{from: account_four, gas:4000000});
 	  	swap_add = receipt.logs[0].args._created;
 	  	await userContract.Initiate(swap_add,10000000000000000000,10000000000000000000,0,true,{value: web3.toWei(10,'ether'), from: account_four});
@@ -207,20 +213,21 @@ contract('Contracts', function(accounts) {
 		assert(balance1 >= newbal + 10 && balance1 <= newbal + 11 ,"Balance1 should change correctly");
 	});
 	it("No Move", async function(){
-			var o_startdate = 1546300800;
-    var o_enddate = 1546905600;
-        await factory.deployTokenContract(o_startdate);
-    long_token_add =await factory.long_tokens(o_startdate);
-    short_token_add =await factory.short_tokens(o_startdate);
-    long_token =await DRCT_Token.at(long_token_add);
-    short_token = await DRCT_Token.at(short_token_add);
-  	await oracle.StoreDocument(o_startdate,1000);
-    await oracle.StoreDocument(o_enddate,1000);
-    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_four), 'ether').toFixed(0));
-  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_five), 'ether').toFixed(0));
-    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
-    assert.equal(await oracle.RetrieveData(o_enddate),1000,"Result should equal start value");
-	console.log("Contracts deployed successfully")
+		var o_startdate = 1546300800;
+    	var o_enddate = 1546905600;
+        await factory.deployTokenContract(o_startdate,true);
+	    await factory.deployTokenContract(o_startdate,false);
+	    long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+	  	await oracle.StoreDocument(o_startdate,1000);
+	    await oracle.StoreDocument(o_enddate,1000);
+	    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_four), 'ether').toFixed(0));
+	  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_five), 'ether').toFixed(0));
+	    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
+	    assert.equal(await oracle.RetrieveData(o_enddate),1000,"Result should equal start value");
+		console.log("Contracts deployed successfully")
 	  	var receipt = await factory.deployContract(o_startdate,{from: account_two, gas:4000000});
 	  	swap_add = receipt.logs[0].args._created;
 	  	await userContract.Initiate(swap_add,10000000000000000000,10000000000000000000,0,true,{value: web3.toWei(10,'ether'), from: account_two});
@@ -251,11 +258,12 @@ contract('Contracts', function(accounts) {
     var o_enddate = 1547510400;
 		await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
-	        await factory.deployTokenContract(o_startdate);
-    long_token_add =await factory.long_tokens(o_startdate);
-    short_token_add =await factory.short_tokens(o_startdate);
-    long_token =await DRCT_Token.at(long_token_add);
-    short_token = await DRCT_Token.at(short_token_add);
+	    await factory.deployTokenContract(o_startdate,true);
+    	await factory.deployTokenContract(o_startdate,false);
+    	long_token_add =await factory.long_tokens(o_startdate);
+    	short_token_add =await factory.short_tokens(o_startdate);
+    	long_token =await DRCT_Token.at(long_token_add);
+    	short_token = await DRCT_Token.at(short_token_add);
 	    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0));
   		var balance2 = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
 	    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
@@ -293,7 +301,8 @@ contract('Contracts', function(accounts) {
 	it("Test Manual Down", async function(){
 		var o_startdate = 1547510400;
     	var o_enddate = 1548115200;
-        await factory.deployTokenContract(o_startdate);
+        await factory.deployTokenContract(o_startdate,true);
+    	await factory.deployTokenContract(o_startdate,false);
     	long_token_add =await factory.long_tokens(o_startdate);
     	short_token_add =await factory.short_tokens(o_startdate);
     	long_token =await DRCT_Token.at(long_token_add);
@@ -338,7 +347,8 @@ contract('Contracts', function(accounts) {
 	it("Test Multiple Swaps", async function(){
 		var o_startdate =1548115200;
     	var o_enddate = 1548720000;
-        await factory.deployTokenContract(o_startdate);
+        await factory.deployTokenContract(o_startdate,true);
+    	await factory.deployTokenContract(o_startdate,false);
     	long_token_add =await factory.long_tokens(o_startdate);
     	short_token_add =await factory.short_tokens(o_startdate);
     	long_token =await DRCT_Token.at(long_token_add);
@@ -399,7 +409,8 @@ contract('Contracts', function(accounts) {
 	it("Test Over 100 Token Holders", async function(){
 		var o_startdate = 1548720000;
     	var o_enddate = 1549324800;
-        await factory.deployTokenContract(o_startdate);
+        await factory.deployTokenContract(o_startdate,true);
+    	await factory.deployTokenContract(o_startdate,false);
    		long_token_add =await factory.long_tokens(o_startdate);
     	short_token_add =await factory.short_tokens(o_startdate);
    		long_token =await DRCT_Token.at(long_token_add);
@@ -481,7 +492,8 @@ contract('Contracts', function(accounts) {
 		var o_startdate = 1550534400;
 		var receipt = await factory.deployContract(o_startdate,{from: account_two, gas:4000000});
 	  	swap_add = receipt.logs[0].args._created;
-	  	await factory.deployTokenContract(o_startdate);
+	  	await factory.deployTokenContract(o_startdate,true);
+    	await factory.deployTokenContract(o_startdate,false);
 	    long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
 	    long_token =await DRCT_Token.at(long_token_add);
