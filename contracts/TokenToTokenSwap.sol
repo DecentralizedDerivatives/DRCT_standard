@@ -27,10 +27,6 @@ contract TokenToTokenSwap {
 
   //Address of the person who created this contract through the Factory
   address creator;
-
-  //Address of an operator who will ensure forcePay is called at the end of the swap period
-  address operator;
-
   //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
   address oracle_address;
   Oracle_Interface oracle;
@@ -168,7 +164,7 @@ contract TokenToTokenSwap {
   }
 
   function setVars() internal{
-      (oracle_address,operator,duration,multiplier,token_a_address,token_b_address) = factory.getVariables();
+      (oracle_address,duration,multiplier,token_a_address,token_b_address) = factory.getVariables();
   }
 
   /*
@@ -245,7 +241,7 @@ contract TokenToTokenSwap {
   * of the Oracle.
   */
   function Calculate() internal {
-    //require(now >= end_date);
+    require(now >= end_date + 86400);
     //should it be end_date + 1? so the oracle can update?
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
@@ -347,8 +343,8 @@ contract TokenToTokenSwap {
     }
 
     if (loop_count == count){
-        token_a.transfer(operator, token_a.balanceOf(address(this)));
-        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        token_a.transfer(factory_address, token_a.balanceOf(address(this)));
+        token_b.transfer(factory_address, token_b.balanceOf(address(this)));
         PaidOut(long_token_address, short_token_address);
         current_state = SwapState.ended;
       }

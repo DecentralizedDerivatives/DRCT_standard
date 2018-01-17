@@ -143,12 +143,16 @@ contract Factory {
   * @returns "token_ratio": The ratio of the created DRCT token
   */
   function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
-    address token = tokenDeployer.newToken();
+    address token;
     if (_long){
+      require(long_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
       long_tokens[_start_date] = token;
     }
     else{
-    short_tokens[_start_date] = token;
+      require(short_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
+      short_tokens[_start_date] = token;
     }
     return token;
   }
@@ -158,13 +162,13 @@ contract Factory {
   function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
     require(created_contracts[msg.sender] > 0);
     address ltoken = long_tokens[_start_date];
-    require(ltoken != address(0));
+    address stoken = short_tokens[_start_date];
+    require(ltoken != address(0) && stoken != address(0));
     if (_long) {
       drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
       return (ltoken, token_ratio1);
     } else {
-      address stoken =short_tokens[_start_date];
       drct_interface = DRCT_Token_Interface(stoken);
       drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
       return (stoken, token_ratio2);
@@ -191,8 +195,8 @@ contract Factory {
   * @returns "token_b_address": The address of token b
   * @returns "start_date": The start date of the swap
   */
-  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
-    return (oracle_address, owner, duration, multiplier, token_a, token_b);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
+    return (oracle_address,duration, multiplier, token_a, token_b);
   }
 
   /*
