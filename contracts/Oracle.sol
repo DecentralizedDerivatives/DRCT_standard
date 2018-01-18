@@ -1,39 +1,56 @@
 pragma solidity ^0.4.17;
 
-//The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is updated by an off chain calculation by DDA.  Methodology can be found at www.github.com/DecentralizedDerivatives/Oracles
-contract Oracle {
+import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
+
+
+contract Oracle is usingOraclize{
 
   /*Variables*/
-  //Owner of the oracle
-  address private owner;
+
+  //Private queryId for Oraclize callback
+  bytes32 private queryID;
+
   //Mapping of documents stored in the oracle
-  mapping(uint => uint) oracle_values;
+  mapping(uint => uint) public oracle_values;
+  mapping(uint => bool) public queried;
 
   /*Events*/
   event DocumentStored(uint _key, uint _value);
+  event newOraclizeQuery(string description);
 
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
-  //Constructor - Sets owner
-  function Oracle() public {
-    owner = msg.sender;
-  }
-
-  //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
-  //represent underlying values at a specified date (key).
-  function StoreDocument(uint _key, uint _value) public onlyOwner() {
-    oracle_values[_key] = _value;
-    DocumentStored(_key, _value);
-  }
-
-  //Allows for the viewing of oracle data
+  /*Functions*/
   function RetrieveData(uint _date) public constant returns (uint data) {
-    return oracle_values[_date];
+    uint value = oracle_values[_date];
+    return value;
   }
 
-  //set a new owner of the contract
-  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
+ //CAlls 
+  function PushData() public {
+    uint _key = now - (now % 86400);
+    require(queried[_key] == false);
+    if (oraclize_getPrice("URL") > this.balance) {
+            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+        } else {
+            newOraclizeQuery("Oraclize queries sent");
+            queryID = oraclize_query("URL", "json(https://api.gdax.com/products/BTC-USD/ticker).price");
+            qureied[_key] == true;
+        }
+  }
+
+
+  function __callback(bytes32 _oraclizeID, string _result) {
+      require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
+      uint _value = parseInt(_result,3);
+      uint _key = now - (now % 86400);
+      oracle_values[_key] = _value;
+      DocumentStored(_key, _value);
+    }
+
+
+  function fund() public payable {}
+
+  function getQuery(uint _date) public view returns(bool _isValue){
+    return queried[_date];
+  }
+
 }

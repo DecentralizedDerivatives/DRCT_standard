@@ -175,14 +175,13 @@ contract Factory {
   }
 
   /*
-  * Deploys a DRCT_Token contract, sent from an already-deployed swap contract
+  * Deploys a DRCT_Token contract
   * @param "_supply": The number of tokens to create
   * @param "_party": The address to send the tokens to
   * @param "_long": Whether the party is long or short
   * @returns "created": The address of the created DRCT token
   * @returns "token_ratio": The ratio of the created DRCT token
   */
-
   function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
     address token = tokenDeployer.newToken();
     if (_long){
@@ -195,10 +194,11 @@ contract Factory {
   }
 
 
+
   function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
     require(created_contracts[msg.sender] > 0);
     address ltoken = long_tokens[_start_date];
-    require(ltoken != address(0) && stoken != address(0));
+    require(ltoken != address(0));
     if (_long) {
       drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);

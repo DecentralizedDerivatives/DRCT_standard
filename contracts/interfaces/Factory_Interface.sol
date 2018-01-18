@@ -6,5 +6,5 @@ interface Factory_Interface {
   function payToken(address _party, address _token_add) public;
   function deployContract(uint _start_date) public payable returns (address created);
    function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
 }
