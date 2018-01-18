@@ -15,7 +15,7 @@ module.exports =async function(callback) {
   let userContract = await UserContract.deployed();
   let tokenDeployer = await Tokendeployer.deployed();
   let oracle = await Oracle.deployed();
-  await factory.setVariables(1000000000000000,1000000000000000,7,1);
+  await factory.setVariables(1000000000000000,1000000000000000,1,1);
   console.log(factory.address);
   await factory.setBaseTokens(base1.address,base2.address);
   await factory.setUserContract(userContract.address);
@@ -23,6 +23,7 @@ module.exports =async function(callback) {
   await factory.settokenDeployer(tokenDeployer.address);
   await factory.setOracleAddress(oracle.address);
   await userContract.setFactory(factory.address);
+  await oracle.PushData();
   console.log(await factory.oracle_address.call() , oracle.address);
 
 }
