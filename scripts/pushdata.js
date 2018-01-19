@@ -3,5 +3,6 @@ var Oracle = artifacts.require("Oracle");
 
 
 module.exports =async function(callback) {
-  await oracle.PushData();
+	let oracle = await Oracle.deployed();
+ 	await oracle.PushData();
 }
