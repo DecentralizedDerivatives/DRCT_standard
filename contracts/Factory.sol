@@ -3,6 +3,7 @@ pragma solidity ^0.4.17;
 import "./interfaces/Deployer_Interface.sol";
 import "./interfaces/DRCT_Token_Interface.sol";
 import "./libraries/SafeMath.sol";
+import "./interfaces/Wrapped_Ether_Interface.sol";
 
 
 //The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
@@ -15,6 +16,7 @@ contract Factory {
   //Address of the user contract
   address public user_contract;
   DRCT_Token_Interface drct_interface;
+  Wrapped_Ether_Interface token_interface;
 
   //Address of the deployer contract
   address deployer_address;
@@ -78,6 +80,10 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+  /*
+  * Sets the token_deployer address
+  * @param "_tdeployer": The new token deployer address
+  */  
   function settokenDeployer(address _tdeployer) public onlyOwner() {
     token_deployer_address = _tdeployer;
     tokenDeployer = Deployer_Interface(_tdeployer);
@@ -91,7 +97,7 @@ contract Factory {
   }
 
   /*
-  * A getter to retrieve the base tokens
+  * Returns the base token addresses
   */
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
@@ -105,7 +111,6 @@ contract Factory {
   * @param "_duration": The duration of the swap, in seconds
   * @param "_multiplier": The multiplier used for the swap
   */
-  //10e15,10e15,7,2,"0x..","0x..."
   function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier) public onlyOwner() {
     token_ratio1 = _token_ratio1;
     token_ratio2 = _token_ratio2;
@@ -134,14 +139,7 @@ contract Factory {
     return new_contract;
   }
 
-  /*
-  * Deploys a DRCT_Token contract
-  * @param "_supply": The number of tokens to create
-  * @param "_party": The address to send the tokens to
-  * @param "_long": Whether the party is long or short
-  * @returns "created": The address of the created DRCT token
-  * @returns "token_ratio": The ratio of the created DRCT token
-  */
+
   function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
     address token;
     if (_long){
@@ -159,6 +157,14 @@ contract Factory {
 
 
 
+  /*
+  * Deploys new tokens on a DRCT_Token contract -- called from within a swap
+  * @param "_supply": The number of tokens to create
+  * @param "_party": The address to send the tokens to
+  * @param "_long": Whether the party is long or short
+  * @returns "created": The address of the created DRCT token
+  * @returns "token_ratio": The ratio of the created DRCT token
+  */
   function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
     require(created_contracts[msg.sender] > 0);
     address ltoken = long_tokens[_start_date];
@@ -183,7 +189,24 @@ contract Factory {
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 
   //Allows the owner to pull contract creation fees
-  function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
+  function withdrawFees() public onlyOwner() returns(uint atok, uint btok, uint _eth){
+   token_interface = Wrapped_Ether_Interface(token_a);
+   uint aval = token_interface.balanceOf(address(this));
+   if(aval > 0){
+      token_interface.withdraw(aval);
+    }
+   token_interface = Wrapped_Ether_Interface(token_b);
+   uint bval = token_interface.balanceOf(address(this));
+   if (bval > 0){
+    token_interface.withdraw(bval);
+  }
+   owner.transfer(this.balance);
+   return(aval,bval,this.balance);
+   }
+
+   function() public payable {
+
+   }
 
   /*
   * Returns a tuple of many private variables

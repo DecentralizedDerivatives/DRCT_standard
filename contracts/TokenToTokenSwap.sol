@@ -241,7 +241,7 @@ contract TokenToTokenSwap {
   * of the Oracle.
   */
   function Calculate() internal {
-    require(now >= end_date + 86400);
+    //require(now >= end_date + 86400);
     //Comment out above for testing purposes
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);

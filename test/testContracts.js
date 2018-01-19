@@ -81,12 +81,11 @@ contract('Contracts', function(accounts) {
 	  	await base1.withdraw(await base1.balanceOf(accounts[i]),{from:accounts[i]});
 	  	await base2.withdraw(await base2.balanceOf(accounts[i]),{from:accounts[i]});
 	}
-	/*var newbal = eval(await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0)));
+	var newbal = eval(await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0)));
 	var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
 	assert(balance1 >= newbal + 2.5 && balance1 <= newbal + 3.5 ,"Balance1 should change correctly");
 	assert(balance2 >= newbal2 + 7 && balance2 <= newbal2 + 8 ,"Balance2 should change correctly");
-	*/});
-
+	});
   it("Down Move", async function(){
   	var o_startdate = 1515628800;
     var o_enddate = 1516233600;
@@ -506,5 +505,20 @@ contract('Contracts', function(accounts) {
 	  	assert(await base1.balanceOf(accounts[1]),0,"You should not be able to exit");
 	  	assert.equal(await swap.current_state.call(),3,"Current State should be 3");
 	});
+	it("Test Withdrawal", async function(){
+		console.log('Sending Ether and Tokens');
+		await base1.CreateToken({value: web3.toWei(1,'ether'), from: account_two});
+		await base1.transfer(factory.address,web3.toWei(1,'ether'),{from: account_two});
+		await base2.CreateToken({value: web3.toWei(1,'ether'), from: account_three});
+		await base2.transfer(factory.address,web3.toWei(1,'ether'),{from: account_three});
+		await factory.deployContract(1,{from: account_two, to: factory.address, value: web3.toWei(1, 'ether') })
+		//withdraw from factory
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(account_one), 'ether').toFixed(0)));
+		await factory.withdrawFees();
+		var newbal2 = eval(await (web3.fromWei(web3.eth.getBalance(account_one), 'ether').toFixed(0)));
+	  	console.log(newbal,newbal2);
+	  	assert(newbal >= newbal2 - 4 && newbal <= newbal2 -3,"Value should changed correctly");
+	});
+
 });
 
