@@ -13,12 +13,17 @@ Documentation - https://github.com/DecentralizedDerivatives/DRCT_standard/wiki/D
 
 ## Truffle Deployment Instructions
 
+clone the repo, cd into it, and then:
+
+    $ npm install
+
     $ truffle compile
 
     $ truffle migrate
 
     $ truffle exec /scripts/launch.js
 
+Now you have a launched Factory, Oracle and dependency contracts and you're ready to create DRCT tokens and contracts
 
 ## How to Contribute
 Join our slack, shoot us an email or contact us to list the tokens or the contract creation pieces on your site
