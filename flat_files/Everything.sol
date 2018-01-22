@@ -33,11 +33,11 @@ library SafeMath {
 
 //Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {
-  function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
-  function payToken(address _party, bool long) public;
-   function deployContract(address swap_owner) public payable returns (address created);
+  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio);
+  function payToken(address _party, address _token_add) public;
+  function deployContract(uint _start_date) public payable returns (address created);
    function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
 }
 
 //Swap Oracle functions - descriptions can be found in Oracle.sol
@@ -56,6 +56,7 @@ interface DRCT_Token_Interface {
   function partyCount(address _swap) public constant returns(uint count);
 }
 
+
 //ERC20 function interface
 interface ERC20_Interface {
   function totalSupply() public constant returns (uint total_supply);
@@ -68,7 +69,8 @@ interface ERC20_Interface {
 
 //Swap Deployer functions - descriptions can be found in Deployer.sol
 interface Deployer_Interface {
-  function newContract(address _party, address user_contract) public payable returns (address created);
+  function newContract(address _party, address user_contract, uint _start_date) public payable returns (address created);
+  function newToken() public returns (address created);
 }
 
 //Swap interface- descriptions can be found in TokenToTokenSwap.sol
@@ -77,6 +79,7 @@ interface TokenToTokenSwap_Interface {
   function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
   function createTokens() public;
 }
+
 
 //Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
 contract Deployer {
@@ -88,9 +91,9 @@ contract Deployer {
     owner = msg.sender;
   }
 
-  function newContract(address _party, address user_contract) public returns (address created) {
+  function newContract(address _party, address user_contract, uint _start_date) public returns (address created) {
     require(msg.sender == factory);
-    address new_contract = new TokenToTokenSwap(factory, _party, user_contract);
+    address new_contract = new TokenToTokenSwap(factory, _party, user_contract, _start_date);
     return new_contract;
   }
 
@@ -114,8 +117,8 @@ contract UserContract{
       owner = msg.sender;
   }
 
-  //The _swapAdd is the address of the deployed contract created from the Factory contract.  
-  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.  
+  //The _swapAdd is the address of the deployed contract created from the Factory contract.
+  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.
   //_premium is a base payment to the other party for taking the other side of the swap
   // _isLong refers to whether the sender is long or short the reference rate
   //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
@@ -156,6 +159,7 @@ contract UserContract{
   }
 }
 
+
 //The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
 contract Factory {
   using SafeMath for uint256;
@@ -166,13 +170,14 @@ contract Factory {
   //Address of the user contract
   address public user_contract;
   DRCT_Token_Interface drct_interface;
+  Wrapped_Ether_Interface token_interface;
 
   //Address of the deployer contract
   address deployer_address;
   Deployer_Interface deployer;
+  Deployer_Interface tokenDeployer;
+  address token_deployer_address;
 
-  address public long_drct;
-  address public short_drct;
   address public token_a;
   address public token_b;
 
@@ -185,13 +190,13 @@ contract Factory {
   //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
   uint public token_ratio1;
   uint public token_ratio2;
-  //Unix timestamp for the start date of the contract.  The end date is the start date + duration and the capped value is the value at the start date +- (start value/ multiplier)
-  uint public start_date;
 
 
   //Array of deployed contracts
   address[] public contracts;
-  mapping(address => bool) public created_contracts;
+  mapping(address => uint) public created_contracts;
+  mapping(uint => address) public long_tokens;
+  mapping(uint => address) public short_tokens;
 
   //Emitted when a Swap is created
   event ContractCreation(address _sender, address _created);
@@ -206,6 +211,10 @@ contract Factory {
   // Constructor - Sets owner
   function Factory() public {
     owner = msg.sender;
+  }
+
+  function getTokens(uint _date) public view returns(address _ltoken, address _stoken){
+    return(long_tokens[_date],short_tokens[_date]);
   }
 
   /*
@@ -224,6 +233,15 @@ contract Factory {
     deployer_address = _deployer;
     deployer = Deployer_Interface(_deployer);
   }
+
+  /*
+  * Sets the token_deployer address
+  * @param "_tdeployer": The new token deployer address
+  */  
+  function settokenDeployer(address _tdeployer) public onlyOwner() {
+    token_deployer_address = _tdeployer;
+    tokenDeployer = Deployer_Interface(_tdeployer);
+  }
   /*
   * Sets the user_contract address
   * @param "_userContract": The new userContract address
@@ -233,29 +251,12 @@ contract Factory {
   }
 
   /*
-  * A getter to retrieve the base tokens
+  * Returns the base token addresses
   */
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
   }
 
-  /*
-  * Sets the long and short DRCT token addresses
-  * @param "_long_drct": The address of the long DRCT token
-  * @param "_short_drct": The address of the short DRCT token
-  */
-  function settokens(address _long_drct, address _short_drct) public onlyOwner() {
-    long_drct = _long_drct;
-    short_drct = _short_drct;
-  }
-
-  /*
-  * Sets the start date of a swap
-  * @param "_start_date": The new start date
-  */
-  function setStartDate(uint _start_date) public onlyOwner() {
-    start_date = _start_date;
-  }
 
   /*
   * Sets token ratio, swap duration, and multiplier variables for a swap
@@ -264,7 +265,6 @@ contract Factory {
   * @param "_duration": The duration of the swap, in seconds
   * @param "_multiplier": The multiplier used for the swap
   */
-  //10e15,10e15,7,2,"0x..","0x..."
   function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier) public onlyOwner() {
     token_ratio1 = _token_ratio1;
     token_ratio2 = _token_ratio2;
@@ -284,33 +284,54 @@ contract Factory {
 
   //Allows a user to deploy a new swap contract, if they pay the fee
   //returns the newly created swap address and calls event 'ContractCreation'
-  function deployContract() public payable returns (address created) {
+  function deployContract(uint _start_date) public payable returns (address created) {
     require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender, user_contract);
+    address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
     contracts.push(new_contract);
-    created_contracts[new_contract] = true;
+    created_contracts[new_contract] = _start_date;
     ContractCreation(msg.sender,new_contract);
     return new_contract;
   }
 
+
+  function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
+    address token;
+    if (_long){
+      require(long_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
+      long_tokens[_start_date] = token;
+    }
+    else{
+      require(short_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
+      short_tokens[_start_date] = token;
+    }
+    return token;
+  }
+
+
+
   /*
-  * Deploys a DRCT_Token contract, sent from an already-deployed swap contract
+  * Deploys new tokens on a DRCT_Token contract -- called from within a swap
   * @param "_supply": The number of tokens to create
   * @param "_party": The address to send the tokens to
   * @param "_long": Whether the party is long or short
   * @returns "created": The address of the created DRCT token
   * @returns "token_ratio": The ratio of the created DRCT token
   */
-  function createToken(uint _supply, address _party, bool _long) public returns (address created, uint token_ratio) {
-    require(created_contracts[msg.sender] == true);
+  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
+    require(created_contracts[msg.sender] > 0);
+    address ltoken = long_tokens[_start_date];
+    address stoken = short_tokens[_start_date];
+    require(ltoken != address(0) && stoken != address(0));
     if (_long) {
-      drct_interface = DRCT_Token_Interface(long_drct);
+      drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
-      return (long_drct, token_ratio1);
+      return (ltoken, token_ratio1);
     } else {
-      drct_interface = DRCT_Token_Interface(short_drct);
+      drct_interface = DRCT_Token_Interface(stoken);
       drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
-      return (short_drct, token_ratio2);
+      return (stoken, token_ratio2);
     }
   }
   
@@ -322,7 +343,24 @@ contract Factory {
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 
   //Allows the owner to pull contract creation fees
-  function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
+  function withdrawFees() public onlyOwner() returns(uint atok, uint btok, uint _eth){
+   token_interface = Wrapped_Ether_Interface(token_a);
+   uint aval = token_interface.balanceOf(address(this));
+   if(aval > 0){
+      token_interface.withdraw(aval);
+    }
+   token_interface = Wrapped_Ether_Interface(token_b);
+   uint bval = token_interface.balanceOf(address(this));
+   if (bval > 0){
+    token_interface.withdraw(bval);
+  }
+   owner.transfer(this.balance);
+   return(aval,bval,this.balance);
+   }
+
+   function() public payable {
+
+   }
 
   /*
   * Returns a tuple of many private variables
@@ -334,8 +372,8 @@ contract Factory {
   * @returns "token_b_address": The address of token b
   * @returns "start_date": The start date of the swap
   */
-  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date){
-    return (oracle_address, owner, duration, multiplier, token_a, token_b, start_date);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
+    return (oracle_address,duration, multiplier, token_a, token_b);
   }
 
   /*
@@ -343,13 +381,9 @@ contract Factory {
   * @param "_party": The address being paid
   * @param "_long": Whether the _party is long or not
   */
-  function payToken(address _party, bool _long) public {
-    require(created_contracts[msg.sender] == true);
-    if (_long) {
-      drct_interface = DRCT_Token_Interface(long_drct);
-    } else {
-      drct_interface = DRCT_Token_Interface(short_drct);
-    }
+  function payToken(address _party, address _token_add) public {
+    require(created_contracts[msg.sender] > 0);
+    drct_interface = DRCT_Token_Interface(_token_add);
     drct_interface.pay(_party, msg.sender);
   }
 
@@ -359,44 +393,1077 @@ contract Factory {
   }
 }
 
+
 //The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is updated by an off chain calculation by DDA.  Methodology can be found at www.github.com/DecentralizedDerivatives/Oracles
-contract Oracle {
+pragma solidity ^0.4.17;
+
+// <ORACLIZE_API>
+/*
+Copyright (c) 2015-2016 Oraclize SRL
+Copyright (c) 2016 Oraclize LTD
+
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+contract OraclizeI {
+    address public cbAddress;
+    function query(uint _timestamp, string _datasource, string _arg) payable returns (bytes32 _id);
+    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) payable returns (bytes32 _id);
+    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) payable returns (bytes32 _id);
+    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) payable returns (bytes32 _id);
+    function queryN(uint _timestamp, string _datasource, bytes _argN) payable returns (bytes32 _id);
+    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) payable returns (bytes32 _id);
+    function getPrice(string _datasource) returns (uint _dsprice);
+    function getPrice(string _datasource, uint gaslimit) returns (uint _dsprice);
+    function useCoupon(string _coupon);
+    function setProofType(byte _proofType);
+    function setConfig(bytes32 _config);
+    function setCustomGasPrice(uint _gasPrice);
+    function randomDS_getSessionPubKeyHash() returns(bytes32);
+}
+contract OraclizeAddrResolverI {
+    function getAddress() returns (address _addr);
+}
+contract usingOraclize {
+    uint constant day = 60*60*24;
+    uint constant week = 60*60*24*7;
+    uint constant month = 60*60*24*30;
+    byte constant proofType_NONE = 0x00;
+    byte constant proofType_TLSNotary = 0x10;
+    byte constant proofType_Android = 0x20;
+    byte constant proofType_Ledger = 0x30;
+    byte constant proofType_Native = 0xF0;
+    byte constant proofStorage_IPFS = 0x01;
+    uint8 constant networkID_auto = 0;
+    uint8 constant networkID_mainnet = 1;
+    uint8 constant networkID_testnet = 2;
+    uint8 constant networkID_morden = 2;
+    uint8 constant networkID_consensys = 161;
+
+    OraclizeAddrResolverI OAR;
+
+    OraclizeI oraclize;
+    modifier oraclizeAPI {
+        if((address(OAR)==0)||(getCodeSize(address(OAR))==0)) oraclize_setNetwork(networkID_auto);
+        oraclize = OraclizeI(OAR.getAddress());
+        _;
+    }
+    modifier coupon(string code){
+        oraclize = OraclizeI(OAR.getAddress());
+        oraclize.useCoupon(code);
+        _;
+    }
+
+    function oraclize_setNetwork(uint8 networkID) internal returns(bool){
+        if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
+            OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
+            oraclize_setNetworkName("eth_mainnet");
+            return true;
+        }
+        if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
+            OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
+            oraclize_setNetworkName("eth_ropsten3");
+            return true;
+        }
+        if (getCodeSize(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e)>0){ //kovan testnet
+            OAR = OraclizeAddrResolverI(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e);
+            oraclize_setNetworkName("eth_kovan");
+            return true;
+        }
+        if (getCodeSize(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48)>0){ //rinkeby testnet
+            OAR = OraclizeAddrResolverI(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48);
+            oraclize_setNetworkName("eth_rinkeby");
+            return true;
+        }
+        if (getCodeSize(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475)>0){ //ethereum-bridge
+            OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
+            return true;
+        }
+        if (getCodeSize(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF)>0){ //ether.camp ide
+            OAR = OraclizeAddrResolverI(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF);
+            return true;
+        }
+        if (getCodeSize(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA)>0){ //browser-solidity
+            OAR = OraclizeAddrResolverI(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA);
+            return true;
+        }
+        return false;
+    }
+
+    function __callback(bytes32 myid, string result) {
+        __callback(myid, result, new bytes(0));
+    }
+    function __callback(bytes32 myid, string result, bytes proof) {
+    }
+    
+    function oraclize_useCoupon(string code) oraclizeAPI internal {
+        oraclize.useCoupon(code);
+    }
+
+    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
+
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
+    }
+    
+    function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(0, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(timestamp, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(timestamp, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(0, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(timestamp, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(timestamp, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];       
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    
+    function oraclize_query(string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    
+    function oraclize_query(string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];       
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    
+    function oraclize_query(string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    
+    function oraclize_query(string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_cbAddress() oraclizeAPI internal returns (address){
+        return oraclize.cbAddress();
+    }
+    function oraclize_setProof(byte proofP) oraclizeAPI internal {
+        return oraclize.setProofType(proofP);
+    }
+    function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
+        return oraclize.setCustomGasPrice(gasPrice);
+    }
+    function oraclize_setConfig(bytes32 config) oraclizeAPI internal {
+        return oraclize.setConfig(config);
+    }
+    
+    function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
+        return oraclize.randomDS_getSessionPubKeyHash();
+    }
+
+    function getCodeSize(address _addr) constant internal returns(uint _size) {
+        assembly {
+            _size := extcodesize(_addr)
+        }
+    }
+
+    function parseAddr(string _a) internal returns (address){
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i=2; i<2+2*20; i+=2){
+            iaddr *= 256;
+            b1 = uint160(tmp[i]);
+            b2 = uint160(tmp[i+1]);
+            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+            else if ((b1 >= 65)&&(b1 <= 70)) b1 -= 55;
+            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+            else if ((b2 >= 65)&&(b2 <= 70)) b2 -= 55;
+            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+            iaddr += (b1*16+b2);
+        }
+        return address(iaddr);
+    }
+
+    function strCompare(string _a, string _b) internal returns (int) {
+        bytes memory a = bytes(_a);
+        bytes memory b = bytes(_b);
+        uint minLength = a.length;
+        if (b.length < minLength) minLength = b.length;
+        for (uint i = 0; i < minLength; i ++)
+            if (a[i] < b[i])
+                return -1;
+            else if (a[i] > b[i])
+                return 1;
+        if (a.length < b.length)
+            return -1;
+        else if (a.length > b.length)
+            return 1;
+        else
+            return 0;
+    }
+
+    function indexOf(string _haystack, string _needle) internal returns (int) {
+        bytes memory h = bytes(_haystack);
+        bytes memory n = bytes(_needle);
+        if(h.length < 1 || n.length < 1 || (n.length > h.length))
+            return -1;
+        else if(h.length > (2**128 -1))
+            return -1;
+        else
+        {
+            uint subindex = 0;
+            for (uint i = 0; i < h.length; i ++)
+            {
+                if (h[i] == n[0])
+                {
+                    subindex = 1;
+                    while(subindex < n.length && (i + subindex) < h.length && h[i + subindex] == n[subindex])
+                    {
+                        subindex++;
+                    }
+                    if(subindex == n.length)
+                        return int(i);
+                }
+            }
+            return -1;
+        }
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string) {
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d) internal returns (string) {
+        return strConcat(_a, _b, _c, _d, "");
+    }
+
+    function strConcat(string _a, string _b, string _c) internal returns (string) {
+        return strConcat(_a, _b, _c, "", "");
+    }
+
+    function strConcat(string _a, string _b) internal returns (string) {
+        return strConcat(_a, _b, "", "", "");
+    }
+
+    // parseInt
+    function parseInt(string _a) internal returns (uint) {
+        return parseInt(_a, 0);
+    }
+
+    // parseInt(parseFloat*10^_b)
+    function parseInt(string _a, uint _b) internal returns (uint) {
+        bytes memory bresult = bytes(_a);
+        uint mint = 0;
+        bool decimals = false;
+        for (uint i=0; i<bresult.length; i++){
+            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
+                if (decimals){
+                   if (_b == 0) break;
+                    else _b--;
+                }
+                mint *= 10;
+                mint += uint(bresult[i]) - 48;
+            } else if (bresult[i] == 46) decimals = true;
+        }
+        if (_b > 0) mint *= 10**_b;
+        return mint;
+    }
+
+    function uint2str(uint i) internal returns (string){
+        if (i == 0) return "0";
+        uint j = i;
+        uint len;
+        while (j != 0){
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (i != 0){
+            bstr[k--] = byte(48 + i % 10);
+            i /= 10;
+        }
+        return string(bstr);
+    }
+    
+    function stra2cbor(string[] arr) internal returns (bytes) {
+            uint arrlen = arr.length;
+
+            // get correct cbor output length
+            uint outputlen = 0;
+            bytes[] memory elemArray = new bytes[](arrlen);
+            for (uint i = 0; i < arrlen; i++) {
+                elemArray[i] = (bytes(arr[i]));
+                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+            }
+            uint ctr = 0;
+            uint cborlen = arrlen + 0x80;
+            outputlen += byte(cborlen).length;
+            bytes memory res = new bytes(outputlen);
+
+            while (byte(cborlen).length > ctr) {
+                res[ctr] = byte(cborlen)[ctr];
+                ctr++;
+            }
+            for (i = 0; i < arrlen; i++) {
+                res[ctr] = 0x5F;
+                ctr++;
+                for (uint x = 0; x < elemArray[i].length; x++) {
+                    // if there's a bug with larger strings, this may be the culprit
+                    if (x % 23 == 0) {
+                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
+                        elemcborlen += 0x40;
+                        uint lctr = ctr;
+                        while (byte(elemcborlen).length > ctr - lctr) {
+                            res[ctr] = byte(elemcborlen)[ctr - lctr];
+                            ctr++;
+                        }
+                    }
+                    res[ctr] = elemArray[i][x];
+                    ctr++;
+                }
+                res[ctr] = 0xFF;
+                ctr++;
+            }
+            return res;
+        }
+
+    function ba2cbor(bytes[] arr) internal returns (bytes) {
+            uint arrlen = arr.length;
+
+            // get correct cbor output length
+            uint outputlen = 0;
+            bytes[] memory elemArray = new bytes[](arrlen);
+            for (uint i = 0; i < arrlen; i++) {
+                elemArray[i] = (bytes(arr[i]));
+                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+            }
+            uint ctr = 0;
+            uint cborlen = arrlen + 0x80;
+            outputlen += byte(cborlen).length;
+            bytes memory res = new bytes(outputlen);
+
+            while (byte(cborlen).length > ctr) {
+                res[ctr] = byte(cborlen)[ctr];
+                ctr++;
+            }
+            for (i = 0; i < arrlen; i++) {
+                res[ctr] = 0x5F;
+                ctr++;
+                for (uint x = 0; x < elemArray[i].length; x++) {
+                    // if there's a bug with larger strings, this may be the culprit
+                    if (x % 23 == 0) {
+                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
+                        elemcborlen += 0x40;
+                        uint lctr = ctr;
+                        while (byte(elemcborlen).length > ctr - lctr) {
+                            res[ctr] = byte(elemcborlen)[ctr - lctr];
+                            ctr++;
+                        }
+                    }
+                    res[ctr] = elemArray[i][x];
+                    ctr++;
+                }
+                res[ctr] = 0xFF;
+                ctr++;
+            }
+            return res;
+        }
+        
+        
+    string oraclize_network_name;
+    function oraclize_setNetworkName(string _network_name) internal {
+        oraclize_network_name = _network_name;
+    }
+    
+    function oraclize_getNetworkName() internal returns (string) {
+        return oraclize_network_name;
+    }
+    
+    function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
+        if ((_nbytes == 0)||(_nbytes > 32)) throw;
+        bytes memory nbytes = new bytes(1);
+        nbytes[0] = byte(_nbytes);
+        bytes memory unonce = new bytes(32);
+        bytes memory sessionKeyHash = new bytes(32);
+        bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
+        assembly {
+            mstore(unonce, 0x20)
+            mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
+            mstore(sessionKeyHash, 0x20)
+            mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
+        }
+        bytes[3] memory args = [unonce, nbytes, sessionKeyHash]; 
+        bytes32 queryId = oraclize_query(_delay, "random", args, _customGasLimit);
+        oraclize_randomDS_setCommitment(queryId, sha3(bytes8(_delay), args[1], sha256(args[0]), args[2]));
+        return queryId;
+    }
+    
+    function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
+        oraclize_randomDS_args[queryId] = commitment;
+    }
+    
+    mapping(bytes32=>bytes32) oraclize_randomDS_args;
+    mapping(bytes32=>bool) oraclize_randomDS_sessionKeysHashVerified;
+
+    function verifySig(bytes32 tosignh, bytes dersig, bytes pubkey) internal returns (bool){
+        bool sigok;
+        address signer;
+        
+        bytes32 sigr;
+        bytes32 sigs;
+        
+        bytes memory sigr_ = new bytes(32);
+        uint offset = 4+(uint(dersig[3]) - 0x20);
+        sigr_ = copyBytes(dersig, offset, 32, sigr_, 0);
+        bytes memory sigs_ = new bytes(32);
+        offset += 32 + 2;
+        sigs_ = copyBytes(dersig, offset+(uint(dersig[offset-1]) - 0x20), 32, sigs_, 0);
+
+        assembly {
+            sigr := mload(add(sigr_, 32))
+            sigs := mload(add(sigs_, 32))
+        }
+        
+        
+        (sigok, signer) = safer_ecrecover(tosignh, 27, sigr, sigs);
+        if (address(sha3(pubkey)) == signer) return true;
+        else {
+            (sigok, signer) = safer_ecrecover(tosignh, 28, sigr, sigs);
+            return (address(sha3(pubkey)) == signer);
+        }
+    }
+
+    function oraclize_randomDS_proofVerify__sessionKeyValidity(bytes proof, uint sig2offset) internal returns (bool) {
+        bool sigok;
+        
+        // Step 6: verify the attestation signature, APPKEY1 must sign the sessionKey from the correct ledger app (CODEHASH)
+        bytes memory sig2 = new bytes(uint(proof[sig2offset+1])+2);
+        copyBytes(proof, sig2offset, sig2.length, sig2, 0);
+        
+        bytes memory appkey1_pubkey = new bytes(64);
+        copyBytes(proof, 3+1, 64, appkey1_pubkey, 0);
+        
+        bytes memory tosign2 = new bytes(1+65+32);
+        tosign2[0] = 1; //role
+        copyBytes(proof, sig2offset-65, 65, tosign2, 1);
+        bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
+        copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
+        sigok = verifySig(sha256(tosign2), sig2, appkey1_pubkey);
+        
+        if (sigok == false) return false;
+        
+        
+        // Step 7: verify the APPKEY1 provenance (must be signed by Ledger)
+        bytes memory LEDGERKEY = hex"7fb956469c5c9b89840d55b43537e66a98dd4811ea0a27224272c2e5622911e8537a2f8e86a46baec82864e98dd01e9ccc2f8bc5dfc9cbe5a91a290498dd96e4";
+        
+        bytes memory tosign3 = new bytes(1+65);
+        tosign3[0] = 0xFE;
+        copyBytes(proof, 3, 65, tosign3, 1);
+        
+        bytes memory sig3 = new bytes(uint(proof[3+65+1])+2);
+        copyBytes(proof, 3+65, sig3.length, sig3, 0);
+        
+        sigok = verifySig(sha256(tosign3), sig3, LEDGERKEY);
+        
+        return sigok;
+    }
+    
+    modifier oraclize_randomDS_proofVerify(bytes32 _queryId, string _result, bytes _proof) {
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) throw;
+        
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        if (proofVerified == false) throw;
+        
+        _;
+    }
+    
+    function matchBytes32Prefix(bytes32 content, bytes prefix) internal returns (bool){
+        bool match_ = true;
+        
+        for (var i=0; i<prefix.length; i++){
+            if (content[i] != prefix[i]) match_ = false;
+        }
+        
+        return match_;
+    }
+
+    function oraclize_randomDS_proofVerify__main(bytes proof, bytes32 queryId, bytes result, string context_name) internal returns (bool){
+        bool checkok;
+        
+        
+        // Step 2: the unique keyhash has to match with the sha256 of (context name + queryId)
+        uint ledgerProofLength = 3+65+(uint(proof[3+65+1])+2)+32;
+        bytes memory keyhash = new bytes(32);
+        copyBytes(proof, ledgerProofLength, 32, keyhash, 0);
+        checkok = (sha3(keyhash) == sha3(sha256(context_name, queryId)));
+        if (checkok == false) return false;
+        
+        bytes memory sig1 = new bytes(uint(proof[ledgerProofLength+(32+8+1+32)+1])+2);
+        copyBytes(proof, ledgerProofLength+(32+8+1+32), sig1.length, sig1, 0);
+        
+        
+        // Step 3: we assume sig1 is valid (it will be verified during step 5) and we verify if 'result' is the prefix of sha256(sig1)
+        checkok = matchBytes32Prefix(sha256(sig1), result);
+        if (checkok == false) return false;
+        
+        
+        // Step 4: commitment match verification, sha3(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
+        // This is to verify that the computed args match with the ones specified in the query.
+        bytes memory commitmentSlice1 = new bytes(8+1+32);
+        copyBytes(proof, ledgerProofLength+32, 8+1+32, commitmentSlice1, 0);
+        
+        bytes memory sessionPubkey = new bytes(64);
+        uint sig2offset = ledgerProofLength+32+(8+1+32)+sig1.length+65;
+        copyBytes(proof, sig2offset-64, 64, sessionPubkey, 0);
+        
+        bytes32 sessionPubkeyHash = sha256(sessionPubkey);
+        if (oraclize_randomDS_args[queryId] == sha3(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
+            delete oraclize_randomDS_args[queryId];
+        } else return false;
+        
+        
+        // Step 5: validity verification for sig1 (keyhash and args signed with the sessionKey)
+        bytes memory tosign1 = new bytes(32+8+1+32);
+        copyBytes(proof, ledgerProofLength, 32+8+1+32, tosign1, 0);
+        checkok = verifySig(sha256(tosign1), sig1, sessionPubkey);
+        if (checkok == false) return false;
+        
+        // verify if sessionPubkeyHash was verified already, if not.. let's do it!
+        if (oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] == false){
+            oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] = oraclize_randomDS_proofVerify__sessionKeyValidity(proof, sig2offset);
+        }
+        
+        return oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash];
+    }
+
+    
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal returns (bytes) {
+        uint minLength = length + toOffset;
+
+        if (to.length < minLength) {
+            // Buffer too small
+            throw; // Should be a better way?
+        }
+
+        // NOTE: the offset 32 is added to skip the `size` field of both bytes variables
+        uint i = 32 + fromOffset;
+        uint j = 32 + toOffset;
+
+        while (i < (32 + fromOffset + length)) {
+            assembly {
+                let tmp := mload(add(from, i))
+                mstore(add(to, j), tmp)
+            }
+            i += 32;
+            j += 32;
+        }
+
+        return to;
+    }
+    
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    // Duplicate Solidity's ecrecover, but catching the CALL return value
+    function safer_ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal returns (bool, address) {
+        // We do our own memory management here. Solidity uses memory offset
+        // 0x40 to store the current end of memory. We write past it (as
+        // writes are memory extensions), but don't update the offset so
+        // Solidity will reuse it. The memory used here is only needed for
+        // this context.
+
+        // FIXME: inline assembly can't access return values
+        bool ret;
+        address addr;
+
+        assembly {
+            let size := mload(0x40)
+            mstore(size, hash)
+            mstore(add(size, 32), v)
+            mstore(add(size, 64), r)
+            mstore(add(size, 96), s)
+
+            // NOTE: we can reuse the request memory because we deal with
+            //       the return code
+            ret := call(3000, 1, 0, size, 128, size, 32)
+            addr := mload(size)
+        }
+  
+        return (ret, addr);
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function ecrecovery(bytes32 hash, bytes sig) internal returns (bool, address) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        if (sig.length != 65)
+          return (false, 0);
+
+        // The signature format is a compact form of:
+        //   {bytes32 r}{bytes32 s}{uint8 v}
+        // Compact means, uint8 is not padded to 32 bytes.
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+
+            // Here we are loading the last 32 bytes. We exploit the fact that
+            // 'mload' will pad with zeroes if we overread.
+            // There is no 'mload8' to do this, but that would be nicer.
+            v := byte(0, mload(add(sig, 96)))
+
+            // Alternative solution:
+            // 'byte' is not working due to the Solidity parser, so lets
+            // use the second best option, 'and'
+            // v := and(mload(add(sig, 65)), 255)
+        }
+
+        // albeit non-transactional signatures are not specified by the YP, one would expect it
+        // to match the YP range of [27, 28]
+        //
+        // geth uses [0, 1] and some clients have followed. This might change, see:
+        //  https://github.com/ethereum/go-ethereum/issues/2053
+        if (v < 27)
+          v += 27;
+
+        if (v != 27 && v != 28)
+            return (false, 0);
+
+        return safer_ecrecover(hash, v, r, s);
+    }
+        
+}
+// </ORACLIZE_API>
+
+
+
+contract Oracle is usingOraclize{
 
   /*Variables*/
-  //Owner of the oracle
-  address private owner;
+
+  //Private queryId for Oraclize callback
+  bytes32 private queryID;
+
   //Mapping of documents stored in the oracle
-  mapping(uint => uint) oracle_values;
+  mapping(uint => uint) public oracle_values;
+  mapping(uint => bool) public queried;
 
   /*Events*/
   event DocumentStored(uint _key, uint _value);
+  event newOraclizeQuery(string description);
 
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
-  //Constructor - Sets owner
-  function Oracle() public {
-    owner = msg.sender;
-  }
-
-  //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
-  //represent underlying values at a specified date (key).
-  function StoreDocument(uint _key, uint _value) public onlyOwner() {
-    oracle_values[_key] = _value;
-    DocumentStored(_key, _value);
-  }
-
-  //Allows for the viewing of oracle data
+  /*Functions*/
   function RetrieveData(uint _date) public constant returns (uint data) {
-    return oracle_values[_date];
+    uint value = oracle_values[_date];
+    return value;
   }
 
-  //set a new owner of the contract
-  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
-}
+ //CAlls 
+  function PushData() public {
+    uint _key = now - (now % 86400);
+    require(queried[_key] == false);
+    if (oraclize_getPrice("URL") > this.balance) {
+            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+        } else {
+            newOraclizeQuery("Oraclize queries sent");
+            queryID = oraclize_query("URL", "json(https://api.gdax.com/products/BTC-USD/ticker).price");
+            queried[_key] = true;
+        }
+  }
 
+
+  function __callback(bytes32 _oraclizeID, string _result) {
+      require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
+      uint _value = parseInt(_result,3);
+      uint _key = now - (now % 86400);
+      oracle_values[_key] = _value;
+      DocumentStored(_key, _value);
+    }
+
+
+  function fund() public payable {}
+
+  function getQuery(uint _date) public view returns(bool _isValue){
+    return queried[_date];
+  }
+
+}
 
 //The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract specified in the Factory contract
 //Each Factory contract is specified one DRCT Token and the token address can contain many different swap contracts that are standardized at the Factory level
@@ -688,10 +1755,6 @@ contract TokenToTokenSwap {
 
   //Address of the person who created this contract through the Factory
   address creator;
-
-  //Address of an operator who will ensure forcePay is called at the end of the swap period
-  address operator;
-
   //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
   address oracle_address;
   Oracle_Interface oracle;
@@ -781,11 +1844,12 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_userContract": Address of the _userContract that is authorized to interact with this contract
   */
-  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
+  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract, uint _start_date) public {
     current_state = SwapState.created;
     creator =_creator;
     factory_address = _factory_address;
     userContract = _userContract;
+    start_date = _start_date;
   }
 
 
@@ -828,7 +1892,7 @@ contract TokenToTokenSwap {
   }
 
   function setVars() internal{
-      (oracle_address,operator,duration,multiplier,token_a_address,token_b_address,start_date) = factory.getVariables();
+      (oracle_address,duration,multiplier,token_a_address,token_b_address) = factory.getVariables();
   }
 
   /*
@@ -883,8 +1947,11 @@ contract TokenToTokenSwap {
       token_b.balanceOf(address(this)) >= token_b_amount
     );
 
-    tokenize(long_party);
-    tokenize(short_party);
+    uint tokenratio = 1;
+    (long_token_address,tokenratio) = factory.createToken(token_a_amount, long_party,true,start_date);
+    num_DRCT_longtokens = token_a_amount.div(tokenratio);
+    (short_token_address,tokenratio) = factory.createToken(token_b_amount, short_party,false,start_date);
+    num_DRCT_shorttokens = token_b_amount.div(tokenratio);
     current_state = SwapState.tokenized;
     if (premium > 0){
       if (creator == long_party){
@@ -897,30 +1964,13 @@ contract TokenToTokenSwap {
   }
 
   /*
-  * Creates DRCT tokens
-  *The amount of DRCT tokens recieved is based upon the contract specifications in the Factory contract
-  * @param "_creator": The creator of the DRCT tokens
-  */
-  function tokenize(address _creator) internal {
-    //Uses the factory to deploy a DRCT Token contract, which we cast to the DRCT_Token_Interface
-    uint tokenratio = 1;
-    if (_creator == long_party) {
-      (long_token_address,tokenratio) = factory.createToken(token_a_amount, _creator,true);
-      num_DRCT_longtokens = token_a_amount.div(tokenratio);
-    } else if (_creator == short_party) {
-      (short_token_address,tokenratio) = factory.createToken(token_b_amount, _creator,false);
-      num_DRCT_shorttokens = token_b_amount.div(tokenratio);
-    }
-  }
-
-  /*
   * This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
   * The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
   * of the Oracle.
   */
   function Calculate() internal {
-    //require(now >= end_date);
-    //should it be end_date + 1? so the oracle can update?
+    require(now >= end_date + 86400);
+    //Comment out above for testing purposes
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
     uint end_value = oracle.RetrieveData(end_date);
@@ -934,7 +1984,6 @@ contract TokenToTokenSwap {
       ratio = 0;
     else
       ratio = 100000;
-
     if (ratio == 100000) {
       share_long = share_short = ratio;
     } else if (ratio > 100000) {
@@ -992,12 +2041,12 @@ contract TokenToTokenSwap {
   */
   function forcePay(uint _begin, uint _end) public returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
-    if(current_state == SwapState.tokenized){
+    if(current_state == SwapState.tokenized /*&& now > end_date + 86400*/){
       Calculate();
     }
 
     //The state at this point should always be SwapState.ready
-    require(msg.sender == operator && current_state == SwapState.ready);
+    require(current_state == SwapState.ready);
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
@@ -1021,8 +2070,8 @@ contract TokenToTokenSwap {
     }
 
     if (loop_count == count){
-        token_a.transfer(operator, token_a.balanceOf(address(this)));
-        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        token_a.transfer(factory_address, token_a.balanceOf(address(this)));
+        token_b.transfer(factory_address, token_b.balanceOf(address(this)));
         PaidOut(long_token_address, short_token_address);
         current_state = SwapState.ended;
       }
@@ -1043,7 +2092,7 @@ contract TokenToTokenSwap {
       if (pay_to_long_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_long_b));
       }
-        factory.payToken(_receiver,true);
+        factory.payToken(_receiver,long_token_address);
     } else {
 
       if (pay_to_short_a > 0)
@@ -1051,7 +2100,7 @@ contract TokenToTokenSwap {
       if (pay_to_short_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_short_b));
       }
-       factory.payToken(_receiver,false);
+       factory.payToken(_receiver,short_token_address);
     }
   }
 
@@ -1080,7 +2129,6 @@ contract TokenToTokenSwap {
     }
   }
 }
-
 
 //This is the basic wrapped Ether contract. 
 //All money deposited is transformed into ERC20 tokens at the rate of 1 wei = 1 token
@@ -1181,310 +2229,24 @@ contract Wrapped_Ether {
 }
 
 
-// All code below here is for the Testing the above contracts.  The Tester contracts are still under development. 
-interface swap_interface{
-    function forcePay(uint _begin, uint _end) public returns (bool);
-}
+contract Tokendeployer {
+  address owner;
+  address public factory;
 
-contract Tester {
-    address oracleAddress;
-    address baseToken1;
-    address baseToken2;
-    address factory_address;
-    address usercontract_address;
-    address swapAddress;
-    address drct1;
-    address drct2;
-    swap_interface swap;
-    Factory factory;
-    Oracle oracle;
-    event Print(string _string, uint _value);
-
-    
-    function StartTest() public returns(address){
-        oracleAddress = new Oracle();
-        baseToken1 = new Wrapped_Ether();
-        baseToken2 = new Wrapped_Ether();
-        factory_address = new Factory();
-        return factory_address;
-    }
-    
-    function setVars(uint _startval, uint _endval) public {
-        factory = Factory(factory_address);
-        oracle = Oracle(oracleAddress);
-        factory.setStartDate(1543881600);
-        factory.setVariables(1000000000000000,1000000000000000,7,2);
-        factory.setBaseTokens(baseToken1,baseToken2);
-        factory.setOracleAddress(oracleAddress);
-        oracle.StoreDocument(1543881600, _startval);
-        oracle.StoreDocument(1544486400,_endval);
-        Print('Start Value : ',_startval);
-        Print('End Value " ',_endval);
-    }
-    
-    function setTokens(address _drct1,address _drct2) public{
-        drct1 = _drct1; drct2 = _drct2;
-        factory.settokens(drct1,drct2);
-    }
-
-    function getFactory() public returns (address){
-      return factory_address;
-    }
-
-   function getUC() public returns (address){
-      return usercontract_address;
-    }
-
-    function swapAdd(address _swap, bool _isSwap) public returns(address){
-      if (_isSwap){
-        swapAddress = _swap;
-      }
-      return swapAddress;
-    }
-
-
-    function setVars2(address _deployer, address _userContract) public{
-      factory.setDeployer(_deployer);
-      factory.setUserContract(_userContract);
-      usercontract_address = _userContract;
-    }
-
-    function getWrapped() public returns(address,address){
-      return (baseToken1,baseToken2);
-    }
-
-    function getDRCT(bool _isLong) public returns(address){
-      address drct;
-      if(_isLong){
-        drct = drct1;
-      }
-      else{
-        drct= drct2;
-      }
-      return drct;
-    }
-
-    function paySwap() public returns(uint,uint){
-      for(uint i=0; i < factory.getCount(); i++){
-        var x = factory.contracts(i);
-          swap = swap_interface(x);
-          swap.forcePay(1,100);
-
-      }
-      
-    Wrapped_Ether wrapped = Wrapped_Ether(baseToken1);
-    uint balance_long = wrapped.balanceOf(address(this));
-    wrapped = Wrapped_Ether(baseToken2);
-    uint balance_short = wrapped.balanceOf(address(this));
-    Print('Factory Long', balance_long);
-    Print('Factory Short',balance_short);
-    return (balance_long, balance_short);
-    }
-}
-
-
-interface Tester_Interface {
-  function getFactory() public returns (address);
-  function setVars2(address _deployer, address _userContract) public;
-  function getUC() public returns (address);
-  function swapAdd(address _swap, bool _isSwap) public returns(address);
-  function getWrapped() public returns(address,address);
-  function getDRCT(bool _isLong) public returns(address);
-  function setTokens(address _drct1,address _drct2);
-  function paySwap() public returns(uint,uint);
-}
-
-contract Tester2 {
-  UserContract usercontract;
-  address deployer_address;
-  address usercontract_address;
-  address factory_address;
-  Tester_Interface tester;
-
-
-  function Tester2(address _tester) {
-    tester = Tester_Interface(_tester);
-    factory_address = tester.getFactory();
-    deployer_address = new Deployer(factory_address);
-    usercontract_address = new UserContract();
+  function Tokendeployer(address _factory) public {
+    factory = _factory;
+    owner = msg.sender;
   }
 
-  function setLastVars(){
-    tester.setVars2(deployer_address,usercontract_address);
-    usercontract = UserContract(usercontract_address);
-    usercontract.setFactory(factory_address);
-    address drct1 = new DRCT_Token(factory_address);
-    address drct2 = new DRCT_Token(factory_address);
-    tester.setTokens(drct1,drct2);
+  function newToken() public returns (address created) {
+    require(msg.sender == factory);
+    address new_token = new DRCT_Token(factory);
+    return new_token;
   }
 
-}
-
-contract TestParty1 {
-  address swap_address;
-  address factory_address;
-  address usercontract_address;
-  address wrapped_long;
-  address wrapped_short;
-  address user3;
-  address drct;
-  UserContract usercontract;
-  Tester_Interface tester;
-  Factory factory;
-  Wrapped_Ether wrapped;
-  ERC20_Interface dtoken;
-  event Print(string _string, uint _value);
-  event Print2(string _string, address _value);
-    event Print3(string _string, bool _bool);
-
-  function TestParty1(address _tester) public{
-    tester = Tester_Interface(_tester);
-    factory_address = tester.getFactory();
-    factory = Factory(factory_address);
-    swap_address = factory.deployContract();
-}
-
-function createSwap() public payable returns (address){
-    usercontract_address = tester.getUC();
-    usercontract = UserContract(usercontract_address);
-    usercontract.Initiate.value(msg.value)(swap_address,10000000000000000000,10000000000000000000,0,true );
-    tester.swapAdd(swap_address,true);
-    user3 = new newTester();
-    Print2('New Swap : ',swap_address);
-    return user3;
+   function setVars(address _factory, address _owner) public {
+    require (msg.sender == owner);
+    factory = _factory;
+    owner = _owner;
   }
-
-    function transfers() public {
-    drct = tester.getDRCT(true);
-    dtoken = ERC20_Interface(drct);
-    bool success = dtoken.transfer(user3,5000);
-    Print3('Succesful Transfer: ',success);
-  }
-
-  function cashOut() public returns(uint, uint,uint,uint){
-    (wrapped_long,wrapped_short) = tester.getWrapped();
-    wrapped = Wrapped_Ether(wrapped_long);
-    uint balance_long = wrapped.balanceOf(address(this));
-    uint balance_long3 = wrapped.balanceOf(user3);
-    wrapped = Wrapped_Ether(wrapped_short);
-    uint balance_short = wrapped.balanceOf(address(this));
-    uint balance_short3 = wrapped.balanceOf(user3);
-    return (balance_long, balance_long3, balance_short, balance_short3);
-  }
-}
-
-contract TestParty2 {
-
-  address swap_address;
-  address usercontract_address;
-  address wrapped_long;
-  address drct;
-  address wrapped_short;
-  UserContract usercontract;
-  Tester_Interface tester;
-  address user4;
-  Wrapped_Ether wrapped;
-  ERC20_Interface dtoken;
-  event Print(string _string, uint _value);
-
-  function TestParty2() public {
-    user4 = new newTester();
-
-  }
-  function EnterSwap(address _tester) public payable{
-    tester = Tester_Interface(_tester);
-    usercontract_address = tester.getUC();
-    usercontract = UserContract(usercontract_address);
-    swap_address = tester.swapAdd(msg.sender,false);
-    usercontract.Enter.value(msg.value)(10000000000000000000,10000000000000000000,false,swap_address);
-  }
-
-    function transfers() public {
-    drct = tester.getDRCT(false);
-    dtoken = ERC20_Interface(drct);
-    dtoken.transfer(user4,5000);
-  }
-
-  function cashOut() public returns(uint, uint,uint,uint){
-    (wrapped_long,wrapped_short) = tester.getWrapped();
-    wrapped = Wrapped_Ether(wrapped_long);
-    uint balance_long = wrapped.balanceOf(address(this));
-    uint balance_long4 = wrapped.balanceOf(user4);
-    wrapped = Wrapped_Ether(wrapped_short);
-    uint balance_short = wrapped.balanceOf(address(this));
-    uint balance_short4 = wrapped.balanceOf(user4);
-    return (balance_long, balance_long4, balance_short, balance_short4);
-  }
-
-}
-
-contract newTester{
-
-}
-
-contract PartyDeployer{
-
-TestParty1 tp1;
-TestParty2 tp2;
-Tester_Interface factory;
-address tester_address;
-address party1;
-address party2;
-address party5;
-address party6;
-event Print(string _string, uint _value);
-uint res1;
-uint res2;
-uint res3;
-uint res4;
-
-
-function PartyDeployer(address _tester) public {
-  tester_address = _tester;
-}
-function deployParties() {
-  party1 = new TestParty1(tester_address);
-  party2 = new TestParty2();
-  party5 = new TestParty1(tester_address);
-  party6 = new TestParty2();
-}
-
-//enter value 40
-function nextStep() payable public {
-  tp1 = TestParty1(party1);
-  tp1.createSwap.value(10 ether)();
-  tp2 = TestParty2(party2);
-  tp2.EnterSwap.value(10 ether)(tester_address);
-  tp1.transfers();
-  tp2.transfers();
-  tp1 = TestParty1(party5);
-  tp1.createSwap.value(10 ether)();
-  tp2 = TestParty2(party6);
-  tp2.EnterSwap.value(10 ether)(tester_address);
-  tp1.transfers();
-  tp2.transfers();
-}
-
-function EndStep() {
-  factory = Tester_Interface(tester_address);
-  (res1,res2) = factory.paySwap();
-  Print('Factory gains',res1+res2);
-  tp1 = TestParty1(party1);
-  (res1,res2,res3,res4) = tp1.cashOut();
-  Print('Party1 Balance',res1+res3);
-  Print('Party3 Balance',res4 + res2);
-  tp2 = TestParty2(party2);
-  (res1,res2,res3,res4) = tp2.cashOut();
-  Print('Party2 Balance',res1+res3);
-  Print('Party4 Balance',res4 + res2);
-  tp1 = TestParty1(party5);
-  (res1,res2,res3,res4) = tp1.cashOut();
-    Print('Party5 Balance',res1+res3);
-  Print('Party7 Balance',res4 + res2);
-  tp2 = TestParty2(party6);
-  (res1,res2,res3,res4) = tp2.cashOut();
-    Print('Party6 Balance',res1+res3);
-  Print('Party8 Balance',res4 + res2);
-}
-
 }

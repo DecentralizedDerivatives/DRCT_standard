@@ -43,12 +43,13 @@ interface ERC20_Interface {
 
 //Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {
-  function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
-  function payToken(address _party, bool long) public;
-   function deployContract(address swap_owner) public payable returns (address created);
+  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio);
+  function payToken(address _party, address _token_add) public;
+  function deployContract(uint _start_date) public payable returns (address created);
    function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
 }
+
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {
@@ -88,10 +89,6 @@ contract TokenToTokenSwap {
 
   //Address of the person who created this contract through the Factory
   address creator;
-
-  //Address of an operator who will ensure forcePay is called at the end of the swap period
-  address operator;
-
   //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
   address oracle_address;
   Oracle_Interface oracle;
@@ -181,11 +178,12 @@ contract TokenToTokenSwap {
   * @param "_creator": Address of the person who created the contract
   * @param "_userContract": Address of the _userContract that is authorized to interact with this contract
   */
-  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract) public {
+  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract, uint _start_date) public {
     current_state = SwapState.created;
     creator =_creator;
     factory_address = _factory_address;
     userContract = _userContract;
+    start_date = _start_date;
   }
 
 
@@ -228,7 +226,7 @@ contract TokenToTokenSwap {
   }
 
   function setVars() internal{
-      (oracle_address,operator,duration,multiplier,token_a_address,token_b_address,start_date) = factory.getVariables();
+      (oracle_address,duration,multiplier,token_a_address,token_b_address) = factory.getVariables();
   }
 
   /*
@@ -283,8 +281,11 @@ contract TokenToTokenSwap {
       token_b.balanceOf(address(this)) >= token_b_amount
     );
 
-    tokenize(long_party);
-    tokenize(short_party);
+    uint tokenratio = 1;
+    (long_token_address,tokenratio) = factory.createToken(token_a_amount, long_party,true,start_date);
+    num_DRCT_longtokens = token_a_amount.div(tokenratio);
+    (short_token_address,tokenratio) = factory.createToken(token_b_amount, short_party,false,start_date);
+    num_DRCT_shorttokens = token_b_amount.div(tokenratio);
     current_state = SwapState.tokenized;
     if (premium > 0){
       if (creator == long_party){
@@ -297,30 +298,13 @@ contract TokenToTokenSwap {
   }
 
   /*
-  * Creates DRCT tokens
-  *The amount of DRCT tokens recieved is based upon the contract specifications in the Factory contract
-  * @param "_creator": The creator of the DRCT tokens
-  */
-  function tokenize(address _creator) internal {
-    //Uses the factory to deploy a DRCT Token contract, which we cast to the DRCT_Token_Interface
-    uint tokenratio = 1;
-    if (_creator == long_party) {
-      (long_token_address,tokenratio) = factory.createToken(token_a_amount, _creator,true);
-      num_DRCT_longtokens = token_a_amount.div(tokenratio);
-    } else if (_creator == short_party) {
-      (short_token_address,tokenratio) = factory.createToken(token_b_amount, _creator,false);
-      num_DRCT_shorttokens = token_b_amount.div(tokenratio);
-    }
-  }
-
-  /*
   * This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
   * The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
   * of the Oracle.
   */
   function Calculate() internal {
-    //require(now >= end_date);
-    //should it be end_date + 1? so the oracle can update?
+    require(now >= end_date + 86400);
+    //Comment out above for testing purposes
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
     uint end_value = oracle.RetrieveData(end_date);
@@ -334,7 +318,6 @@ contract TokenToTokenSwap {
       ratio = 0;
     else
       ratio = 100000;
-
     if (ratio == 100000) {
       share_long = share_short = ratio;
     } else if (ratio > 100000) {
@@ -392,12 +375,12 @@ contract TokenToTokenSwap {
   */
   function forcePay(uint _begin, uint _end) public returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
-    if(current_state == SwapState.tokenized){
+    if(current_state == SwapState.tokenized /*&& now > end_date + 86400*/){
       Calculate();
     }
 
     //The state at this point should always be SwapState.ready
-    require(msg.sender == operator && current_state == SwapState.ready);
+    require(current_state == SwapState.ready);
 
     //Loop through the owners of long and short DRCT tokens and pay them
 
@@ -421,8 +404,8 @@ contract TokenToTokenSwap {
     }
 
     if (loop_count == count){
-        token_a.transfer(operator, token_a.balanceOf(address(this)));
-        token_b.transfer(operator, token_b.balanceOf(address(this)));
+        token_a.transfer(factory_address, token_a.balanceOf(address(this)));
+        token_b.transfer(factory_address, token_b.balanceOf(address(this)));
         PaidOut(long_token_address, short_token_address);
         current_state = SwapState.ended;
       }
@@ -443,7 +426,7 @@ contract TokenToTokenSwap {
       if (pay_to_long_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_long_b));
       }
-        factory.payToken(_receiver,true);
+        factory.payToken(_receiver,long_token_address);
     } else {
 
       if (pay_to_short_a > 0)
@@ -451,7 +434,7 @@ contract TokenToTokenSwap {
       if (pay_to_short_b > 0){
         token_b.transfer(_receiver, _amount.mul(pay_to_short_b));
       }
-       factory.payToken(_receiver,false);
+       factory.payToken(_receiver,short_token_address);
     }
   }
 
@@ -480,6 +463,8 @@ contract TokenToTokenSwap {
     }
   }
 }
+
+
 //Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
 contract Deployer {
   address owner;
@@ -490,9 +475,9 @@ contract Deployer {
     owner = msg.sender;
   }
 
-  function newContract(address _party, address user_contract) public returns (address created) {
+  function newContract(address _party, address user_contract, uint _start_date) public returns (address created) {
     require(msg.sender == factory);
-    address new_contract = new TokenToTokenSwap(factory, _party, user_contract);
+    address new_contract = new TokenToTokenSwap(factory, _party, user_contract, _start_date);
     return new_contract;
   }
 

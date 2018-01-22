@@ -14,6 +14,19 @@ interface DRCT_Token_Interface {
   function pay(address _party, address _swap) public;
   function partyCount(address _swap) public constant returns(uint count);
 }
+
+interface Wrapped_Ether_Interface {
+  function totalSupply() public constant returns (uint total_supply);
+  function balanceOf(address _owner) public constant returns (uint balance);
+  function transfer(address _to, uint _amount) public returns (bool success);
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
+  function approve(address _spender, uint _amount) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint amount);
+  function withdraw(uint _value) public;
+  function CreateToken() public;
+
+}
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -55,6 +68,7 @@ contract Factory {
   //Address of the user contract
   address public user_contract;
   DRCT_Token_Interface drct_interface;
+  Wrapped_Ether_Interface token_interface;
 
   //Address of the deployer contract
   address deployer_address;
@@ -118,6 +132,10 @@ contract Factory {
     deployer = Deployer_Interface(_deployer);
   }
 
+  /*
+  * Sets the token_deployer address
+  * @param "_tdeployer": The new token deployer address
+  */  
   function settokenDeployer(address _tdeployer) public onlyOwner() {
     token_deployer_address = _tdeployer;
     tokenDeployer = Deployer_Interface(_tdeployer);
@@ -131,7 +149,7 @@ contract Factory {
   }
 
   /*
-  * A getter to retrieve the base tokens
+  * Returns the base token addresses
   */
   function getBase() public view returns(address _base1, address base2){
     return (token_a, token_b);
@@ -145,7 +163,6 @@ contract Factory {
   * @param "_duration": The duration of the swap, in seconds
   * @param "_multiplier": The multiplier used for the swap
   */
-  //10e15,10e15,7,2,"0x..","0x..."
   function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier) public onlyOwner() {
     token_ratio1 = _token_ratio1;
     token_ratio2 = _token_ratio2;
@@ -174,37 +191,42 @@ contract Factory {
     return new_contract;
   }
 
-  /*
-  * Deploys a DRCT_Token contract
-  * @param "_supply": The number of tokens to create
-  * @param "_party": The address to send the tokens to
-  * @param "_long": Whether the party is long or short
-  * @returns "created": The address of the created DRCT token
-  * @returns "token_ratio": The ratio of the created DRCT token
-  */
+
   function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
-    address token = tokenDeployer.newToken();
+    address token;
     if (_long){
+      require(long_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
       long_tokens[_start_date] = token;
     }
     else{
-    short_tokens[_start_date] = token;
+      require(short_tokens[_start_date] == address(0));
+      token = tokenDeployer.newToken();
+      short_tokens[_start_date] = token;
     }
     return token;
   }
 
 
 
+  /*
+  * Deploys new tokens on a DRCT_Token contract -- called from within a swap
+  * @param "_supply": The number of tokens to create
+  * @param "_party": The address to send the tokens to
+  * @param "_long": Whether the party is long or short
+  * @returns "created": The address of the created DRCT token
+  * @returns "token_ratio": The ratio of the created DRCT token
+  */
   function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
     require(created_contracts[msg.sender] > 0);
     address ltoken = long_tokens[_start_date];
-    require(ltoken != address(0));
+    address stoken = short_tokens[_start_date];
+    require(ltoken != address(0) && stoken != address(0));
     if (_long) {
       drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
       return (ltoken, token_ratio1);
     } else {
-      address stoken =short_tokens[_start_date];
       drct_interface = DRCT_Token_Interface(stoken);
       drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
       return (stoken, token_ratio2);
@@ -219,7 +241,24 @@ contract Factory {
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 
   //Allows the owner to pull contract creation fees
-  function withdrawFees() public onlyOwner() { owner.transfer(this.balance); }
+  function withdrawFees() public onlyOwner() returns(uint atok, uint btok, uint _eth){
+   token_interface = Wrapped_Ether_Interface(token_a);
+   uint aval = token_interface.balanceOf(address(this));
+   if(aval > 0){
+      token_interface.withdraw(aval);
+    }
+   token_interface = Wrapped_Ether_Interface(token_b);
+   uint bval = token_interface.balanceOf(address(this));
+   if (bval > 0){
+    token_interface.withdraw(bval);
+  }
+   owner.transfer(this.balance);
+   return(aval,bval,this.balance);
+   }
+
+   function() public payable {
+
+   }
 
   /*
   * Returns a tuple of many private variables
@@ -231,8 +270,8 @@ contract Factory {
   * @returns "token_b_address": The address of token b
   * @returns "start_date": The start date of the swap
   */
-  function getVariables() public view returns (address oracle_addr, address operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
-    return (oracle_address, owner, duration, multiplier, token_a, token_b);
+  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
+    return (oracle_address,duration, multiplier, token_a, token_b);
   }
 
   /*

@@ -1,6 +1,5 @@
 pragma solidity ^0.4.17;
 
-//Slightly modified SafeMath library - includes a min function
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -31,22 +30,6 @@ library SafeMath {
   }
 }
 
-//Swap interface- descriptions can be found in TokenToTokenSwap.sol
-interface TokenToTokenSwap_Interface {
-  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public payable;
-  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
-  function createTokens() public;
-}
-
-
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio);
-  function payToken(address _party, address _token_add) public;
-  function deployContract(uint _start_date) public payable returns (address created);
-   function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
-}
 
 
 //This is the basic wrapped Ether contract. 
@@ -145,59 +128,4 @@ contract Wrapped_Ether {
 
   //Returns the remaining allowance of tokens granted to the _spender from the _owner
   function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
-}
-
-//The User Contract enables the entering of a deployed swap along with the wrapping of Ether.  This contract was specifically made for drct.decentralizedderivatives.org to simplify user metamask calls
-contract UserContract{
-  TokenToTokenSwap_Interface swap;
-  Wrapped_Ether token;
-  Factory_Interface factory;
-
-  address public factory_address;
-  address owner;
-
-  function UserContract() public {
-      owner = msg.sender;
-  }
-
-  //The _swapAdd is the address of the deployed contract created from the Factory contract.
-  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.
-  //_premium is a base payment to the other party for taking the other side of the swap
-  // _isLong refers to whether the sender is long or short the reference rate
-  //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
-
-  function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
-    require(msg.value == _amounta + _premium);
-    swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_a_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
-    return success;
-  }
-
-  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public returns(bool){
-    require(msg.value ==_amountb);
-    swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.EnterSwap(_amounta, _amountb, _isLong,msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_b_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
-    swap.createTokens();
-    return success;
-
-  }
-
-
-  function setFactory(address _factory_address) public {
-      require (msg.sender == owner);
-    factory_address = _factory_address;
-    factory = Factory_Interface(factory_address);
-  }
 }
