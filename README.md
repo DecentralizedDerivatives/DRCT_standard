@@ -5,7 +5,7 @@ Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for tradi
 
 ## Useful Links
 
-If you have questions, ask us on Slack: https://deriveth.slack.com/
+#### If you have questions, ask us on Slack: https://deriveth.slack.com/
 
 DAPP:  https://drct.decentralizedderivatives.org 
 
