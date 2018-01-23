@@ -15,6 +15,8 @@ Documentation - https://github.com/DecentralizedDerivatives/DRCT_standard/wiki/D
 
 Metamask - www.metamask.io 
 
+Truffle - http://truffleframework.com/
+
 
 ## Truffle Deployment Instructions
 
