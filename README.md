@@ -34,4 +34,5 @@ Now you have a launched Factory, Oracle and dependency contracts and you're read
 
 ## How to Contribute
 Join our slack, shoot us an email or contact us to list the tokens or the contract creation pieces on your site
+
 Any contributions are welcome!
