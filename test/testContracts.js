@@ -520,5 +520,94 @@ contract('Contracts', function(accounts) {
 	  	assert(newbal >= newbal2 - 4 && newbal <= newbal2 -3,"Value should changed correctly");
 	});
 
+	it("Up Move w/ Premium", async function(){
+  	var o_startdate = 1550880000;
+    var o_enddate = 1550966400;
+  	var balance1 = await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0));
+  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+  	await oracle.StoreDocument(o_startdate,1000);
+    await oracle.StoreDocument(o_enddate,1500);
+    await factory.deployTokenContract(o_startdate,true);
+    await factory.deployTokenContract(o_startdate,false);
+    long_token_add =await factory.long_tokens(o_startdate);
+    short_token_add =await factory.short_tokens(o_startdate);
+    long_token =await DRCT_Token.at(long_token_add);
+    short_token = await DRCT_Token.at(short_token_add);
+    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal start value");
+    assert.equal(await oracle.RetrieveData(o_enddate),1500,"Result should equal end value");
+	console.log("Contracts deployed successfully")
+  	var receipt = await factory.deployContract(o_startdate,{from: account_two, gas:4000000});
+  	swap_add = receipt.logs[0].args._created;
+  	await userContract.Initiate(swap_add,1000000000000000000,1000000000000000000,web3.toWei(1, 'ether'),true,{value: web3.toWei(2,'ether'), from: account_two});
+  	swap = await TokenToTokenSwap.at(swap_add);
+  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
+  	await userContract.Enter(1000000000000000000,1000000000000000000,false,swap_add,{value: web3.toWei(1,'ether'), from: account_three});
+  	var prem_balance = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+  	console.log(prem_balance, balance2);
+  	assert(prem_balance + .1 >= balance2, "Premium should be paid");
+  	assert.equal(await swap.current_state.call(),3,"Current State should be 3");
+	console.log("Tokens Traded");
+  	await long_token.transfer(account_four,500,{from:account_two});
+  	await short_token.transfer(account_five,500,{from:account_three});
+  	assert.equal(await long_token.balanceOf(account_two),500,"second balance should send tokens");
+  	assert.equal(await short_token.balanceOf(account_five),500,"half of short tokens should be sent");
+	console.log("Contracts successfully closed");
+  	await swap.forcePay(1,100,{from:account_one});
+  	assert.equal(await swap.current_state.call(),5,"Current State should be 5");
+  	for (i = 0; i < 5; i++){
+	  	await base1.withdraw(await base1.balanceOf(accounts[i]),{from:accounts[i]});
+	  	await base2.withdraw(await base2.balanceOf(accounts[i]),{from:accounts[i]});
+	}
+	var newbal = eval(await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0)));
+	var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+	console.log(balance1, balance2, newbal, newbal2);
+	assert(balance1 >= newbal + 1.5 && balance1 <= newbal +  3 ,"Balance1 should change correctly");
+	assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
+	});
+  it("Down Move w/ Premium", async function(){
+  	var o_startdate = 1550966400;
+    var o_enddate = 1551052800;
+  	await oracle.StoreDocument(o_startdate,1000);
+    await oracle.StoreDocument(o_enddate,500);
+    await factory.deployTokenContract(o_startdate,true);
+    await factory.deployTokenContract(o_startdate,false);
+    long_token_add =await factory.long_tokens(o_startdate);
+    short_token_add =await factory.short_tokens(o_startdate);
+    long_token =await DRCT_Token.at(long_token_add);
+    short_token = await DRCT_Token.at(short_token_add);
+    var balance1 = await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0));
+  	var balance2 = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
+    assert.equal(await oracle.RetrieveData(o_enddate),500,"Result should equal start value");
+	console.log("Contracts deployed successfully")
+	  	var receipt = await factory.deployContract(o_startdate,{from: account_two, gas:4000000});
+	  	swap_add = receipt.logs[0].args._created;
+	  	await userContract.Initiate(swap_add,1000000000000000000,1000000000000000000,web3.toWei(1,'ether'),true,{value: web3.toWei(2,'ether'), from: account_two});
+	  	swap = TokenToTokenSwap.at(swap_add);
+	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
+	  	await userContract.Enter(1000000000000000000,1000000000000000000,false,swap_add,{value: web3.toWei(1,'ether'), from: account_three});
+	  	assert.equal(await swap.current_state.call(),3,"Current State should be 3");
+	  	var prem_balance = await (web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+	  	  	console.log(prem_balance, balance2);
+  		assert(prem_balance + .1 >= balance2, "Premium should be paid");
+	console.log("Tokens Traded");
+	  	await long_token.transfer(account_five,500,{from:account_two});
+	  	await short_token.transfer(account_four,500,{from:account_three});
+	  	assert.equal(await long_token.balanceOf(account_two),500,"second balance should send tokens");
+	  	assert.equal(await short_token.balanceOf(account_four),500,"half of short tokens should be sent");
+	console.log("Contracts successfully closed");
+	  	await swap.forcePay(1,100,{from:account_one});
+	  	assert.equal(await swap.current_state.call(),5,"Current State should be 5");
+	  	for (i = 0; i < 5; i++){
+		  	await base1.withdraw(await base1.balanceOf(accounts[i]),{from:accounts[i]});
+		  	await base2.withdraw(await base2.balanceOf(accounts[i]),{from:accounts[i]});
+		}
+	var newbal = eval(await (web3.fromWei(web3.eth.getBalance(account_two), 'ether').toFixed(0)));
+	var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(account_three), 'ether').toFixed(0));
+	console.log(balance1, balance2, newbal, newbal2);
+	assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
+	assert(balance1 >= newbal + 1.75 && balance1 <= newbal + 2.25 ,"Balance1 should change correctly");
+	});
+
 });
 
