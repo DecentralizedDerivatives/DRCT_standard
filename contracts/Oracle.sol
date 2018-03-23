@@ -31,7 +31,7 @@ contract Oracle is usingOraclize{
    /*
   PushData - Sends an Oraclize query for entered API
   */
-  function PushData() public {
+  function PushData() public payable{
     uint _key = now - (now % 86400);
     require(queried[_key] == false);
     if (oraclize_getPrice("URL") > this.balance) {
