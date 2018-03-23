@@ -28,18 +28,17 @@ contract TokenToTokenSwap {
   //Address of the Factory that created this contract
   address public factory_address;
   Factory_Interface factory;
+  address creator;
   //Addresses of ERC20 token
   address token_address;
   ERC20_Interface token;
   //Enum state of the swap
   SwapState public current_state;
   //Start and end dates of the swaps - format is the same as block.timestamp
-  struct contractDetails{
-    uint start_date;
-    uint end_date;
-    uint multiplier;
-    uint duration
-  }
+  uint start_date;
+  uint end_date;
+  uint multiplier;
+  uint duration;
   // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
   uint pay_to_long;
   uint pay_to_short;
@@ -58,9 +57,9 @@ contract TokenToTokenSwap {
 
   /*Events*/
   //Emitted when a Swap is created
-  event SwapCreation(address _token_a, address _token_b, uint _start_date, uint _end_date, address _creating_party);
+  event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
   //Emitted when the swap has been paid out
-  event PaidOut(address _long_token, address _short_token);
+  event PaidOut(uint pay_to_long, uint pay_to_short);
 
   /*Functions*/
   modifier onlyState(SwapState expected_state) {
@@ -79,13 +78,13 @@ contract TokenToTokenSwap {
     factory_address = _factory_address;
     userContract = _userContract;
     start_date = _start_date;
-    current_state = SwapState.started;
+    current_state = SwapState.created;
   }
 
 
   //A getter function for retriving standardized variables from the factory contract
-  function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
-    return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
+  function showPrivateVars() public view returns (address, uint, address, address, address, address,  uint, uint, uint, uint){
+    return (userContract, num_DRCT_tokens,long_token_address,short_token_address, oracle_address, token_address, multiplier, duration, start_date, end_date);
   }
 
   /*
@@ -109,7 +108,9 @@ contract TokenToTokenSwap {
     assert(end_date-start_date < 28*86400);
     token_amount = _amount;
     token = ERC20_Interface(token_address);
-    createTokens();
+    createTokens(msg.sender);
+    SwapCreation(token_address,start_date,end_date,token_amount);
+    current_state = SwapState.started;
   }
 
   function setVars() internal{
@@ -135,6 +136,7 @@ contract TokenToTokenSwap {
   function oracleQuery() public returns(bool){
     oracle = Oracle_Interface(oracle_address);
     uint _today = now - (now % 86400);
+    uint i;
     if(_today >= start_date && start_value == 0){
         for(i=0;i < (_today- start_date)/86400;i++){
            if(oracle.getQuery(start_date+i*86400)){
@@ -143,7 +145,7 @@ contract TokenToTokenSwap {
            }
         }
         if(start_value ==0){
-          Oracle.pushData();
+          oracle.pushData();
           return false;
         }
     }
@@ -155,7 +157,7 @@ contract TokenToTokenSwap {
            }
         }
         if(end_value ==0){
-          Oracle.pushData();
+          oracle.pushData();
           return false;
         }
     }
@@ -169,8 +171,6 @@ contract TokenToTokenSwap {
   */
   function Calculate() internal {
     uint ratio;
-    uint share_long;
-    uint share_short;
     token_amount = token_amount.mul(995).div(1000);
     if (start_value > 0 && end_value > 0)
       ratio = (end_value).mul(100000).div(start_value);
@@ -181,14 +181,14 @@ contract TokenToTokenSwap {
     else
       ratio = 100000;
     if (ratio == 100000) {
-      pay_to_short,pay_to_long = (token_amount).div(num_DRCT_tokens);
+      pay_to_short = pay_to_long = (token_amount).div(num_DRCT_tokens);
     } else if (ratio > 100000) {
-      share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
+      uint share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
       ratio = SafeMath.min(100000, (share_long).sub(100000));
       pay_to_long = (token_amount.add(ratio.mul(token_amount))).div(num_DRCT_tokens).div(100000);
       pay_to_short = (SafeMath.sub(100000,ratio)).mul(token_amount).div(num_DRCT_tokens).div(100000);
     } else {
-      share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
+      uint share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
       ratio = SafeMath.min(100000, (share_short).sub(100000));
       pay_to_short = (token_amount.add(ratio.mul(token_amount))).div(num_DRCT_tokens).div(100000);
       pay_to_long = (SafeMath.sub(100000,ratio)).mul(token_amount).div(num_DRCT_tokens).div(100000);
@@ -229,7 +229,7 @@ contract TokenToTokenSwap {
       }
       if (loop_count == count){
           token.transfer(factory_address, token.balanceOf(address(this)));
-          PaidOut(long_token_address, short_token_address);
+          PaidOut(pay_to_long,pay_to_short);
           current_state = SwapState.ended;
         }
     }
@@ -249,7 +249,7 @@ contract TokenToTokenSwap {
         factory.payToken(_receiver,long_token_address);
       }
     } else {
-      if (pay_to_short_a > 0){
+      if (pay_to_short > 0){
        token.transfer(_receiver, _amount.mul(pay_to_short));
        factory.payToken(_receiver,short_token_address);
      }

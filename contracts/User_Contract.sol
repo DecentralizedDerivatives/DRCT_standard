@@ -25,37 +25,18 @@ contract UserContract{
   // _isLong refers to whether the sender is long or short the reference rate
   //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
 
-  function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
-    require(msg.value == _amounta + _premium);
+  function Initiate(address _swapadd, uint _amount) payable public returns (bool) {
+    require(msg.value == _amount);
     swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_a_address);
-    token.CreateToken.value(_amounta)();
-    bool success = token.transfer(_swapadd,_amounta);
-    return success;
+    swap.CreateSwap(_amount, msg.sender);
+    address token_address = factory.getBase();
+    token = Wrapped_Ether(token_address);
+    token.CreateToken.value(_amount)();
+    return token.transfer(_swapadd,_amount);
   }
-
-  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public returns(bool){
-    require(msg.value ==_amountb);
-    swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.EnterSwap(_amounta, _amountb, _isLong,msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_b_address);
-    token.CreateToken.value(_amountb)();
-    bool success = token.transfer(_swapadd,_amountb);
-    swap.createTokens();
-    return success;
-
-  }
-
 
   function setFactory(address _factory_address) public {
-      require (msg.sender == owner);
+    require (msg.sender == owner);
     factory_address = _factory_address;
     factory = Factory_Interface(factory_address);
   }
