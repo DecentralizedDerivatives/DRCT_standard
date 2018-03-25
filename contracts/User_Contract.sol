@@ -25,14 +25,13 @@ contract UserContract{
   // _isLong refers to whether the sender is long or short the reference rate
   //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
 
-  function Initiate(address _swapadd, uint _amount) payable public returns (bool) {
-    require(msg.value == _amount);
+  function Initiate(address _swapadd, uint _amount) payable public{
+    require(msg.value == _amount * 2);
     swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.CreateSwap(_amount, msg.sender);
     address token_address = factory.getBase();
     token = Wrapped_Ether(token_address);
-    token.CreateToken.value(_amount)();
-    return token.transfer(_swapadd,_amount);
+    token.transfer(_swapadd,_amount);
+    swap.CreateSwap(_amount, msg.sender);
   }
 
   function setFactory(address _factory_address) public {

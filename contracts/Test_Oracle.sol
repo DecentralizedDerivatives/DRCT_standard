@@ -31,7 +31,7 @@ contract Test_Oracle {
     queried[_key] = true;
   }
 
-  function pushData() public{
+  function pushData() public view{
     //here for testing purposes
   }
     function getQuery(uint _date) public view returns(bool){
