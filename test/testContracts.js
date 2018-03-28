@@ -46,13 +46,6 @@ contract('Contracts', function(accounts) {
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
    })
-	it("Test Oracle", async function(){
-	  	await oracle.StoreDocument(o_startdate,1000);
-	    await oracle.StoreDocument(o_enddate,1500);
-	    assert.equal(await factory.user_contract.call(),userContract.address,"User Contract address not set correctly");
-	    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
-	    assert.equal(await oracle.RetrieveData(o_enddate),1500,"Result should equal start value");
-		})
   	it("Up Move", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
@@ -319,27 +312,6 @@ contract('Contracts', function(accounts) {
 		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
 		assert(balance0 >= newbal0 - 2 && balance0 <= newbal0 - 1 ,"Balance0 should change correctly");
 		});
-	it("Missed Dates", async function(){
-		await oracle.StoreDocument(o_startdate + 86400,1000);
-	    await oracle.StoreDocument(o_enddate + 86400,1500);
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
-	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
-	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
-	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
-	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
-		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.current_state.call(),2,"Current State should be 2");
-	  	for (i = 0; i < 5; i++){
-		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
-		}
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
-		assert(balance1 >= newbal - 6 && balance1 <= newbal - 5 ,"Balance1 should change correctly");
-		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
-	});
 		it("Gas Calculation", async function(){
 
 		await oracle.StoreDocument(o_startdate,1000);
@@ -370,4 +342,3 @@ contract('Contracts', function(accounts) {
 	});
 
 });
-
