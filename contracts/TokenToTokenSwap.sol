@@ -60,7 +60,6 @@ contract TokenToTokenSwap {
   event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
   //Emitted when the swap has been paid out
   event PaidOut(uint pay_to_long, uint pay_to_short);
-
   /*Functions*/
   modifier onlyState(SwapState expected_state) {
     require(expected_state == current_state);
@@ -97,8 +96,7 @@ contract TokenToTokenSwap {
   function CreateSwap(
     uint _amount,
     address _senderAdd
-    ) public{
-    require(token.balanceOf(address(this)) == token_amount*2);
+    ) public onlyState(SwapState.created) {
     require(
       msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
     );
@@ -108,7 +106,8 @@ contract TokenToTokenSwap {
     assert(end_date-start_date < 28*86400);
     token_amount = _amount;
     token = ERC20_Interface(token_address);
-    createTokens(msg.sender);
+    assert(token.balanceOf(address(this)) == _amount*2);
+    createTokens(creator);
     SwapCreation(token_address,start_date,end_date,token_amount);
     current_state = SwapState.started;
   }
@@ -127,13 +126,12 @@ contract TokenToTokenSwap {
   */
   function createTokens(address _party) internal {
     uint tokenratio = 1;
-    (long_token_address,tokenratio) = factory.createToken(token_amount,_party,true,start_date);
-    (short_token_address,tokenratio) = factory.createToken(token_amount,_party,false,start_date);
+    (long_token_address,short_token_address,tokenratio) = factory.createToken(token_amount,_party,start_date);
     num_DRCT_tokens = token_amount.div(tokenratio);
     oracleQuery();
   }
 
-  function oracleQuery() public returns(bool){
+  function oracleQuery() internal returns(bool){
     oracle = Oracle_Interface(oracle_address);
     uint _today = now - (now % 86400);
     uint i;
@@ -141,7 +139,7 @@ contract TokenToTokenSwap {
         for(i=0;i < (_today- start_date)/86400;i++){
            if(oracle.getQuery(start_date+i*86400)){
               start_value = oracle.RetrieveData(start_date+i*86400);
-              i = (_today- start_date)/86400;
+              return true;
            }
         }
         if(start_value ==0){
@@ -153,7 +151,7 @@ contract TokenToTokenSwap {
         for(i=0;i < (_today- end_date)/86400;i++){
            if(oracle.getQuery(end_date+i*86400)){
               end_value = oracle.RetrieveData(end_date+i*86400);
-              i = (_today- end_date)/86400;
+              return true;
            }
         }
         if(end_value ==0){
@@ -180,19 +178,9 @@ contract TokenToTokenSwap {
       ratio = 0;
     else
       ratio = 100000;
-    if (ratio == 100000) {
-      pay_to_short = pay_to_long = (token_amount).div(num_DRCT_tokens);
-    } else if (ratio > 100000) {
-      uint share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
-      ratio = SafeMath.min(100000, (share_long).sub(100000));
-      pay_to_long = (token_amount.add(ratio.mul(token_amount))).div(num_DRCT_tokens).div(100000);
-      pay_to_short = (SafeMath.sub(100000,ratio)).mul(token_amount).div(num_DRCT_tokens).div(100000);
-    } else {
-      uint share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
-      ratio = SafeMath.min(100000, (share_short).sub(100000));
-      pay_to_short = (token_amount.add(ratio.mul(token_amount))).div(num_DRCT_tokens).div(100000);
-      pay_to_long = (SafeMath.sub(100000,ratio)).mul(token_amount).div(num_DRCT_tokens).div(100000);
-    }
+    ratio = SafeMath.min(200000,ratio);
+    pay_to_long = (ratio.mul(token_amount)).div(num_DRCT_tokens).div(100000);
+    pay_to_short = (SafeMath.sub(200000,ratio).mul(token_amount)).div(num_DRCT_tokens).div(100000);
   }
 
 
@@ -202,7 +190,7 @@ contract TokenToTokenSwap {
   * The function then pays every token holder of both the long and short DRCT tokens
   //What should we do about zeroed out values? 
   */
-  function forcePay(uint _begin, uint _end) public returns (bool) {
+  function forcePay(uint _begin, uint _end) public onlyState(SwapState.started) returns (bool) {
     //Calls the Calculate function first to calculate short and long shares
     require(now >= end_date);
     bool ready = oracleQuery();

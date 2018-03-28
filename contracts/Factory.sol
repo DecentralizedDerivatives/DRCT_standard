@@ -161,20 +161,16 @@ contract Factory {
   * @returns "created": The address of the created DRCT token
   * @returns "token_ratio": The ratio of the created DRCT token
   */
-  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address, uint) {
-    require(created_contracts[msg.sender] > 0);
+  function createToken(uint _supply, address _party, uint _start_date) public returns (address, address, uint) {
+    require(created_contracts[msg.sender] == _start_date);
     address ltoken = long_tokens[_start_date];
     address stoken = short_tokens[_start_date];
     require(ltoken != address(0) && stoken != address(0));
-    if (_long) {
       drct_interface = DRCT_Token_Interface(ltoken);
       drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
-      return (ltoken, token_ratio);
-    } else {
       drct_interface = DRCT_Token_Interface(stoken);
       drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
-      return (stoken, token_ratio);
-    }
+    return (ltoken, stoken, token_ratio);
   }
   
 
@@ -192,7 +188,6 @@ contract Factory {
       token_interface.withdraw(_val);
     }
    owner.transfer(this.balance);
-   return(_val,this.balance);
    }
 
    function() public payable {

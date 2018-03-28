@@ -30,7 +30,8 @@ contract UserContract{
     swap = TokenToTokenSwap_Interface(_swapadd);
     address token_address = factory.getBase();
     token = Wrapped_Ether(token_address);
-    token.transfer(_swapadd,_amount);
+    token.CreateToken.value(_amount * 2)();
+    token.transfer(_swapadd,_amount* 2);
     swap.CreateSwap(_amount, msg.sender);
   }
 
