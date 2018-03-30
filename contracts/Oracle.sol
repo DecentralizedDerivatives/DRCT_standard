@@ -23,7 +23,7 @@ contract Oracle is usingOraclize{
   RetrieveData - Returns stored value by given key
   @param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
   */
-  function RetrieveData(uint _date) public constant returns (uint data) {
+  function RetrieveData(uint _date) public constant returns (uint) {
     uint value = oracle_values[_date];
     return value;
   }
@@ -31,7 +31,7 @@ contract Oracle is usingOraclize{
    /*
   PushData - Sends an Oraclize query for entered API
   */
-  function PushData() public {
+  function pushData() public payable{
     uint _key = now - (now % 86400);
     require(queried[_key] == false);
     if (oraclize_getPrice("URL") > this.balance) {
@@ -48,7 +48,7 @@ contract Oracle is usingOraclize{
   @param "_oraclizeID": unique oraclize identifier of call
   @param "_result": Result of API call in string format
   */
-  function __callback(bytes32 _oraclizeID, string _result) {
+  function __callback(bytes32 _oraclizeID, string _result) public {
       require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
       uint _value = parseInt(_result,3);
       uint _key = now - (now % 86400);
@@ -65,7 +65,7 @@ contract Oracle is usingOraclize{
   getQuery - Returns true or false based upon whether an API query has been initialized (or completed) for given date
   @param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
   */
-  function getQuery(uint _date) public view returns(bool _isValue){
+  function getQuery(uint _date) public view returns(bool){
     return queried[_date];
   }
 }

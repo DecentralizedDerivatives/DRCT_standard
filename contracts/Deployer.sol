@@ -12,7 +12,7 @@ contract Deployer {
     owner = msg.sender;
   }
 
-  function newContract(address _party, address user_contract, uint _start_date) public returns (address created) {
+  function newContract(address _party, address user_contract, uint _start_date) public returns (address) {
     require(msg.sender == factory);
     address new_contract = new TokenToTokenSwap(factory, _party, user_contract, _start_date);
     return new_contract;

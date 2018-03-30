@@ -8,6 +8,7 @@ contract Test_Oracle {
   address private owner;
   //Mapping of documents stored in the oracle
   mapping(uint => uint) oracle_values;
+  mapping(uint => bool) public queried;
 
   /*Events*/
   event DocumentStored(uint _key, uint _value);
@@ -27,10 +28,17 @@ contract Test_Oracle {
   function StoreDocument(uint _key, uint _value) public onlyOwner() {
     oracle_values[_key] = _value;
     DocumentStored(_key, _value);
+    queried[_key] = true;
   }
 
+  function pushData() public view{
+    //here for testing purposes
+  }
+    function getQuery(uint _date) public view returns(bool){
+    return queried[_date];
+  }
   //Allows for the viewing of oracle data
-  function RetrieveData(uint _date) public constant returns (uint data) {
+  function RetrieveData(uint _date) public constant returns (uint) {
     return oracle_values[_date];
   }
 
