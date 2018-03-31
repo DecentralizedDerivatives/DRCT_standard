@@ -139,7 +139,6 @@ contract DRCT_Token {
         if (user_swaps_index[_to][from_swaps[i]] != 0) {
           //Get the index of the _to balance in this swap
           uint to_balance_index = swap_balances_index[from_swaps[i]][_to];
-          assert(to_balance_index != 0);
           //Add the _from tokens to _to
           swap_balances[from_swaps[i]][to_balance_index].amount = swap_balances[from_swaps[i]][to_balance_index].amount.add(from_user_bal.amount);
           //Remove the _from address from this swap's balance array

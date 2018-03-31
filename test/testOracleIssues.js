@@ -37,8 +37,8 @@ contract('Contracts', function(accounts) {
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
     	o_enddate = 1515369600;
-    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
    		await factory.deployTokenContract(o_startdate,true);
     	await factory.deployTokenContract(o_startdate,false);
     	long_token_add =await factory.long_tokens(o_startdate);
@@ -70,9 +70,11 @@ contract('Contracts', function(accounts) {
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
-		assert(balance1 >= newbal - 6 && balance1 <= newbal - 5 ,"Balance1 should change correctly");
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
+		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+		console.log(balance1-newbal);
+		console.log(balance2-newbal2);
+		assert(balance1 >= newbal - 5.5 && balance1 <= newbal - 4.5 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
 	});
 });

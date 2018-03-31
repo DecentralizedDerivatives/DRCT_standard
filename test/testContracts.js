@@ -46,7 +46,7 @@ contract('Contracts', function(accounts) {
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
    })
-  	it("Up Move", async function(){
+  	/*it("Up Move", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
@@ -340,5 +340,83 @@ contract('Contracts', function(accounts) {
 	  	console.log('4,000,000 gas = ', 4000000/(gas_base-gas_80)/80, 'users')
 
 	});
+		it("Test Multiple Swaps - send all/ buy back", async function(){
+		await oracle.StoreDocument(o_startdate,1000);
+	    await oracle.StoreDocument(o_enddate,1500);
+	    var swaps = [0]
+	    var balances = []
+	    var balances2 = []
+	    for (i = 0; i <= 8; i++){
+	    	balances[i] = eval(await (web3.fromWei(web3.eth.getBalance(accounts[i]), 'ether').toFixed(1)))
+	    }
+	    for (i=1;i<=4;i++){
+		  	var receipt = await factory.deployContract(o_startdate,{from: accounts[i]});
+		  	swap_add = receipt.logs[0].args._created;
+		  	swaps[i] = await TokenToTokenSwap.at(swap_add);
+		  	assert.equal(await swaps[i].current_state.call(),0,"Current State of swap " +i+" should be 0");
+		  	await userContract.Initiate(swap_add,5000000000000000000,{value: web3.toWei(10,'ether'), from: accounts[i]});
+		  	assert.equal(await swaps[i].current_state.call(),1,"Current State of swap " +i+" should be 1");
+		  	await short_token.transfer(accounts[i+4],5000,{from:accounts[i]});
+		  	await web3.eth.sendTransaction({from:accounts[i+4],to:accounts[i], value:web3.toWei(5, "ether")});
+		}
+	  	await long_token.transfer(accounts[3],5000,{from:accounts[1]});
+		await web3.eth.sendTransaction({from:accounts[3],to:accounts[1], value:web3.toWei(5, "ether")});
+		await long_token.transfer(accounts[1],5000,{from:accounts[4]});
+		await web3.eth.sendTransaction({from:accounts[1],to:accounts[4], value:web3.toWei(5, "ether")});
+		await short_token.transfer(accounts[2],5000,{from:accounts[5]});
+		await web3.eth.sendTransaction({from:accounts[2],to:accounts[5], value:web3.toWei(5, "ether")});
+		await long_token.transfer(accounts[2],5000,{from:accounts[3]});
+		await web3.eth.sendTransaction({from:accounts[2],to:accounts[3], value:web3.toWei(5, "ether")});
+		assert.equal(await long_token.balanceOf(accounts[1]),5000,"first guy cashes out should get it back");
+		assert.equal(await short_token.balanceOf(accounts[1]),0,"first guy cashes out short tokens");
+		assert.equal(await short_token.balanceOf(accounts[2]),5000,"half of short tokens should be sent");
+		assert.equal(await long_token.balanceOf(accounts[2]),10000,"half of short tokens should be sent");
+	  	for (i=1;i<=4;i++){
+			await swaps[i].forcePay(1,100,{from:accounts[0]});
+	  		assert.equal(await swaps[i].current_state.call(),2,"Current State of Swap "+i+" should be 2");
+	  	}
+	  	for (i = 0; i <= 8; i++){
+		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
+		}
+
+	    for (i = 0; i <= 8; i++){
+	    	balances2[i] = eval(await (web3.fromWei(web3.eth.getBalance(accounts[i]), 'ether').toFixed(1)))
+	    }
+	    console.log(balances[1],balances2[1])
+	    console.log(balances[2],balances2[2])
+		assert(balances[1] <= balances2[1] - 2 && balances[1] >= balances2[1] -2.5 ,"Balance1 should change correctly");
+		assert(balances[2] <= balances2[2] -2 && balances[2] >= balances2[2]-2.5,"Balance2 should change correctly");
+	});*/
+			it("Allowance Test", async function(){
+	  	await oracle.StoreDocument(o_startdate,1000);
+	    await oracle.StoreDocument(o_enddate,800);
+	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
+	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
+	  	await short_token.approve(accounts[4],10000,{from:accounts[1]})
+	  	await short_token.transferFrom(accounts[1],accounts[2],10000,{from:accounts[4]});
+	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
+	  	await long_token.approve(accounts[4],5000,{from:accounts[1]})
+	  	await long_token.transferFrom(accounts[1],accounts[3],5000,{from:accounts[4]});
+	  	await web3.eth.sendTransaction({from:accounts[3],to:accounts[1], value:web3.toWei(5, "ether")});
+	  	await short_token.transfer(accounts[4],5000,{from:accounts[2]});
+	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
+	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
+	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
+		await swap.forcePay(1,100,{from:accounts[0]});
+	  	assert.equal(await swap.current_state.call(),2,"Current State should be 2");
+	  	for (i = 0; i < 5; i++){
+		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
+		}
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
+		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
+		assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
+		});
+
+
 
 });
