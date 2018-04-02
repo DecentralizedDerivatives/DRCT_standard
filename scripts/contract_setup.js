@@ -6,19 +6,16 @@ var Deployer = artifacts.require("Deployer");
 var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
-
+var days_future = 0;
 
 module.exports =async function(callback) {
-      let oracle;
-      let factory;
+      let factory = await Factory.deployed();
       let base;
       let deployer;
-      let userContract;
       let tokenDeployer;
-      o_startdate = Date.now() - Date.now()%86400;
-      o_enddate = o_startdate + 86400*7;
-      balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-      balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+      let oracle = await Test_Oracle.deployed();
+      var o_startdate = Date.now()+86400*days_future - Date.now()%86400;
+      var o_enddate = o_startdate + 86400*7+86400*days_future;
       await factory.deployTokenContract(o_startdate,true);
       await factory.deployTokenContract(o_startdate,false);
       long_token_add =await factory.long_tokens(o_startdate);
@@ -27,4 +24,5 @@ module.exports =async function(callback) {
       short_token = await DRCT_Token.at(short_token_add);
       await oracle.StoreDocument(o_startdate,1000);
       await oracle.StoreDocument(o_enddate,1500);
+      console.log(o_enddate);
 }

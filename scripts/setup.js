@@ -21,6 +21,7 @@ module.exports =async function(callback) {
     let tokenDeployer;
       oracle = await Test_Oracle.deployed();
       factory = await Factory.deployed();
+      console.log('This is your factory address  :  ',factory.address)
       await factory.setVariables(1000000000000000,7,1);
       base = await Wrapped_Ether.deployed();
       userContract = await UserContract.deployed();

@@ -46,7 +46,7 @@ contract('Contracts', function(accounts) {
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
    })
-  	/*it("Up Move", async function(){
+  	it("Up Move", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
@@ -386,7 +386,7 @@ contract('Contracts', function(accounts) {
 	    console.log(balances[2],balances2[2])
 		assert(balances[1] <= balances2[1] - 2 && balances[1] >= balances2[1] -2.5 ,"Balance1 should change correctly");
 		assert(balances[2] <= balances2[2] -2 && balances[2] >= balances2[2]-2.5,"Balance2 should change correctly");
-	});*/
+	});
 			it("Allowance Test", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,800);
