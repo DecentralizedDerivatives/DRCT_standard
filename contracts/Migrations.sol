@@ -1,23 +1,39 @@
 pragma solidity ^0.4.17;
 
 contract Migrations {
-  address public owner;
-  uint public last_completed_migration;
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
+    /*Variables*/
+    address public owner;
+    uint public last_completed_migration;
 
-  function Migrations() public {
-    owner = msg.sender;
-  }
+    /*Modifiers*/
+    modifier restricted() {
+        if (msg.sender == owner) 
+        _;
+    }
 
-  function setCompleted(uint completed) public restricted {
-    last_completed_migration = completed;
-  }
+    /*Functions*/
+    /**
+    *@dev Constructor - Sets owner
+    */    
+    function Migrations() public {
+        owner = msg.sender;
+    }
 
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
-  }
+    /**
+    *@dev Resets last_completed_migration to latest completed migration
+    *@param completed unix date as uint for last completed migration? gobal variable?
+    */ 
+    function setCompleted(uint completed) public restricted {
+        last_completed_migration = completed;
+    }
+
+    /**
+    @dev ?
+    @param new_address ?
+    */
+    function upgrade(address new_address) public restricted {
+        Migrations upgraded = Migrations(new_address);
+        upgraded.setCompleted(last_completed_migration);
+    }
 }
