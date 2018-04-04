@@ -37,7 +37,7 @@ contract Test_Oracle {
     *@param _key a specified date
     *@param _value the value for the specified date
     */
-    function StoreDocument(uint _key, uint _value) public onlyOwner() {
+    function storeDocument(uint _key, uint _value) public onlyOwner() {
         oracle_values[_key] = _value;
         DocumentStored(_key, _value);
         queried[_key] = true;
@@ -64,7 +64,7 @@ contract Test_Oracle {
     *@param _date specified date being queried from the Oracle data
     *@return oracle_values for the date
     */
-    function RetrieveData(uint _date) public constant returns (uint) {
+    function retrieveData(uint _date) public constant returns (uint) {
         return oracle_values[_date];
     }
 
