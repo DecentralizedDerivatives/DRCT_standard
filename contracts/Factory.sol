@@ -96,7 +96,7 @@ contract Factory {
     *@dev Sets the token_deployer address
     *@param _tdeployer the new token deployer address
     */  
-    function settokenDeployer(address _tdeployer) public onlyOwner() {
+    function setTokenDeployer(address _tdeployer) public onlyOwner() {
         token_deployer_address = _tdeployer;
         tokenDeployer = Deployer_Interface(_tdeployer);
     }
