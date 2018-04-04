@@ -1,5 +1,19 @@
 pragma solidity ^0.4.17;
 
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _party, uint _start_date) public returns (address,address, uint);
+  function payToken(address _party, address _token_add) public;
+  function deployContract(uint _start_date) public payable returns (address);
+   function getBase() public view returns(address);
+  function getVariables() public view returns (address, uint, uint, address);
+}
+
+
+interface TokenToTokenSwap_Interface {
+  function CreateSwap(uint _amount, address _senderAdd) public;
+}
+
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -31,21 +45,7 @@ library SafeMath {
   }
 }
 
-//Swap interface- descriptions can be found in TokenToTokenSwap.sol
-interface TokenToTokenSwap_Interface {
-  function CreateSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public payable;
-  function EnterSwap(uint _amount_a, uint _amount_b, bool _sender_is_long, address _senderAdd) public;
-  function createTokens() public;
-}
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _owner, bool long) public returns (address created, uint tokenratio);
-  function payToken(address _party, bool long) public;
-   function deployContract(address swap_owner) public payable returns (address created);
-   function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, address factory_operator, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr, uint swap_start_date);
-}
 
 //This is the basic wrapped Ether contract. 
 //All money deposited is transformed into ERC20 tokens at the rate of 1 wei = 1 token
@@ -99,7 +99,7 @@ contract Wrapped_Ether {
   * @param "_to": The address to send tokens to
   * @param "_amount": The amount of tokens to send
   */
-  function transfer(address _to, uint _amount) public returns (bool success) {
+  function transfer(address _to, uint _amount) public returns (bool) {
     if (balances[msg.sender] >= _amount
     && _amount > 0
     && balances[_to] + _amount > balances[_to]) {
@@ -119,7 +119,7 @@ contract Wrapped_Ether {
   * @param "_to": The address to send tokens to
   * @param "_amount": The amount of tokens to send
   */
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
     if (balances[_from] >= _amount
     && allowed[_from][msg.sender] >= _amount
     && _amount > 0
@@ -135,15 +135,16 @@ contract Wrapped_Ether {
   }
 
   //Approves a _spender an _amount of tokens to use
-  function approve(address _spender, uint _amount) public returns (bool success) {
+  function approve(address _spender, uint _amount) public returns (bool) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
     return true;
   }
 
   //Returns the remaining allowance of tokens granted to the _spender from the _owner
-  function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
+  function allowance(address _owner, address _spender) public view returns (uint) { return allowed[_owner][_spender]; }
 }
+
 
 //The User Contract enables the entering of a deployed swap along with the wrapping of Ether.  This contract was specifically made for drct.decentralizedderivatives.org to simplify user metamask calls
 contract UserContract{
@@ -158,43 +159,24 @@ contract UserContract{
       owner = msg.sender;
   }
 
-  //The _swapAdd is the address of the deployed contract created from the Factory contract.  
-  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.  
+  //The _swapAdd is the address of the deployed contract created from the Factory contract.
+  //_amounta and _amountb are the amounts of token_a and token_b (the base tokens) in the swap.  For wrapped Ether, this is wei.
   //_premium is a base payment to the other party for taking the other side of the swap
   // _isLong refers to whether the sender is long or short the reference rate
   //Value must be sent with Initiate and Enter equivalent to the _amounta(in wei) and the premium, and _amountb respectively
 
-  function Initiate(address _swapadd, uint _amounta, uint _amountb, uint _premium, bool _isLong) payable public returns (bool) {
-    require(msg.value == _amounta + _premium);
+  function Initiate(address _swapadd, uint _amount) payable public{
+    require(msg.value == _amount * 2);
     swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.CreateSwap.value(_premium)(_amounta, _amountb, _isLong, msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_a_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
-    return success;
+    address token_address = factory.getBase();
+    token = Wrapped_Ether(token_address);
+    token.CreateToken.value(_amount * 2)();
+    token.transfer(_swapadd,_amount* 2);
+    swap.CreateSwap(_amount, msg.sender);
   }
-
-  function Enter(uint _amounta, uint _amountb, bool _isLong, address _swapadd) payable public returns(bool){
-    require(msg.value ==_amountb);
-    swap = TokenToTokenSwap_Interface(_swapadd);
-    swap.EnterSwap(_amounta, _amountb, _isLong,msg.sender);
-    address token_a_address;
-    address token_b_address;
-    (token_a_address,token_b_address) = factory.getBase();
-    token = Wrapped_Ether(token_b_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
-    swap.createTokens();
-    return success;
-
-  }
-
 
   function setFactory(address _factory_address) public {
-      require (msg.sender == owner);
+    require (msg.sender == owner);
     factory_address = _factory_address;
     factory = Factory_Interface(factory_address);
   }

@@ -55,7 +55,7 @@ contract Wrapped_Ether {
   * @param "_to": The address to send tokens to
   * @param "_amount": The amount of tokens to send
   */
-  function transfer(address _to, uint _amount) public returns (bool success) {
+  function transfer(address _to, uint _amount) public returns (bool) {
     if (balances[msg.sender] >= _amount
     && _amount > 0
     && balances[_to] + _amount > balances[_to]) {
@@ -75,7 +75,7 @@ contract Wrapped_Ether {
   * @param "_to": The address to send tokens to
   * @param "_amount": The amount of tokens to send
   */
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
     if (balances[_from] >= _amount
     && allowed[_from][msg.sender] >= _amount
     && _amount > 0
@@ -91,12 +91,12 @@ contract Wrapped_Ether {
   }
 
   //Approves a _spender an _amount of tokens to use
-  function approve(address _spender, uint _amount) public returns (bool success) {
+  function approve(address _spender, uint _amount) public returns (bool) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
     return true;
   }
 
   //Returns the remaining allowance of tokens granted to the _spender from the _owner
-  function allowance(address _owner, address _spender) public view returns (uint remaining) { return allowed[_owner][_spender]; }
+  function allowance(address _owner, address _spender) public view returns (uint) { return allowed[_owner][_spender]; }
 }

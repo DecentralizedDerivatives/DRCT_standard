@@ -1,6 +1,5 @@
 pragma solidity ^0.4.17;
 
-//Slightly modified SafeMath library - includes a min function
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -30,6 +29,7 @@ library SafeMath {
     return a < b ? a : b;
   }
 }
+
 
 
 //The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract specified in the Factory contract
@@ -67,6 +67,7 @@ contract DRCT_Token {
   //events for transfer and approvals
   event Transfer(address indexed _from, address indexed _to, uint _value);
   event Approval(address indexed _owner, address indexed _spender, uint _value);
+  event CreateToken(address _from, uint _value);
 
   modifier onlyMaster() {
     require(msg.sender == master_contract);
@@ -104,6 +105,7 @@ contract DRCT_Token {
       owner: _owner,
       amount: _supply
     }));
+    CreateToken(_owner,_supply);
   }
 
   //Called by the factory contract, and pays out to a _party
@@ -124,10 +126,7 @@ contract DRCT_Token {
   //Getter for the total_supply of tokens in the contract
   function totalSupply() public constant returns (uint _total_supply) { return total_supply; }
 
-  //Checks whether an address is in a specified swap. If they are, the user_swaps_index for that user and swap will be non-zero
-  function addressInSwap(address _swap, address _owner) public view returns (bool) {
-    return user_swaps_index[_owner][_swap] != 0;
-  }
+
 
   //Removes the address from the swap balances for a swap, and moves the last address in the swap into their place
   function removeFromSwapBalances(address _remove, address _swap) internal {
@@ -166,7 +165,7 @@ contract DRCT_Token {
         delete user_swaps_index[_from][from_swaps[i]];
 
         //If the _to address already holds tokens from this swap
-        if (addressInSwap(from_swaps[i], _to)) {
+        if (user_swaps_index[_to][from_swaps[i]] != 0) {
           //Get the index of the _to balance in this swap
           uint to_balance_index = swap_balances_index[from_swaps[i]][_to];
           assert(to_balance_index != 0);
@@ -174,12 +173,14 @@ contract DRCT_Token {
           swap_balances[from_swaps[i]][to_balance_index].amount = swap_balances[from_swaps[i]][to_balance_index].amount.add(from_user_bal.amount);
           //Remove the _from address from this swap's balance array
           removeFromSwapBalances(_from, from_swaps[i]);
-        } else {
+        } 
+        else {
           //Prepare to add a new swap by assigning the swap an index for _to
-          if (user_swaps[_to].length == 0)
-            user_swaps_index[_to][from_swaps[i]] = 1;
-          else
-            user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+          if (user_swaps[_to].length == 0){
+            user_swaps[_to].push(address(0x0));
+          }
+
+          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
           //Add the new swap to _to
           user_swaps[_to].push(from_swaps[i]);
           //Give the reciever the sender's balance for this swap
@@ -192,19 +193,21 @@ contract DRCT_Token {
         //If there is no more remaining to be removed, we break out of the loop
         if (_amount == 0)
           break;
-      } else {
+      } 
+      else {
         //The amount in this swap is more than the amount we still need to transfer
         uint to_swap_balance_index = swap_balances_index[from_swaps[i]][_to];
         //If the _to address already holds tokens from this swap
-        if (addressInSwap(from_swaps[i], _to)) {
+        if (user_swaps_index[_to][from_swaps[i]] != 0) {
           //Because both addresses are in this swap, and neither will be removed, we simply update both swap balances
           swap_balances[from_swaps[i]][to_swap_balance_index].amount = swap_balances[from_swaps[i]][to_swap_balance_index].amount.add(_amount);
         } else {
           //Prepare to add a new swap by assigning the swap an index for _to
-          if (user_swaps[_to].length == 0)
-            user_swaps_index[_to][from_swaps[i]] = 1;
-          else
-            user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+          if (user_swaps[_to].length == 0){
+            user_swaps[_to].push(address(0x0));
+          }
+          
+          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
           //And push the new swap
           user_swaps[_to].push(from_swaps[i]);
           //_to is not in this swap, so we give this swap a new balance index for _to
@@ -229,7 +232,7 @@ contract DRCT_Token {
     @param - _amount: Amount of token to send
     returns true for successful
   */
-  function transfer(address _to, uint _amount) public returns (bool success) {
+  function transfer(address _to, uint _amount) public returns (bool) {
     uint balance_owner = user_total_balances[msg.sender];
 
     if (
@@ -253,7 +256,7 @@ contract DRCT_Token {
     @param - _amount: Amount of token to send
     returns true for successful
   */
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+  function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
     uint balance_owner = user_total_balances[_from];
     uint sender_allowed = allowed[_from][msg.sender];
 
@@ -279,24 +282,24 @@ contract DRCT_Token {
     @param - _amount: Amount of token to approve for sending
     returns true for successful
   */
-  function approve(address _spender, uint _amount) public returns (bool success) {
+  function approve(address _spender, uint _amount) public returns (bool) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
     return true;
   }
 
   //Returns the length of the balances array for a swap
-  function addressCount(address _swap) public constant returns (uint count) { return swap_balances[_swap].length; }
+  function addressCount(address _swap) public constant returns (uint) { return swap_balances[_swap].length; }
 
   //Returns the address associated with a particular index in a particular swap
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address holder) { return swap_balances[_swap][_ind].owner; }
+  function getHolderByIndex(uint _ind, address _swap) public constant returns (address) { return swap_balances[_swap][_ind].owner; }
 
   //Returns the balance associated with a particular index in a particular swap
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint bal) { return swap_balances[_swap][_ind].amount; }
+  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint) { return swap_balances[_swap][_ind].amount; }
 
   //Returns the index associated with the _owner address in a particular swap
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint index) { return swap_balances_index[_swap][_owner]; }
+  function getIndexByAddress(address _owner, address _swap) public constant returns (uint) { return swap_balances_index[_swap][_owner]; }
 
   //Returns the allowed amount _spender can spend of _owner's balance
-  function allowance(address _owner, address _spender) public constant returns (uint amount) { return allowed[_owner][_spender]; }
+  function allowance(address _owner, address _spender) public constant returns (uint) { return allowed[_owner][_spender]; }
 }
