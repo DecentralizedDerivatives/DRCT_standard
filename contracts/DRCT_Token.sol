@@ -291,7 +291,7 @@ contract DRCT_Token {
     }
 
     /**
-    *@dev Counts addresses involved in the swap based on the lenght of balances array for _swap
+    *@dev Counts addresses involved in the swap based on the length of balances array for _swap
     *@param _swap address
     *@return the length of the balances array for the swap
     */
