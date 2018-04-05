@@ -14,15 +14,15 @@ module.exports =async function(callback) {
       let deployer;
       let tokenDeployer;
       let oracle = await Test_Oracle.deployed();
-      var o_startdate = Date.now()+86400*days_future - Date.now()%86400;
+      var o_startdate = Date.now()/1000+86400*days_future - (Date.now()/1000)%86400;
       var o_enddate = o_startdate + 86400*7+86400*days_future;
       await factory.deployTokenContract(o_startdate,true);
       await factory.deployTokenContract(o_startdate,false);
-      long_token_add =await factory.long_tokens(o_startdate);
-      short_token_add =await factory.short_tokens(o_startdate);
-      long_token =await DRCT_Token.at(long_token_add);
-      short_token = await DRCT_Token.at(short_token_add);
+      var long_token_add =await factory.long_tokens(o_startdate);
+      var short_token_add =await factory.short_tokens(o_startdate);
+      console.log('Long Token at: ',long_token_add);
+      console.log('Short Token at: ',short_token_add);
       await oracle.StoreDocument(o_startdate,1000);
       await oracle.StoreDocument(o_enddate,1500);
-      console.log(o_enddate);
+      console.log('End Date: ',o_enddate);
 }

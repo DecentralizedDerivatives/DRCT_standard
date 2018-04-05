@@ -15,11 +15,10 @@ module.exports =async function(callback) {
       let userContract = await UserContract.deployed();
       var swap_add;
       var o_startdate = Date.now()/1000+86400*days_future - (Date.now()/1000)%86400;
-      o_enddate = o_startdate + 86400*7+86400*days_future;
+      var o_enddate = o_startdate + 86400*7+86400*days_future;
       var receipt = await factory.deployContract(o_startdate);
-      console.log(receipt);
 	  swap_add = receipt.logs[0].args._created;
 	  swap = await TokenToTokenSwap.at(swap_add);
-	  console.log(swap_add);
+	  console.log('My Swap',swap_add);
 	  await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether')});
 }
