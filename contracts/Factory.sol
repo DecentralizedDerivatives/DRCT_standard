@@ -38,6 +38,7 @@ contract Factory {
 
   //Array of deployed contracts
   address[] public contracts;
+  uint[] public startDates;
   mapping(address => uint) public created_contracts;
   mapping(uint => address) public long_tokens;
   mapping(uint => address) public short_tokens;
@@ -128,6 +129,7 @@ contract Factory {
   //returns the newly created swap address and calls event 'ContractCreation'
   function deployContract(uint _start_date) public payable returns (address) {
     require(msg.value >= fee);
+    require(_start_date % 86400 == 0);
     address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
     contracts.push(new_contract);
     created_contracts[new_contract] = _start_date;
@@ -138,6 +140,7 @@ contract Factory {
 
   function deployTokenContract(uint _start_date, bool _long) public returns(address) {
     address _token;
+    require(_start_date % 86400 == 0);
     if (_long){
       require(long_tokens[_start_date] == address(0));
       _token = tokenDeployer.newToken();
@@ -147,6 +150,9 @@ contract Factory {
       require(short_tokens[_start_date] == address(0));
       _token = tokenDeployer.newToken();
       short_tokens[_start_date] = _token;
+    }
+    if(short_tokens[_start_date] != address(0) && long_tokens[_start_date] != address(0)){
+      startDates.push(_start_date);
     }
     return _token;
   }
@@ -181,17 +187,16 @@ contract Factory {
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 
   //Allows the owner to pull contract creation fees
-  function withdrawFees() public onlyOwner() returns(uint, uint){
+  function withdrawFees() public onlyOwner(){
    token_interface = Wrapped_Ether_Interface(token);
    uint _val = token_interface.balanceOf(address(this));
    if(_val > 0){
       token_interface.withdraw(_val);
     }
-   owner.transfer(this.balance);
+          owner.transfer(this.balance);
    }
 
    function() public payable {
-
    }
 
   /*
@@ -222,5 +227,11 @@ contract Factory {
   //Returns the number of contracts created by this factory
     function getCount() public constant returns(uint) {
       return contracts.length;
+  }
+
+
+  //Returns the number of start dates created by this factory
+    function getDateCount() public constant returns(uint) {
+      return startDates.length;
   }
 }

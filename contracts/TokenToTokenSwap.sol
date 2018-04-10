@@ -199,28 +199,33 @@ contract TokenToTokenSwap {
       //Loop through the owners of long and short DRCT tokens and pay them
       drct = DRCT_Token_Interface(long_token_address);
       uint count = drct.addressCount(address(this));
-      uint loop_count = count < _end ? count : _end;
-      //Indexing begins at 1 for DRCT_Token balances
-      for(uint i = loop_count-1; i >= _begin ; i--) {
-        address long_owner = drct.getHolderByIndex(i, address(this));
-        uint to_pay_long = drct.getBalanceByIndex(i, address(this));
-        paySwap(long_owner, to_pay_long, true);
+      if(_begin <= count){
+        uint loop_count = count < _end ? count : _end;
+        //Indexing begins at 1 for DRCT_Token balances
+        for(uint i = loop_count-1; i >= _begin ; i--) {
+          address long_owner = drct.getHolderByIndex(i, address(this));
+          uint to_pay_long = drct.getBalanceByIndex(i, address(this));
+          paySwap(long_owner, to_pay_long, true);
+        }
       }
 
       drct = DRCT_Token_Interface(short_token_address);
-      count = drct.addressCount(address(this));
-      loop_count = count < _end ? count : _end;
+      uint count2 = drct.addressCount(address(this));
+      if(_begin <= count2){
+      loop_count = count2 < _end ? count2 : _end;
       for(uint j = loop_count-1; j >= _begin ; j--) {
         address short_owner = drct.getHolderByIndex(j, address(this));
         uint to_pay_short = drct.getBalanceByIndex(j, address(this));
         paySwap(short_owner, to_pay_short, false);
       }
-      if (loop_count == count){
+     }
+      if (_end > count && _end > count2){
           token.transfer(factory_address, token.balanceOf(address(this)));
           PaidOut(pay_to_long,pay_to_short);
           current_state = SwapState.ended;
         }
     }
+
     return ready;
   }
 

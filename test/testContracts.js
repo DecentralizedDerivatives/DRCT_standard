@@ -291,27 +291,7 @@ contract('Contracts', function(accounts) {
 		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
 	});
-	it("Test Withdrawal and no trades", async function(){
-		await factory.setFee(web3.toWei(1, 'ether'));
-		await oracle.StoreDocument(o_startdate,1000);
-	    await oracle.StoreDocument(o_enddate,1500);
-	    var balance0 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[0]), 'ether').toFixed(0)));
-	  	var receipt = await factory.deployContract(o_startdate,{value: web3.toWei(1,'ether'),from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
-	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
-		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.current_state.call(),2,"Current State should be 2");
-	  	for (i = 0; i < 5; i++){
-		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
-		}
-		await factory.withdrawFees();
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-		var newbal0 = eval(await web3.fromWei(web3.eth.getBalance(accounts[0]), 'ether').toFixed(0));
-		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
-		assert(balance0 >= newbal0 - 2 && balance0 <= newbal0 - 1 ,"Balance0 should change correctly");
-		});
+
 		it("Gas Calculation", async function(){
 
 		await oracle.StoreDocument(o_startdate,1000);
@@ -387,7 +367,7 @@ contract('Contracts', function(accounts) {
 		assert(balances[1] <= balances2[1] - 2 && balances[1] >= balances2[1] -2.5 ,"Balance1 should change correctly");
 		assert(balances[2] <= balances2[2] -2 && balances[2] >= balances2[2]-2.5,"Balance2 should change correctly");
 	});
-			it("Allowance Test", async function(){
+	it("Allowance Test", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,800);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
@@ -416,6 +396,28 @@ contract('Contracts', function(accounts) {
 		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
 		});
+		it("Test Withdrawal and no trades", async function(){
+			await factory.setFee(web3.toWei(1, 'ether'));
+			await oracle.StoreDocument(o_startdate,1000);
+		    await oracle.StoreDocument(o_enddate,1500);
+		    var balance0 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[0]), 'ether').toFixed(0)));
+		  	var receipt = await factory.deployContract(o_startdate,{value: web3.toWei(1,'ether'),from: accounts[1]});
+		  	swap_add = receipt.logs[0].args._created;
+		  	swap = await TokenToTokenSwap.at(swap_add);
+		  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
+		  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+		  	assert.equal(await long_token.balanceOf(accounts[1]),10000,"second balance should send tokens");
+			await swap.forcePay(1,100,{from:accounts[0]});
+		  	assert.equal(await swap.current_state.call(),2,"Current State should be 2");
+		  	for (i = 0; i < 5; i++){
+			  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
+			}
+			await factory.withdrawFees();
+			var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
+			var newbal0 = eval(await web3.fromWei(web3.eth.getBalance(accounts[0]), 'ether').toFixed(0));
+			assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
+			assert(balance0 >= newbal0 - 2 && balance0 <= newbal0 - 1 ,"Balance0 should change correctly");
+			});
 
 
 

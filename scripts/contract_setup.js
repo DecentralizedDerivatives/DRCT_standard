@@ -25,4 +25,6 @@ module.exports =async function(callback) {
       await oracle.StoreDocument(o_startdate,1000);
       await oracle.StoreDocument(o_enddate,1500);
       console.log('End Date: ',o_enddate);
+      await factory.deployTokenContract(o_enddate,true);
+      await factory.deployTokenContract(o_enddate,false);
 }

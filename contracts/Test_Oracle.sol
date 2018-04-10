@@ -6,6 +6,7 @@ contract Test_Oracle {
   /*Variables*/
   //Owner of the oracle
   address private owner;
+  string public API;
   //Mapping of documents stored in the oracle
   mapping(uint => uint) oracle_values;
   mapping(uint => bool) public queried;
@@ -21,6 +22,7 @@ contract Test_Oracle {
   //Constructor - Sets owner
   function Test_Oracle() public {
     owner = msg.sender;
+    API = "https://api.gdax.com/products/BTC-USD/ticker).price";
   }
 
   //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents

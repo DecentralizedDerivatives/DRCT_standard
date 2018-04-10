@@ -61,6 +61,7 @@ contract Exchange{
     function Exchange() public{
         owner = msg.sender;
         openBooks.push(address(0));
+        order_nonce = 0;
     }
 
     /*
@@ -79,7 +80,7 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         require(_price > 0);
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        require(token.transferFrom(msg.sender,address(this),order_nonce));
+        require(token.transferFrom(msg.sender,address(this),_amount));
         if(forSale[_tokenadd].length == 0){
             forSale[_tokenadd].push(0);
             }
@@ -136,9 +137,9 @@ contract Exchange{
     *@return address of the party selling the rights to the photo
     *@return uint of the price of the sale
     */
-    function getOrder(uint256 _orderId) external view returns(address,uint){
+    function getOrder(uint256 _orderId) external view returns(address,uint,uint){
         Order storage _order = orders[_orderId];
-        return (_order.maker,_order.price);
+        return (_order.maker,_order.price,_order.amount);
     }
 
     /*

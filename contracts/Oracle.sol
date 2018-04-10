@@ -9,6 +9,7 @@ contract Oracle is usingOraclize{
 
   //Private queryId for Oraclize callback
   bytes32 private queryID;
+  string public API;
 
   //Mapping of documents stored in the oracle
   mapping(uint => uint) public oracle_values;
@@ -23,6 +24,9 @@ contract Oracle is usingOraclize{
   RetrieveData - Returns stored value by given key
   @param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
   */
+  function Oracle() public{
+    API = "https://api.gdax.com/products/BTC-USD/ticker).price";
+  }
   function RetrieveData(uint _date) public constant returns (uint) {
     uint value = oracle_values[_date];
     return value;
