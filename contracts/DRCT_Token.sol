@@ -20,7 +20,6 @@ contract DRCT_Token {
   address public master_contract;
   //Total supply of outstanding tokens in the contract
   uint public total_supply;
-
   //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
   mapping(address => Balance[]) swap_balances;
   //Mapping from: swap address -> user -> swap_balances index
@@ -29,7 +28,6 @@ contract DRCT_Token {
   mapping(address => address[]) user_swaps;
   //Mapping from: user -> swap address -> user_swaps index
   mapping(address => mapping(address => uint)) user_swaps_index;
-
   //Mapping from: user -> total balance accross all entered swaps
   mapping(address => uint) user_total_balances;
   //Mapping from: owner -> spender -> amount allowed

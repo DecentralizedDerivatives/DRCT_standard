@@ -8,6 +8,7 @@ var Exchange = artifacts.require("Exchange");
 var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
+var Migrations = artifacts.require("../contracts/Migrations.sol");
 var days_future = 7;
 
 module.exports =async function(callback) {

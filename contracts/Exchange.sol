@@ -177,6 +177,15 @@ contract Exchange{
         return forSale[_token].length;
     }
 
+        /*
+    *@dev getOrderCount allows parties to query how many orders are on the book
+    *@return _uint of the number of orders in the orderbook
+    */
+    function getOrders(address _token) public constant returns(uint[]) {
+        return forSale[_token];
+    }
+
+
     /*
     *@dev allows owner to withdraw funds
     */
