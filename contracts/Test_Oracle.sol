@@ -1,7 +1,12 @@
 pragma solidity ^0.4.17;
 
-//The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is updated by an off chain calculation by DDA.  Methodology can be found at www.github.com/DecentralizedDerivatives/Oracles
+/**
+*The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 
+*updated by an off chain calculation by DDA.  Methodology can be found at 
+*www.github.com/DecentralizedDerivatives/Oracles
+*/
 contract Test_Oracle {
+
 
   /*Variables*/
   //Owner of the oracle
@@ -35,15 +40,31 @@ contract Test_Oracle {
 
   function pushData() public view{
     //here for testing purposes
-  }
-    function getQuery(uint _date) public view returns(bool){
-    return queried[_date];
-  }
-  //Allows for the viewing of oracle data
-  function RetrieveData(uint _date) public constant returns (uint) {
-    return oracle_values[_date];
-  }
+    }
 
-  //set a new owner of the contract
-  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
+    /**
+    *@dev Determine if the Oracle was queried
+    *@param _date a specified date
+    *@return whether or not the Oracle was queried on the specified date
+    */    
+    function getQuery(uint _date) public view returns(bool){
+        return queried[_date];
+    }
+
+    /**
+    *@dev Allows for the viewing of Oracle data
+    *@param _date specified date being queried from the Oracle data
+    *@return oracle_values for the date
+    */
+    function retrieveData(uint _date) public constant returns (uint) {
+        return oracle_values[_date];
+    }
+
+    /**
+    *@dev Set the new owner of the contract or test oracle?
+    *@param _new_owner for the oracle? 
+    */
+    function setOwner(address _new_owner) public onlyOwner() {
+        owner = _new_owner; 
+    }
 }

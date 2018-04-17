@@ -2,7 +2,6 @@ pragma solidity ^0.4.17;
 
 import "./libraries/SafeMath.sol";
 
-
 /**
 *The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
 *specified in the Factory contract.
@@ -10,7 +9,6 @@ import "./libraries/SafeMath.sol";
 *different swap contracts that are standardized at the Factory level.
 */
 contract DRCT_Token {
-
   using SafeMath for uint256;
 
   /*Structs */
@@ -143,12 +141,9 @@ contract DRCT_Token {
       swap_balances_index[_swap][last_address] = remove_index;
       //Set the swap's Balance struct at the removed index to the Balance struct of the last address
       swap_balances[_swap][remove_index] = swap_balances[_swap][last_address_index];
+
     }
-    //Remove the swap_balances index for this address
-    delete swap_balances_index[_swap][_remove];
-    //Finally, decrement the swap balances length
-    swap_balances[_swap].length = swap_balances[_swap].length.sub(1);
-  }
+
 
    /**
     *@dev This is the main function to update the mappings when a transfer happens
@@ -160,19 +155,21 @@ contract DRCT_Token {
     //Get memory copies of the swap arrays for the sender and reciever
     address[] memory from_swaps = user_swaps[_from];
 
-    //Iterate over sender's swaps in reverse order until enough tokens have been transferred
-    for (uint i = from_swaps.length.sub(1); i > 0; i--) {
-      //Get the index of the sender's balance for the current swap
-      uint from_swap_user_index = swap_balances_index[from_swaps[i]][_from];
-      Balance memory from_user_bal = swap_balances[from_swaps[i]][from_swap_user_index];
-      //If the current swap will be entirely depleted - we remove all references to it for the sender
-      if (_amount >= from_user_bal.amount) {
-        _amount -= from_user_bal.amount;
-        //If this swap is to be removed, we know it is the (current) last swap in the user's user_swaps list, so we can simply decrement the length to remove it
-        user_swaps[_from].length = user_swaps[_from].length.sub(1);
-        //Remove the user swap index for this swap
-        delete user_swaps_index[_from][from_swaps[i]];
-
+    /**
+    *@dev Called by the factory contract, and pays out to a _party
+    *@param _party being paid
+    *@param _swap
+    */
+    function pay(address _party, address _swap) public onlyMaster() {
+        uint party_balance_index = swap_balances_index[_swap][_party];
+        uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
+        //reduces the users totals balance by the amount in that swap
+        user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
+        //reduces the total supply by the amount of that users in that swap
+        total_supply = total_supply.sub(party_swap_balance);
+        //sets the partys balance to zero for that specific swaps party balances
+        swap_balances[_swap][party_balance_index].amount = 0;
+    }
         //If the _to address already holds tokens from this swap
         if (user_swaps_index[_to][from_swaps[i]] != 0) {
           //Get the index of the _to balance in this swap
@@ -188,113 +185,167 @@ contract DRCT_Token {
             user_swaps[_to].push(address(0x0));
           }
 
-          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
-          //Add the new swap to _to
-          user_swaps[_to].push(from_swaps[i]);
-          //Give the reciever the sender's balance for this swap
-          swap_balances[from_swaps[i]][from_swap_user_index].owner = _to;
-          //Give the reciever the sender's swap balance index for this swap
-          swap_balances_index[from_swaps[i]][_to] = swap_balances_index[from_swaps[i]][_from];
-          //Remove the swap balance index from the sending party
-          delete swap_balances_index[from_swaps[i]][_from];
+
+    /**
+    *@dev Removes the address from the swap balances for a swap, and moves the last address in the
+    *swap into their place
+    *@param _remove address of prevous owner
+    *@param _swap address used to get last addrss of the swap to replace the removed address
+    */
+    function removeFromSwapBalances(address _remove, address _swap) internal {
+        uint last_address_index = swap_balances[_swap].length.sub(1);
+        address last_address = swap_balances[_swap][last_address_index].owner;
+        //If the address we want to remove is the final address in the swap
+        if (last_address != _remove) {
+            uint remove_index = swap_balances_index[_swap][_remove];
+            //Update the swap's balance index of the last address to that of the removed address index
+            swap_balances_index[_swap][last_address] = remove_index;
+            //Set the swap's Balance struct at the removed index to the Balance struct of the last address
+            swap_balances[_swap][remove_index] = swap_balances[_swap][last_address_index];
         }
-        //If there is no more remaining to be removed, we break out of the loop
-        if (_amount == 0)
-          break;
-      } 
-      else {
-        //The amount in this swap is more than the amount we still need to transfer
-        uint to_swap_balance_index = swap_balances_index[from_swaps[i]][_to];
-        //If the _to address already holds tokens from this swap
-        if (user_swaps_index[_to][from_swaps[i]] != 0) {
-          //Because both addresses are in this swap, and neither will be removed, we simply update both swap balances
-          swap_balances[from_swaps[i]][to_swap_balance_index].amount = swap_balances[from_swaps[i]][to_swap_balance_index].amount.add(_amount);
-        } else {
-          //Prepare to add a new swap by assigning the swap an index for _to
-          if (user_swaps[_to].length == 0){
-            user_swaps[_to].push(address(0x0));
-          }
-          
-          user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
-          //And push the new swap
-          user_swaps[_to].push(from_swaps[i]);
-          //_to is not in this swap, so we give this swap a new balance index for _to
-          swap_balances_index[from_swaps[i]][_to] = swap_balances[from_swaps[i]].length;
-          //And push a new balance for _to
-          swap_balances[from_swaps[i]].push(Balance({
-            owner: _to,
-            amount: _amount
-          }));
-        }
-        //Finally, update the _from user's swap balance
-        swap_balances[from_swaps[i]][from_swap_user_index].amount = swap_balances[from_swaps[i]][from_swap_user_index].amount.sub(_amount);
-        //Because we have transferred the last of the amount to the reciever, we break;
-        break;
-      }
+        //Remove the swap_balances index for this address
+        delete swap_balances_index[_swap][_remove];
+        //Finally, decrement the swap balances length
+        swap_balances[_swap].length = swap_balances[_swap].length.sub(1);
     }
-  }
 
-  /*
-    ERC20 compliant transfer function
-    @param - _to: Address to send funds to
-    @param - _amount: Amount of token to send
-    returns true for successful
-  */
-  function transfer(address _to, uint _amount) public returns (bool) {
-    uint balance_owner = user_total_balances[msg.sender];
+    /**
+    *@dev This is the main function to update the mappings when a transfer happens
+    *@param _from address to send funds from
+    *@param _to address to send funds to
+    *@param _amount amount of token to send
+    */
+    function transferHelper(address _from, address _to, uint _amount) internal {
+        //Get memory copies of the swap arrays for the sender and reciever
+        address[] memory from_swaps = user_swaps[_from];
+        //Iterate over sender's swaps in reverse order until enough tokens have been transferred
+        for (uint i = from_swaps.length.sub(1); i > 0; i--) {
+            //Get the index of the sender's balance for the current swap
+            uint from_swap_user_index = swap_balances_index[from_swaps[i]][_from];
+            Balance memory from_user_bal = swap_balances[from_swaps[i]][from_swap_user_index];
+            //If the current swap will be entirely depleted - we remove all references to it for the sender
+            if (_amount >= from_user_bal.amount) {
+                _amount -= from_user_bal.amount;
+                //If this swap is to be removed, we know it is the (current) last swap in the user's user_swaps list, so we can simply decrement the length to remove it
+                user_swaps[_from].length = user_swaps[_from].length.sub(1);
+                //Remove the user swap index for this swap
+                delete user_swaps_index[_from][from_swaps[i]];
+                //If the _to address already holds tokens from this swap
+                if (user_swaps_index[_to][from_swaps[i]] != 0) {
+                    //Get the index of the _to balance in this swap
+                    uint to_balance_index = swap_balances_index[from_swaps[i]][_to];
+                    assert(to_balance_index != 0);
+                    //Add the _from tokens to _to
+                    swap_balances[from_swaps[i]][to_balance_index].amount = swap_balances[from_swaps[i]][to_balance_index].amount.add(from_user_bal.amount);
+                    //Remove the _from address from this swap's balance array
+                    removeFromSwapBalances(_from, from_swaps[i]);
+                } else {
+                    //Prepare to add a new swap by assigning the swap an index for _to
+                    if (user_swaps[_to].length == 0){
+                        user_swaps[_to].push(address(0x0));
+                    }
+                user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+                //Add the new swap to _to
+                user_swaps[_to].push(from_swaps[i]);
+                //Give the reciever the sender's balance for this swap
+                swap_balances[from_swaps[i]][from_swap_user_index].owner = _to;
+                //Give the reciever the sender's swap balance index for this swap
+                swap_balances_index[from_swaps[i]][_to] = swap_balances_index[from_swaps[i]][_from];
+                //Remove the swap balance index from the sending party
+                delete swap_balances_index[from_swaps[i]][_from];
+            }
+            //If there is no more remaining to be removed, we break out of the loop
+            if (_amount == 0)
+                break;
+            } else {
+                //The amount in this swap is more than the amount we still need to transfer
+                uint to_swap_balance_index = swap_balances_index[from_swaps[i]][_to];
+                //If the _to address already holds tokens from this swap
+                if (user_swaps_index[_to][from_swaps[i]] != 0) {
+                    //Because both addresses are in this swap, and neither will be removed, we simply update both swap balances
+                    swap_balances[from_swaps[i]][to_swap_balance_index].amount = swap_balances[from_swaps[i]][to_swap_balance_index].amount.add(_amount);
+                } else {
+                    //Prepare to add a new swap by assigning the swap an index for _to
+                    if (user_swaps[_to].length == 0){
+                        user_swaps[_to].push(address(0x0));
+                    }
+                    user_swaps_index[_to][from_swaps[i]] = user_swaps[_to].length;
+                    //And push the new swap
+                    user_swaps[_to].push(from_swaps[i]);
+                    //_to is not in this swap, so we give this swap a new balance index for _to
+                    swap_balances_index[from_swaps[i]][_to] = swap_balances[from_swaps[i]].length;
+                    //And push a new balance for _to
+                    swap_balances[from_swaps[i]].push(Balance({
+                        owner: _to,
+                        amount: _amount
+                    }));
+                }
+                //Finally, update the _from user's swap balance
+                swap_balances[from_swaps[i]][from_swap_user_index].amount = swap_balances[from_swaps[i]][from_swap_user_index].amount.sub(_amount);
+                //Because we have transferred the last of the amount to the reciever, we break;
+                break;
+            }
+        }
+    }
 
-    if (
-      _to == msg.sender ||
-      _to == address(0) ||
-      _amount == 0 ||
-      balance_owner < _amount
-    ) return false;
+    /**
+    *ERC20 compliant transfer function
+    *@param _to Address to send funds to
+    *@param _amount Amount of token to send
+    *@return true for successful
+    */
+    function transfer(address _to, uint _amount) public returns (bool) {
+        uint balance_owner = user_total_balances[msg.sender];
+        if (
+            _to == msg.sender ||
+            _to == address(0) ||
+            _amount == 0 ||
+            balance_owner < _amount
+        ) return false;
+        transferHelper(msg.sender, _to, _amount);
+        user_total_balances[msg.sender] = user_total_balances[msg.sender].sub(_amount);
+        user_total_balances[_to] = user_total_balances[_to].add(_amount);
+        Transfer(msg.sender, _to, _amount);
+        return true;
+    }
 
-    transferHelper(msg.sender, _to, _amount);
-    user_total_balances[msg.sender] = user_total_balances[msg.sender].sub(_amount);
-    user_total_balances[_to] = user_total_balances[_to].add(_amount);
-    Transfer(msg.sender, _to, _amount);
-    return true;
-  }
+    /**
+    *@dev ERC20 compliant transferFrom function
+    *@param _from address to send funds from (must be allowed, see approve function)
+    *@param _to address to send funds to
+    *@param _amount amount of token to send
+    *@return true for successful
+    */
+    function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
+        uint balance_owner = user_total_balances[_from];
+        uint sender_allowed = allowed[_from][msg.sender];
+        if (
+            _to == _from ||
+            _to == address(0) ||
+            _amount == 0 ||
+            balance_owner < _amount ||
+            sender_allowed < _amount
+        ) return false;
+        transferHelper(_from, _to, _amount);
+        user_total_balances[_from] = user_total_balances[_from].sub(_amount);
+        user_total_balances[_to] = user_total_balances[_to].add(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        Transfer(_from, _to, _amount);
+        return true;
+    }
 
-  /*
-    ERC20 compliant transferFrom function
-    @param - _from: Address to send funds from (must be allowed, see approve function)
-    @param - _to: Address to send funds to
-    @param - _amount: Amount of token to send
-    returns true for successful
-  */
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
-    uint balance_owner = user_total_balances[_from];
-    uint sender_allowed = allowed[_from][msg.sender];
+    /**
+    *@dev ERC20 compliant approve function
+    *@param _spender party that msg.sender approves for transferring funds
+    *@param _amount amount of token to approve for sending
+    *@return true for successful
+    */
+    function approve(address _spender, uint _amount) public returns (bool) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
 
-    if (
-      _to == _from ||
-      _to == address(0) ||
-      _amount == 0 ||
-      balance_owner < _amount ||
-      sender_allowed < _amount
-    ) return false;
-
-    transferHelper(_from, _to, _amount);
-    user_total_balances[_from] = user_total_balances[_from].sub(_amount);
-    user_total_balances[_to] = user_total_balances[_to].add(_amount);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-    Transfer(_from, _to, _amount);
-    return true;
-  }
-
-  /*
-    ERC20 compliant approve function
-    @param - _spender: Party that msg.sender approves for transferring funds
-    @param - _amount: Amount of token to approve for sending
-    returns true for successful
-  */
-  function approve(address _spender, uint _amount) public returns (bool) {
-    allowed[msg.sender][_spender] = _amount;
-    Approval(msg.sender, _spender, _amount);
-    return true;
-  }
 
   /**
     *@dev Counts addresses involved in the swap based on the length of balances array for _swap
@@ -308,30 +359,41 @@ contract DRCT_Token {
     *@param _ind specified index in the swap
     *@param _swap specified swap address
     *@return the owner address associated with a particular index in a particular swap
-  */
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address) { return swap_balances[_swap][_ind].owner; }
 
-  /**
+    */
+    function getHolderByIndex(uint _ind, address _swap) public constant returns (address) {
+        return swap_balances[_swap][_ind].owner; 
+    }
+    
+    /**
     *@dev Gets the balance by specifying the swap address and index
     *@param _ind specified index in the swap
     *@param _swap specified swap address
     *@return the balance associated with a particular index in a particular swap
-  */
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint) { return swap_balances[_swap][_ind].amount; }
 
-  /**
+    */
+    function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint) {
+        return swap_balances[_swap][_ind].amount; 
+    }
+
+    /**
     *@dev Gets the index by specifying the swap and owner addresses
     *@param _owner specifed address
     *@param _swap  specified swap address
     *@return the index associated with the _owner address in a particular swap
-   */
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint) { return swap_balances_index[_swap][_owner]; }
-    
-  /**
+    */
+    function getIndexByAddress(address _owner, address _swap) public constant returns (uint) {
+        return swap_balances_index[_swap][_owner]; 
+    }
+
+    /**
     *@dev Look up how much the spender or contract is allowed to spend?
     *@param _owner 
     *@param _spender party or contract? approved for transfering funds 
     *@return the allowed amount _spender can spend of _owner's balance
-  */
-  function allowance(address _owner, address _spender) public constant returns (uint) { return allowed[_owner][_spender]; }
+
+    */
+    function allowance(address _owner, address _spender) public constant returns (uint) {
+        return allowed[_owner][_spender]; 
+    }
 }

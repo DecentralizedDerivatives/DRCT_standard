@@ -3,7 +3,7 @@ pragma solidity ^0.4.17;
 import "./DRCT_Token.sol";
 
 /**Swap Token Deployer Contract-- purpose is to save gas for deployment of Factory contract
- *It also ensures only the factory can create new tokens?
+ *It also ensures only the factory can create new tokens
 */
 contract TokenDeployer {
     /*Variables*/
@@ -32,7 +32,7 @@ contract TokenDeployer {
     }
 
     /**
-     *@dev Set variables if the owner is the factory contract?
+     *@dev Allows owner to set variables in contract
      *@param _factory
      *@param _owner
     */

@@ -35,7 +35,7 @@ contract Deployer {
     }
 
     /**
-     *@dev Set variables if the owner is the factory contract?
+     *@dev Set variables if the owner is the factory contract
      *@param _factory
      *@param _owner
     */

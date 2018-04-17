@@ -8,13 +8,17 @@ Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for tradi
 
 ## Useful Links
 
-If you have questions, ask us on Slack: https://deriveth.slack.com/
+#### If you have questions, ask us on Slack: https://deriveth.slack.com/
 
 DAPP:  https://drct.decentralizedderivatives.org 
 
 Oracle Methodology can be found at: https://github.com/DecentralizedDerivatives/Public_Oracle
 
 Documentation - https://github.com/DecentralizedDerivatives/DRCT_standard/wiki/Documentation
+
+Metamask - www.metamask.io 
+
+Truffle - http://truffleframework.com/
 
 
 ## Truffle Deployment Instructions
@@ -35,4 +39,5 @@ Now you have a launched Factory, Oracle and dependency contracts and you're read
 
 ## How to Contribute
 Join our slack, shoot us an email or contact us to list the tokens or the contract creation pieces on your site
+
 Any contributions are welcome!

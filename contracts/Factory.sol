@@ -117,13 +117,12 @@ contract Factory {
     return (token);
   }
 
-
-    /*
+   /*
     *@dev Sets token ratio, swap duration, and multiplier variables for a swap
     *@param _token_ratio the ratio of the tokens
     *@param _duration the duration of the swap, in seconds
     *@param _multiplier the multiplier used for the swap
-    */
+   */
   function setVariables(uint _token_ratio, uint _duration, uint _multiplier) public onlyOwner() {
     token_ratio = _token_ratio;
     duration = _duration;
@@ -202,7 +201,15 @@ contract Factory {
       drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
     return (ltoken, stoken, token_ratio);
   }
+
   
+    /**
+    *@dev Allows the owner to set a new oracle address
+    *@param _new_oracle_address 
+    */
+    function setOracleAddress(address _new_oracle_address) public onlyOwner() {
+        oracle_address = _new_oracle_address; 
+    }
 
   /**
     *@dev Allows the owner to set a new oracle address
@@ -274,3 +281,4 @@ contract Factory {
       return startDates.length;
   }
 }
+
