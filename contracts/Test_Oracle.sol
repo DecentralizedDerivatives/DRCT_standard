@@ -7,46 +7,38 @@ pragma solidity ^0.4.17;
 */
 contract Test_Oracle {
 
-    /*Variables*/
-    //Owner of the oracle
-    address private owner;
-    //Mapping of documents stored in the oracle
-    mapping(uint => uint) oracle_values;
-    mapping(uint => bool) public queried;
 
-    /*Events*/
-    event DocumentStored(uint _key, uint _value);
+  /*Variables*/
+  //Owner of the oracle
+  address private owner;
+  string public API;
+  //Mapping of documents stored in the oracle
+  mapping(uint => uint) oracle_values;
+  mapping(uint => bool) public queried;
 
-    /*Modifiers*/
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  /*Events*/
+  event DocumentStored(uint _key, uint _value);
 
-    /*Functions*/
-    /**
-    *@dev Constructor - Sets owner
-    */
-    function Test_Oracle() public {
-        owner = msg.sender;
-    }
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /**
-    *@dev Allows the owner of the Oracle to store a document in the oracle_values mapping. 
-    *Documents represent underlying values at a specified date (_key).
-    *@param _key a specified date
-    *@param _value the value for the specified date
-    */
-    function storeDocument(uint _key, uint _value) public onlyOwner() {
-        oracle_values[_key] = _value;
-        DocumentStored(_key, _value);
-        queried[_key] = true;
-    }
+  //Constructor - Sets owner
+  function Test_Oracle() public {
+    owner = msg.sender;
+    API = "https://api.gdax.com/products/BTC-USD/ticker).price";
+  }
 
-    /**
-    *@dev Function pushData is here for testing purposes
-    */
-    function pushData() public view{
+  //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
+  //represent underlying values at a specified date (key).
+  function StoreDocument(uint _key, uint _value) public onlyOwner() {
+    oracle_values[_key] = _value;
+    DocumentStored(_key, _value);
+    queried[_key] = true;
+  }
+
+  function pushData() public view{
     //here for testing purposes
     }
 

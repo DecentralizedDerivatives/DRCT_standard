@@ -9,93 +9,151 @@ import "./libraries/SafeMath.sol";
 *different swap contracts that are standardized at the Factory level.
 */
 contract DRCT_Token {
+  using SafeMath for uint256;
 
-    using SafeMath for uint256;
+  /*Structs */
+  //Keeps track of balance amounts in the balances array
+  struct Balance {
+    address owner;
+    uint amount;
+  }
 
-    /*Structs*/
-    /**
-    *@dev Keeps track of balance amounts in the balances array
-    */
-    struct Balance {
-        address owner;
-        uint amount;
-    }
+  /*Variables*/
+  //This is the factory contract that the token is standardized at
+  address public master_contract;
+  //Total supply of outstanding tokens in the contract
+  uint public total_supply;
+  //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
+  mapping(address => Balance[]) swap_balances;
+  //Mapping from: swap address -> user -> swap_balances index
+  mapping(address => mapping(address => uint)) swap_balances_index;
+  //Mapping from: user -> dynamic array of swap addresses (index for a particular swap can be found in user_swaps_index)
+  mapping(address => address[]) user_swaps;
+  //Mapping from: user -> swap address -> user_swaps index
+  mapping(address => mapping(address => uint)) user_swaps_index;
+  //Mapping from: user -> total balance accross all entered swaps
+  mapping(address => uint) user_total_balances;
+  //Mapping from: owner -> spender -> amount allowed
+  mapping(address => mapping(address => uint)) allowed;
 
-    /*Variables*/
-    //This is the factory contract that the token is standardized at
-    address public master_contract;
-    //Total supply of outstanding tokens in the contract
-    uint public total_supply;
-    //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
-    mapping(address => Balance[]) swap_balances;
-    //Mapping from: swap address -> user -> swap_balances index
-    mapping(address => mapping(address => uint)) swap_balances_index;
-    //Mapping from: user -> dynamic array of swap addresses (index for a particular swap can be found in user_swaps_index)
-    mapping(address => address[]) user_swaps;
-    //Mapping from: user -> swap address -> user_swaps index
-    mapping(address => mapping(address => uint)) user_swaps_index;
-    //Mapping from: user -> total balance accross all entered swaps
-    mapping(address => uint) user_total_balances;
-    //Mapping from: owner -> spender -> amount allowed
-    mapping(address => mapping(address => uint)) allowed;
-
-    /*Events*/
-    /**
+  /*Events*/
+  /**
     *@dev events for transfer and approvals
-    */
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    event CreateToken(address _from, uint _value);
-    
-    /*Modifiers*/
-    modifier onlyMaster() {
-        require(msg.sender == master_contract);
-        _;
-    }
+  */
+  event Transfer(address indexed _from, address indexed _to, uint _value);
+  event Approval(address indexed _owner, address indexed _spender, uint _value);
+  event CreateToken(address _from, uint _value);
 
-    /*Functions*/
-    /**
+  /*Modifiers*/
+  modifier onlyMaster() {
+    require(msg.sender == master_contract);
+    _;
+  }
+
+  /*Functions*/
+  /**
     *@dev Constructor - sets values for token name and token supply, as well as the 
     *master_contract, the swap.
     *@param _factory 
-    */
-    function DRCT_Token(address _factory) public {
-        master_contract = _factory;
-    }
+  */
+  function DRCT_Token(address _factory) public {
+    //Sets values for token name and token supply, as well as the master_contract, the swap.
+    master_contract = _factory;
+  }
 
-    /**
+  /**
     *@dev Token Creator - This function is called by the factory contract and creates new tokens
     *for the user
     *@param _supply amount of DRCT tokens created by the factory contract for this swap
     *@param _owner
     *@param _swap
-    */
-    function createToken(uint _supply, address _owner, address _swap) public onlyMaster() {
-        //Update total supply of DRCT Tokens
-        total_supply = total_supply.add(_supply);
-        //Update the total balance of the owner
-        user_total_balances[_owner] = user_total_balances[_owner].add(_supply);
-        //If the user has not entered any swaps already, push a zeroed address to their user_swaps mapping to prevent default value conflicts in user_swaps_index
-        if (user_swaps[_owner].length == 0)
-            user_swaps[_owner].push(address(0x0));
-        //Add a new swap index for the owner
-        user_swaps_index[_owner][_swap] = user_swaps[_owner].length;
-        //Push a new swap address to the owner's swaps
-        user_swaps[_owner].push(_swap);
-        //Push a zeroed Balance struct to the swap balances mapping to prevent default value conflicts in swap_balances_index
-        swap_balances[_swap].push(Balance({
-            owner: 0,
-            amount: 0
-        }));
-        //Add a new owner balance index for the swap
-        swap_balances_index[_swap][_owner] = 1;
-        //Push the owner's balance to the swap
-        swap_balances[_swap].push(Balance({
-            owner: _owner,
-            amount: _supply
-        }));
-        CreateToken(_owner,_supply);
+  */
+  function createToken(uint _supply, address _owner, address _swap) public onlyMaster() {
+    //Update total supply of DRCT Tokens
+    total_supply = total_supply.add(_supply);
+    //Update the total balance of the owner
+    user_total_balances[_owner] = user_total_balances[_owner].add(_supply);
+    //If the user has not entered any swaps already, push a zeroed address to their user_swaps mapping to prevent default value conflicts in user_swaps_index
+    if (user_swaps[_owner].length == 0)
+      user_swaps[_owner].push(address(0x0));
+    //Add a new swap index for the owner
+    user_swaps_index[_owner][_swap] = user_swaps[_owner].length;
+    //Push a new swap address to the owner's swaps
+    user_swaps[_owner].push(_swap);
+    //Push a zeroed Balance struct to the swap balances mapping to prevent default value conflicts in swap_balances_index
+    swap_balances[_swap].push(Balance({
+      owner: 0,
+      amount: 0
+    }));
+    //Add a new owner balance index for the swap
+    swap_balances_index[_swap][_owner] = 1;
+    //Push the owner's balance to the swap
+    swap_balances[_swap].push(Balance({
+      owner: _owner,
+      amount: _supply
+    }));
+    CreateToken(_owner,_supply);
+  }
+
+  /**
+    *@dev Called by the factory contract, and pays out to a _party
+    *@param _party being paid
+    *@param _swap
+  */
+  function pay(address _party, address _swap) public onlyMaster() {
+    uint party_balance_index = swap_balances_index[_swap][_party];
+    uint party_swap_balance = swap_balances[_swap][party_balance_index].amount;
+    //reduces the users totals balance by the amount in that swap
+    user_total_balances[_party] = user_total_balances[_party].sub(party_swap_balance);
+    //reduces the total supply by the amount of that users in that swap
+    total_supply = total_supply.sub(party_swap_balance);
+    //sets the partys balance to zero for that specific swaps party balances
+    swap_balances[_swap][party_balance_index].amount = 0;
+  }
+
+  /**
+    *@dev Returns the users total balance (sum of tokens in all swaps the user has tokens in)
+    *@param _owner user address
+    *@return user total balance
+  */
+  function balanceOf(address _owner) public constant returns (uint balance) { return user_total_balances[_owner]; }
+
+  
+  /**
+    *@dev Getter for the total_supply of tokens in the contract
+    *@return total supply
+  */
+  function totalSupply() public constant returns (uint _total_supply) { return total_supply; }
+
+  /**
+    *@dev Removes the address from the swap balances for a swap, and moves the last address in the
+    *swap into their place
+    *@param _remove address of prevous owner
+    *@param _swap address used to get last addrss of the swap to replace the removed address
+  */
+  function removeFromSwapBalances(address _remove, address _swap) internal {
+    uint last_address_index = swap_balances[_swap].length.sub(1);
+    address last_address = swap_balances[_swap][last_address_index].owner;
+    //If the address we want to remove is the final address in the swap
+    if (last_address != _remove) {
+      uint remove_index = swap_balances_index[_swap][_remove];
+      //Update the swap's balance index of the last address to that of the removed address index
+      swap_balances_index[_swap][last_address] = remove_index;
+      //Set the swap's Balance struct at the removed index to the Balance struct of the last address
+      swap_balances[_swap][remove_index] = swap_balances[_swap][last_address_index];
+
     }
+
+
+   /**
+    *@dev This is the main function to update the mappings when a transfer happens
+    *@param _from address to send funds from
+    *@param _to address to send funds to
+    *@param _amount amount of token to send
+   */
+  function transferHelper(address _from, address _to, uint _amount) internal {
+    //Get memory copies of the swap arrays for the sender and reciever
+    address[] memory from_swaps = user_swaps[_from];
 
     /**
     *@dev Called by the factory contract, and pays out to a _party
@@ -112,23 +170,21 @@ contract DRCT_Token {
         //sets the partys balance to zero for that specific swaps party balances
         swap_balances[_swap][party_balance_index].amount = 0;
     }
+        //If the _to address already holds tokens from this swap
+        if (user_swaps_index[_to][from_swaps[i]] != 0) {
+          //Get the index of the _to balance in this swap
+          uint to_balance_index = swap_balances_index[from_swaps[i]][_to];
+          //Add the _from tokens to _to
+          swap_balances[from_swaps[i]][to_balance_index].amount = swap_balances[from_swaps[i]][to_balance_index].amount.add(from_user_bal.amount);
+          //Remove the _from address from this swap's balance array
+          removeFromSwapBalances(_from, from_swaps[i]);
+        } 
+        else {
+          //Prepare to add a new swap by assigning the swap an index for _to
+          if (user_swaps[_to].length == 0){
+            user_swaps[_to].push(address(0x0));
+          }
 
-    /**
-    *@dev Returns the users total balance (sum of tokens in all swaps the user has tokens in)
-    *@param _owner user address
-    *@return user total balance
-    */
-    function balanceOf(address _owner) public constant returns (uint balance) {
-       return user_total_balances[_owner]; 
-     }
-
-    /**
-    *@dev Getter for the total_supply of tokens in the contract
-    *@return total supply
-    */
-    function totalSupply() public constant returns (uint _total_supply) {
-       return total_supply;
-    }
 
     /**
     *@dev Removes the address from the swap balances for a swap, and moves the last address in the
@@ -290,30 +346,31 @@ contract DRCT_Token {
         return true;
     }
 
-    /**
+
+  /**
     *@dev Counts addresses involved in the swap based on the length of balances array for _swap
     *@param _swap address
     *@return the length of the balances array for the swap
-    */
-    function addressCount(address _swap) public constant returns (uint) { 
-        return swap_balances[_swap].length; 
-    }
+  */
+  function addressCount(address _swap) public constant returns (uint) { return swap_balances[_swap].length; }
 
-    /**
+  /**
     *@dev Gets the owner address by specifying the swap address and index
     *@param _ind specified index in the swap
     *@param _swap specified swap address
     *@return the owner address associated with a particular index in a particular swap
+
     */
     function getHolderByIndex(uint _ind, address _swap) public constant returns (address) {
         return swap_balances[_swap][_ind].owner; 
     }
-
+    
     /**
     *@dev Gets the balance by specifying the swap address and index
     *@param _ind specified index in the swap
     *@param _swap specified swap address
     *@return the balance associated with a particular index in a particular swap
+
     */
     function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint) {
         return swap_balances[_swap][_ind].amount; 
@@ -334,6 +391,7 @@ contract DRCT_Token {
     *@param _owner 
     *@param _spender party or contract? approved for transfering funds 
     *@return the allowed amount _spender can spend of _owner's balance
+
     */
     function allowance(address _owner, address _spender) public constant returns (uint) {
         return allowed[_owner][_spender]; 
