@@ -1,6 +1,9 @@
 
 # Dynamic Rate Cash Transaction Tokens
 
+
+![Derivative](./public/derivative.png)
+
 Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates.
 
 ## Useful Links
@@ -24,7 +27,9 @@ clone the repo, cd into it, and then:
 
     $ truffle migrate
 
-    $ truffle exec /scripts/launch.js
+    $ truffle exec /scripts/setup.js
+
+    $ truffle exec /scripts/contract_setup.js
 
 Now you have a launched Factory, Oracle and dependency contracts and you're ready to create DRCT tokens and contracts
 

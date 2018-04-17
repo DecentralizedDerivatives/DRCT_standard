@@ -2,11 +2,15 @@ pragma solidity ^0.4.17;
 
 import "oraclize/usingOraclize.sol";
 
+/**
+*The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 
+*updated by an off chain calculation by DDA.  Methodology can be found at 
+*www.github.com/DecentralizedDerivatives/Oracles
+*/
 
 contract Oracle is usingOraclize{
 
   /*Variables*/
-
   //Private queryId for Oraclize callback
   bytes32 private queryID;
   string public API;
@@ -21,19 +25,23 @@ contract Oracle is usingOraclize{
 
   /*Functions*/
   /*
-  RetrieveData - Returns stored value by given key
-  @param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
+  *@dev - Constructor, sets public api string
   */
   function Oracle() public{
     API = "https://api.gdax.com/products/BTC-USD/ticker).price";
   }
+
+  /*
+  *@dev RetrieveData - Returns stored value by given key
+  *@param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
+  */
   function RetrieveData(uint _date) public constant returns (uint) {
     uint value = oracle_values[_date];
     return value;
   }
 
-   /*
-  PushData - Sends an Oraclize query for entered API
+  /**
+    *@dev PushData - Sends an Oraclize query for entered API
   */
   function pushData() public payable{
     uint _key = now - (now % 86400);
@@ -65,10 +73,12 @@ contract Oracle is usingOraclize{
   */
   function fund() public payable {}
 
-  /*
-  getQuery - Returns true or false based upon whether an API query has been initialized (or completed) for given date
-  @param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
-  */
+  /**
+    *@dev Determine if the Oracle was queried
+    *@param _date Daily unix timestamp of key storing value (GMT 00:00:00)
+    *@return Returns true or false based upon whether an API query has been 
+    *initialized (or completed) for given date
+   */
   function getQuery(uint _date) public view returns(bool){
     return queried[_date];
   }

@@ -6,10 +6,16 @@ import "./libraries/SafeMath.sol";
 import "./interfaces/Wrapped_Ether_Interface.sol";
 
 
-//The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
+/**
+*The Factory contract sets the standardized variables and also deploys new contracts based on
+*these variables for the user.  
+*/
 contract Factory {
   using SafeMath for uint256;
-  //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
+  
+  /*Variables*/
+  //Addresses of the Factory owner and oracle. For oracle information, 
+  //check www.github.com/DecentralizedDerivatives/Oracles
   address public owner;
   address public oracle_address;
 
@@ -43,6 +49,7 @@ contract Factory {
   mapping(uint => address) public long_tokens;
   mapping(uint => address) public short_tokens;
 
+  /*Events*/
   //Emitted when a Swap is created
   event ContractCreation(address _sender, address _created);
 
@@ -53,11 +60,18 @@ contract Factory {
   }
 
   /*Functions*/
-  // Constructor - Sets owner
+  /**
+    *@dev Constructor - Sets owner
+  */
   function Factory() public {
     owner = msg.sender;
   }
 
+  /**
+    *@dev Gets long and short token addresses based on specified date
+    *@param uint_date
+    *@return short and long tokens' addresses
+  */
   function getTokens(uint _date) public view returns(address, address){
     return(long_tokens[_date],short_tokens[_date]);
   }
@@ -96,20 +110,20 @@ contract Factory {
   }
 
   /*
-  * Returns the base token address
+    *@dev The base token is the token used as collateral in the contract
+    *@return Returns the base token address
   */
   function getBase() public view returns(address){
     return (token);
   }
 
 
-  /*
-  * Sets token ratio, swap duration, and multiplier variables for a swap
-  * @param "_token_ratio1": The ratio of the first token
-  * @param "_token_ratio2": The ratio of the second token
-  * @param "_duration": The duration of the swap, in seconds
-  * @param "_multiplier": The multiplier used for the swap
-  */
+    /*
+    *@dev Sets token ratio, swap duration, and multiplier variables for a swap
+    *@param _token_ratio the ratio of the tokens
+    *@param _duration the duration of the swap, in seconds
+    *@param _multiplier the multiplier used for the swap
+    */
   function setVariables(uint _token_ratio, uint _duration, uint _multiplier) public onlyOwner() {
     token_ratio = _token_ratio;
     duration = _duration;
@@ -117,16 +131,18 @@ contract Factory {
   }
 
   /*
-  * Sets the addresses of the tokens used for the swap
-  * @param "_token_a": The address of a token to be used
-  * @param "_token_b": The address of another token to be used
+    *@dev Sets the addresses of the tokens used for the swap
+    *@param _token The address of a token to be used  as collateral
   */
   function setBaseToken(address _token) public onlyOwner() {
     token = _token;
   }
 
-  //Allows a user to deploy a new swap contract, if they pay the fee
-  //returns the newly created swap address and calls event 'ContractCreation'
+  /**
+    *@dev Allows a user to deploy a new swap contract, if they pay the fee
+    *@param _start_date the contract start date or date contract was created?
+    *@return returns the newly created swap address and calls event 'ContractCreation'
+  */
   function deployContract(uint _start_date) public payable returns (address) {
     require(msg.value >= fee);
     require(_start_date % 86400 == 0);
@@ -138,6 +154,12 @@ contract Factory {
   }
 
 
+    /**
+    *@dev Deploys DRCT tokens for given start date
+    *@param _start_date of contract
+    *@param long if true
+    *@return returns token address of deployed contract
+  */
   function deployTokenContract(uint _start_date, bool _long) public returns(address) {
     address _token;
     require(_start_date % 86400 == 0);
@@ -159,13 +181,15 @@ contract Factory {
 
 
 
+
   /*
-  * Deploys new tokens on a DRCT_Token contract -- called from within a swap
-  * @param "_supply": The number of tokens to create
-  * @param "_party": The address to send the tokens to
-  * @param "_long": Whether the party is long or short
-  * @returns "created": The address of the created DRCT token
-  * @returns "token_ratio": The ratio of the created DRCT token
+    *@dev Deploys new tokens on a DRCT_Token contract -- called from within a swap
+    *@param _supply The number of tokens to create
+    *@param _party the address to send the tokens to
+    *@param _start_date the start date of the contract?       
+    *@returns ltoken the address of the created DRCT long tokens?
+    *@returns stoken the address of the created DRCT short tokens?
+    *@returns token_ratio The ratio of the created DRCT token
   */
   function createToken(uint _supply, address _party, uint _start_date) public returns (address, address, uint) {
     require(created_contracts[msg.sender] == _start_date);
@@ -180,13 +204,22 @@ contract Factory {
   }
   
 
-  //Allows the owner to set a new oracle address
+  /**
+    *@dev Allows the owner to set a new oracle address
+    *@param _new_oracle_address 
+  */
   function setOracleAddress(address _new_oracle_address) public onlyOwner() { oracle_address = _new_oracle_address; }
 
-  //Allows the owner to set a new owner address
+  /**
+    *@dev Allows the owner to set a new owner address
+    *@param _new_owner the new owner address
+  */
   function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
 
-  //Allows the owner to pull contract creation fees
+  /**
+    *@dev Allows the owner to pull contract creation fees
+    *@return the withdrawal fee _val and the balance where is the return function?
+  */
   function withdrawFees() public onlyOwner(){
    token_interface = Wrapped_Ether_Interface(token);
    uint _val = token_interface.balanceOf(address(this));
@@ -196,18 +229,18 @@ contract Factory {
           owner.transfer(this.balance);
    }
 
-   function() public payable {
+  /**
+    *@dev fallback function
+  */ 
+  function() public payable {
    }
 
   /*
-  * Returns a tuple of many private variables
-  * @returns "_oracle_adress": The address of the oracle
-  * @returns "_operator": The address of the owner and operator of the factory
-  * @returns "_duration": The duration of the swap
-  * @returns "_multiplier": The multiplier for the swap
-  * @returns "token_a_address": The address of token a
-  * @returns "token_b_address": The address of token b
-  * @returns "start_date": The start date of the swap
+    *@dev Returns a tuple of many private variables
+    *@returns oracle_adress": The address of the oracle
+    *@returns duration The duration of the swap
+    *@returns multiplier The multiplier for the swap
+    *@returns token The address of token 
   */
   function getVariables() public view returns (address, uint, uint, address){
     return (oracle_address,duration, multiplier, token);
@@ -224,14 +257,20 @@ contract Factory {
     drct_interface.pay(_party, msg.sender);
   }
 
-  //Returns the number of contracts created by this factory
-    function getCount() public constant returns(uint) {
+  /**
+    *@dev Counts number of contacts created by this factory
+    *@return the number of contracts
+  */
+  function getCount() public constant returns(uint) {
       return contracts.length;
   }
 
 
-  //Returns the number of start dates created by this factory
-    function getDateCount() public constant returns(uint) {
+  /**
+    *@dev Counts number of start dates in this factory
+    *@return the number of active start dates
+  */
+  function getDateCount() public constant returns(uint) {
       return startDates.length;
   }
 }
