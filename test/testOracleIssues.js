@@ -32,7 +32,7 @@ contract('Contracts', function(accounts) {
 	    await factory.setBaseToken(base.address);
 	    await factory.setUserContract(userContract.address);
 	    await factory.setDeployer(deployer.address);
-	    await factory.settokenDeployer(tokenDeployer.address);
+	    await factory.setTokenDeployer(tokenDeployer.address);
 	    await factory.setOracleAddress(oracle.address);
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
@@ -50,8 +50,8 @@ contract('Contracts', function(accounts) {
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
 	    assert.equal(await factory.user_contract.call(),userContract.address,"User Contract address not set correctly");
-	    assert.equal(await oracle.RetrieveData(o_startdate),1000,"Result should equal end value");
-	    assert.equal(await oracle.RetrieveData(o_enddate),1500,"Result should equal start value");
+	    assert.equal(await oracle.retrieveData(o_startdate),1000,"Result should equal end value");
+	    assert.equal(await oracle.retrieveData(o_enddate),1500,"Result should equal start value");
 		})
   	
 	it("Missed Dates", async function(){
@@ -72,8 +72,6 @@ contract('Contracts', function(accounts) {
 		}
 		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
 		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
-		console.log(balance1-newbal);
-		console.log(balance2-newbal2);
 		assert(balance1 >= newbal - 5.5 && balance1 <= newbal - 4.5 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
 	});

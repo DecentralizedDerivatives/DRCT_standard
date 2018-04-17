@@ -42,7 +42,7 @@ contract Oracle is usingOraclize{
   *@dev RetrieveData - Returns stored value by given key
   *@param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
   */
-  function RetrieveData(uint _date) public constant returns (uint) {
+  function retrieveData(uint _date) public constant returns (uint) {
     uint value = oracle_values[_date];
     return value;
   }

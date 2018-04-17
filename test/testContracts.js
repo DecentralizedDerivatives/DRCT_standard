@@ -32,7 +32,7 @@ contract('Contracts', function(accounts) {
 	    await factory.setBaseToken(base.address);
 	    await factory.setUserContract(userContract.address);
 	    await factory.setDeployer(deployer.address);
-	    await factory.settokenDeployer(tokenDeployer.address);
+	    await factory.setTokenDeployer(tokenDeployer.address);
 	    await factory.setOracleAddress(oracle.address);
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
