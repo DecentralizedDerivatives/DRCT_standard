@@ -222,27 +222,27 @@ contract Factory {
     }
 
     /**
-    *@dev 
+      *@dev fallback
     */  
     function() public payable {
 
     }
 
-    /*
-    *@dev Returns a tuple of many private variables
-    *@returns oracle_adress": The address of the oracle
-    *@returns duration The duration of the swap
-    *@returns multiplier The multiplier for the swap
-    *@returns token The address of token 
+    /**
+      *@dev Returns a tuple of many private variables
+      *@returns oracle_adress": The address of the oracle
+      *@returns duration The duration of the swap
+      *@returns multiplier The multiplier for the swap
+      *@returns token The address of token 
     */
     function getVariables() public view returns (address, uint, uint, address){
         return (oracle_address, duration, multiplier, token);
     }
 
-    /*
-    *@dev Pays out to a DRCT token
-    *@param _party The address being paid
-    *@param _token_add ?
+    /**
+      *@dev Pays out to a DRCT token
+      *@param _party The address being paid
+      *@param _token_add ?
     */
     function payToken(address _party, address _token_add) public {
         require(created_contracts[msg.sender] > 0);
@@ -251,10 +251,18 @@ contract Factory {
     }
 
     /**
-    *@dev Counts number of contacts created by this factory
-    *@return the number of contracts
+      *@dev Counts number of contacts created by this factory
+      *@return the number of contracts
     */
     function getCount() public constant returns(uint) {
         return contracts.length;
+    }
+
+    /**
+     *@dev Counts number of start dates in this factory
+     *@return the number of active start dates
+    */
+    function getDateCount() public constant returns(uint) {
+      return startDates.length;
     }
 }
