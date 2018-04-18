@@ -362,8 +362,6 @@ contract('Contracts', function(accounts) {
 	    for (i = 0; i <= 8; i++){
 	    	balances2[i] = eval(await (web3.fromWei(web3.eth.getBalance(accounts[i]), 'ether').toFixed(1)))
 	    }
-	    console.log(balances[1],balances2[1])
-	    console.log(balances[2],balances2[2])
 		assert(balances[1] <= balances2[1] - 2 && balances[1] >= balances2[1] -2.5 ,"Balance1 should change correctly");
 		assert(balances[2] <= balances2[2] -2 && balances[2] >= balances2[2]-2.5,"Balance2 should change correctly");
 	});

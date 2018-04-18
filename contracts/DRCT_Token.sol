@@ -63,14 +63,14 @@ contract DRCT_Token {
         master_contract = _factory;
     }
 
-    /**
+  /**
     *@dev Token Creator - This function is called by the factory contract and creates new tokens
     *for the user
     *@param _supply amount of DRCT tokens created by the factory contract for this swap
     *@param _owner
     *@param _swap
-    */
-    function createToken(uint _supply, address _owner, address _swap) public onlyMaster() {
+  */
+  function createToken(uint _supply, address _owner, address _swap) public onlyMaster() {
         //Update total supply of DRCT Tokens
         total_supply = total_supply.add(_supply);
         //Update the total balance of the owner
@@ -94,7 +94,7 @@ contract DRCT_Token {
             owner: _owner,
             amount: _supply
         }));
-        CreateToken(_owner,_supply);
+        emit CreateToken(_owner,_supply);
     }
 
     /**
@@ -249,7 +249,7 @@ contract DRCT_Token {
         transferHelper(msg.sender, _to, _amount);
         user_total_balances[msg.sender] = user_total_balances[msg.sender].sub(_amount);
         user_total_balances[_to] = user_total_balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
 
@@ -274,7 +274,7 @@ contract DRCT_Token {
         user_total_balances[_from] = user_total_balances[_from].sub(_amount);
         user_total_balances[_to] = user_total_balances[_to].add(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        Transfer(_from, _to, _amount);
+        emit Transfer(_from, _to, _amount);
         return true;
     }
 
@@ -286,7 +286,7 @@ contract DRCT_Token {
     */
     function approve(address _spender, uint _amount) public returns (bool) {
         allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+        emit Approval(msg.sender, _spender, _amount);
         return true;
     }
 

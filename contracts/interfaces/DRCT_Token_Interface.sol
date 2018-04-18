@@ -2,11 +2,11 @@ pragma solidity ^0.4.17;
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {
-  function addressCount(address _swap) public constant returns (uint);
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address);
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint);
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint);
-  function createToken(uint _supply, address _owner, address _swap) public;
-  function pay(address _party, address _swap) public;
-  function partyCount(address _swap) public constant returns(uint);
+  function addressCount(address _swap) external constant returns (uint);
+  function getHolderByIndex(uint _ind, address _swap) external constant returns (address);
+  function getBalanceByIndex(uint _ind, address _swap) external constant returns (uint);
+  function getIndexByAddress(address _owner, address _swap) external constant returns (uint);
+  function createToken(uint _supply, address _owner, address _swap) external;
+  function pay(address _party, address _swap) external;
+  function partyCount(address _swap) external constant returns(uint);
 }

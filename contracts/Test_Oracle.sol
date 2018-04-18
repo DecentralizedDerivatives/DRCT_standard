@@ -34,7 +34,7 @@ contract Test_Oracle {
   //represent underlying values at a specified date (key).
   function StoreDocument(uint _key, uint _value) public onlyOwner() {
     oracle_values[_key] = _value;
-    DocumentStored(_key, _value);
+    emit DocumentStored(_key, _value);
     queried[_key] = true;
   }
 

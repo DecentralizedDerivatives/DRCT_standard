@@ -107,7 +107,7 @@ contract TokenToTokenSwap {
     token = ERC20_Interface(token_address);
     assert(token.balanceOf(address(this)) == _amount*2);
     createTokens(creator);
-    SwapCreation(token_address,start_date,end_date,token_amount);
+    emit SwapCreation(token_address,start_date,end_date,token_amount);
     current_state = SwapState.started;
   }
 
@@ -216,7 +216,7 @@ contract TokenToTokenSwap {
       }
       if (loop_count == count){
           token.transfer(factory_address, token.balanceOf(address(this)));
-          PaidOut(pay_to_long,pay_to_short);
+          emit PaidOut(pay_to_long,pay_to_short);
           current_state = SwapState.ended;
         }
     }

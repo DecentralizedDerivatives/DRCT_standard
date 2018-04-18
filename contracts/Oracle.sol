@@ -55,9 +55,9 @@ contract Oracle is usingOraclize{
     require(queried[_key] == false);
     if (oraclize_getPrice("URL") > this.balance) {
 
-            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+            emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
-            newOraclizeQuery("Oraclize queries sent");
+            emit newOraclizeQuery("Oraclize queries sent");
             queryID = oraclize_query("URL", "json(https://api.gdax.com/products/BTC-USD/ticker).price");
             queried[_key] = true;
         }
@@ -73,7 +73,7 @@ contract Oracle is usingOraclize{
         uint _value = parseInt(_result,3);
         uint _key = now - (now % 86400);
         oracle_values[_key] = _value;
-        DocumentStored(_key, _value);
+        emit DocumentStored(_key, _value);
     }
 
     /**

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
  import "./libraries/SafeMath.sol";
  import "./interfaces/ERC20_Interface.sol";
@@ -61,18 +61,11 @@ contract Exchange{
     function Exchange() public{
         owner = msg.sender;
         openBooks.push(address(0));
-        order_nonce = 0;
+        order_nonce = 1;
     }
 
     /*
-    *@dev The fallback function to prevent money from being sent to the contract
-    */
-    function()  payable public{
-        require(msg.value == 0);
-    }
-
-    /*
-    *@dev listPhoto allows a party to place a photo on the orderbook
+    *@dev list allows a party to place a photo on the orderbook
     *@param _tokenId uint256 ID of photo
     *@param _price uint256 price of photo in wei
     */
@@ -102,8 +95,8 @@ contract Exchange{
         order_nonce += 1;
     }
     /**
-    *@dev unlistPhoto allows a party to remove their order from the orderbook
-    *@param _tokenId uint256 ID of photo
+    *@dev unlist allows a party to remove their order from the orderbook
+    *@param _tokenId uint256 ID of order
     */
     function unlist(uint256 _orderId) external{
         require(forSaleIndex[_orderId] > 0);
@@ -112,12 +105,12 @@ contract Exchange{
         unLister(_orderId);
         ERC20_Interface token = ERC20_Interface(_order.asset);
         token.transferFrom(address(this),msg.sender,_order.amount);
-        OrderRemoved(_order.asset,_order.amount,_order.price);
+        emit OrderRemoved(_order.asset,_order.amount,_order.price);
     }
 
     /**
-    *@dev buyPhoto allows a party to send Ether to buy a photo off of the orderbook
-    *@param _tokenId uint256 ID of photo
+    *@dev buy allows a party to fill an order
+    *@param _tokenId uint256 ID of order
     */
     function buy(uint256 _orderId) external payable {
         Order memory _order = orders[_orderId];
@@ -128,14 +121,14 @@ contract Exchange{
         token.transferFrom(address(this),msg.sender, _order.amount);
         unLister(_orderId);
         maker.transfer(_order.price);
-        Sale(_order.asset,_order.amount,_order.price);
+        emit Sale(_order.asset,_order.amount,_order.price);
     }
 
     /*
-    *@dev getOrder lists the price and maker of a specific token for a sale
-    *@param _tokenId uint256 ID of photo
-    *@return address of the party selling the rights to the photo
-    *@return uint of the price of the sale
+    *@dev getOrder lists the price,amount, and maker of a specific token for a sale
+    *@param _tokenId uint256 ID of order
+    *@return address of the party selling
+    *@return uint of the price of the sale (in wei)
     */
     function getOrder(uint256 _orderId) external view returns(address,uint,uint){
         Order storage _order = orders[_orderId];
@@ -177,6 +170,15 @@ contract Exchange{
         return forSale[_token].length;
     }
 
+
+    /*
+    *@dev Gets number of open orderbooks
+    *@return _uint of the number of tokens with open orders
+    */
+    function getBookCount() public constant returns(uint) {
+        return openBooks.length;
+    }
+
         /*
     *@dev getOrderCount allows parties to query how many orders are on the book
     *@return _uint of the number of orders in the orderbook
@@ -197,7 +199,7 @@ contract Exchange{
     /***INTERNAL FUNCTIONS***/
     /*
     *@dev An internal function to update mappings when an order is removed from the book
-    *@param _tokenId uint256 ID of photo
+    *@param _tokenId uint256 ID of order
     */
     function unLister(uint256 _orderId) internal{
         Order memory _order = orders[_orderId];
