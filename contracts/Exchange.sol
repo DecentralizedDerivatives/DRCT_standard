@@ -65,9 +65,10 @@ contract Exchange{
     }
 
     /*
-    *@dev list allows a party to place a photo on the orderbook
-    *@param _tokenId uint256 ID of photo
-    *@param _price uint256 price of photo in wei
+    *@dev list allows a party to place an order on the orderbook
+    *@param _tokenadd address of the drct tokens
+    *@param _amount number of DRCT tokens
+    *@param _price uint256 price of all tokens in wei
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
         require(blacklist[msg.sender] == false);
@@ -81,11 +82,11 @@ contract Exchange{
         forSale[_tokenadd].push(order_nonce);
         orders[order_nonce] = Order({
             maker: msg.sender,
+            asset: _tokenadd,
             price: _price,
-            amount:_amount,
-            asset: _tokenadd
+            amount:_amount
         });
-        OrderPlaced(_tokenadd,_amount,_price);
+        emit OrderPlaced(_tokenadd,_amount,_price);
         if(openBookIndex[_tokenadd] == 0 ){    
             openBookIndex[_tokenadd] = openBooks.length;
             openBooks.push(_tokenadd);
@@ -104,7 +105,7 @@ contract Exchange{
         require(msg.sender== _order.maker || msg.sender == owner);
         unLister(_orderId);
         ERC20_Interface token = ERC20_Interface(_order.asset);
-        token.transferFrom(address(this),msg.sender,_order.amount);
+        assert(token.transfer(msg.sender,_order.amount));
         emit OrderRemoved(_order.asset,_order.amount,_order.price);
     }
 
@@ -118,7 +119,7 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         address maker = _order.maker;
         ERC20_Interface token = ERC20_Interface(_order.asset);
-        token.transferFrom(address(this),msg.sender, _order.amount);
+        assert(token.transfer(msg.sender, _order.amount));
         unLister(_orderId);
         maker.transfer(_order.price);
         emit Sale(_order.asset,_order.amount,_order.price);
@@ -129,10 +130,11 @@ contract Exchange{
     *@param _tokenId uint256 ID of order
     *@return address of the party selling
     *@return uint of the price of the sale (in wei)
+    *@return address of the token
     */
-    function getOrder(uint256 _orderId) external view returns(address,uint,uint){
+    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address){
         Order storage _order = orders[_orderId];
-        return (_order.maker,_order.price,_order.amount);
+        return (_order.maker,_order.price,_order.amount,_order.asset);
     }
 
     /*
@@ -188,14 +190,6 @@ contract Exchange{
     }
 
 
-    /*
-    *@dev allows owner to withdraw funds
-    */
-    function withdraw() public onlyOwner(){
-        owner.transfer(this.balance);
-    }
-
-
     /***INTERNAL FUNCTIONS***/
     /*
     *@dev An internal function to update mappings when an order is removed from the book
@@ -225,6 +219,7 @@ contract Exchange{
             openBookIndex[lastAdd] = tokenIndex;
             openBooks.length--;
             openBookIndex[_order.asset] = 0;
+            forSale[_order.asset].length--;
         }
         tokenIndex = userOrderIndex[_orderId];
         lastTokenIndex = userOrders[_order.maker].length.sub(1);
