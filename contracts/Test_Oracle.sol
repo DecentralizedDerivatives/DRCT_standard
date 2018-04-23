@@ -7,39 +7,38 @@ pragma solidity ^0.4.17;
 */
 contract Test_Oracle {
 
+    /*Variables*/
+    //Owner of the oracle
+    address private owner;
+    string public API;
+    //Mapping of documents stored in the oracle
+    mapping(uint => uint) internal oracle_values;
+    mapping(uint => bool) public queried;
 
-  /*Variables*/
-  //Owner of the oracle
-  address private owner;
-  string public API;
-  //Mapping of documents stored in the oracle
-  mapping(uint => uint) oracle_values;
-  mapping(uint => bool) public queried;
+    /*Events*/
+    event DocumentStored(uint _key, uint _value);
 
-  /*Events*/
-  event DocumentStored(uint _key, uint _value);
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
+    //Constructor - Sets owner
+    function Test_Oracle() public {
+        owner = msg.sender;
+        API = "https://api.gdax.com/products/BTC-USD/ticker).price";
+    }
 
-  //Constructor - Sets owner
-  function Test_Oracle() public {
-    owner = msg.sender;
-    API = "https://api.gdax.com/products/BTC-USD/ticker).price";
-  }
+    //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
+    //represent underlying values at a specified date (key).
+    function StoreDocument(uint _key, uint _value) public onlyOwner() {
+        oracle_values[_key] = _value;
+        emit DocumentStored(_key, _value);
+        queried[_key] = true;
+    }
 
-  //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
-  //represent underlying values at a specified date (key).
-  function StoreDocument(uint _key, uint _value) public onlyOwner() {
-    oracle_values[_key] = _value;
-    emit DocumentStored(_key, _value);
-    queried[_key] = true;
-  }
-
-  function pushData() public view{
-    //here for testing purposes
+    function pushData() public view{
+        //here for testing purposes
     }
 
     /**
