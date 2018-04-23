@@ -4,16 +4,16 @@ pragma solidity ^0.4.19;
  import "./interfaces/ERC20_Interface.sol";
 
 /**
+*Exchange creates an exchange for the swaps.
 *@To do:
-Allow partial fills
+*Allow partial fills
 */
-contract Exchange{
+contract Exchange{ 
     using SafeMath for uint256;
 
-    /***VARIABLES***/
+    /*VARIABLES*/
     address public owner; //The owner of the market contract
     
-    /***DATA***/
     //This is the base data structure for an order (the maker of the order and the price)
     struct Order {
         address maker;// the placer of the order
@@ -27,34 +27,33 @@ contract Exchange{
     //An mapping of a token address to the orderID's
     mapping(address =>  uint256[]) public forSale;
     //Index telling where a specific tokenId is in the forSale array
-    mapping(uint256 => uint256) forSaleIndex;
+    mapping(uint256 => uint256) internal forSaleIndex;
     //Index telling where a specific tokenId is in the forSale array
     address[] public openBooks;
     //mapping of address to position in openBooks
-    mapping (address => uint) openBookIndex;
+    mapping (address => uint) internal openBookIndex;
     //mapping of user to their orders
-    mapping(address => uint[]) userOrders;
+    mapping(address => uint[]) internal userOrders;
     //mapping from orderId to userOrder position
-    mapping(uint => uint) userOrderIndex;
+    mapping(uint => uint) internal userOrderIndex;
     //A list of the blacklisted addresses
-    mapping(address => bool) blacklist;
+    mapping(address => bool) internal blacklist;
     //order_nonce;
-    uint order_nonce;
+    uint internal order_nonce;
 
-    /***MODIFIERS***/
+    /*Modifiers*/
     /// @dev Access modifier for Owner functionality
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-
-    /***EVENTS***/
+    /*Events*/
     event OrderPlaced(address _token, uint256 _amount, uint256 _price);
     event Sale(address _token, uint256 _amount, uint256 _price);
     event OrderRemoved(address _token, uint256 _amount, uint256 _price);
 
-    /***FUNCTIONS***/
+    /*Functions*/
     /*
     *@dev the constructor argument to set the owner and initialize the array.
     */
@@ -97,7 +96,7 @@ contract Exchange{
     }
     /**
     *@dev unlist allows a party to remove their order from the orderbook
-    *@param _tokenId uint256 ID of order
+    *@param _orderId is the uint256 ID of order
     */
     function unlist(uint256 _orderId) external{
         require(forSaleIndex[_orderId] > 0);
@@ -111,7 +110,7 @@ contract Exchange{
 
     /**
     *@dev buy allows a party to fill an order
-    *@param _tokenId uint256 ID of order
+    *@param _orderId is the uint256 ID of order
     */
     function buy(uint256 _orderId) external payable {
         Order memory _order = orders[_orderId];
@@ -127,9 +126,10 @@ contract Exchange{
 
     /*
     *@dev getOrder lists the price,amount, and maker of a specific token for a sale
-    *@param _tokenId uint256 ID of order
+    *@param _orderId uint256 ID of order
     *@return address of the party selling
     *@return uint of the price of the sale (in wei)
+    *@return uint of the order amount of the sale
     *@return address of the token
     */
     function getOrder(uint256 _orderId) external view returns(address,uint,uint,address){
@@ -146,10 +146,11 @@ contract Exchange{
     }
 
     /*
+    *@notice This allows the owner to stop a malicious party from spamming the orderbook
     *@dev Allows the owner to blacklist addresses from using this exchange
     *@param _address the address of the party to blacklist
     *@param _motion true or false depending on if blacklisting or not
-    *@Note - This allows the owner to stop a malicious party from spamming the orderbook
+
     */
     function blacklistParty(address _address, bool _motion) public onlyOwner() {
         blacklist[_address] = _motion;
@@ -158,7 +159,7 @@ contract Exchange{
     /*
     *@dev Allows parties to see if one is blacklisted
     *@param _address the address of the party to blacklist
-    *@return bool, true for is blacklisted
+    *@return bool true for is blacklisted
     */
     function isBlacklist(address _address) public view returns(bool) {
         return blacklist[_address];
@@ -166,12 +167,12 @@ contract Exchange{
 
     /*
     *@dev getOrderCount allows parties to query how many orders are on the book
+    *@param _token address used to count the number of orders?
     *@return _uint of the number of orders in the orderbook
     */
     function getOrderCount(address _token) public constant returns(uint) {
         return forSale[_token].length;
     }
-
 
     /*
     *@dev Gets number of open orderbooks
@@ -181,23 +182,21 @@ contract Exchange{
         return openBooks.length;
     }
 
-        /*
+    /*
     *@dev getOrderCount allows parties to query how many orders are on the book
+    *@param _token address used to count the number of orders?
     *@return _uint of the number of orders in the orderbook
     */
     function getOrders(address _token) public constant returns(uint[]) {
         return forSale[_token];
     }
 
-
-    /***INTERNAL FUNCTIONS***/
     /*
     *@dev An internal function to update mappings when an order is removed from the book
-    *@param _tokenId uint256 ID of order
+    *@param _orderId is the uint256 ID of order
     */
     function unLister(uint256 _orderId) internal{
         Order memory _order = orders[_orderId];
-
         uint256 tokenIndex = forSaleIndex[_orderId];
         uint256 lastTokenIndex = forSale[_order.asset].length.sub(1);
         uint256 lastToken = forSale[_order.asset][lastTokenIndex];

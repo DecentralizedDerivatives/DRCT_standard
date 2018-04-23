@@ -7,7 +7,7 @@ import "./DRCT_Token.sol";
 */
 contract TokenDeployer {
     /*Variables*/
-    address owner;
+    address internal owner;
     address public factory;
 
     /*Functions*/
