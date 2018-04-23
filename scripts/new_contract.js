@@ -20,5 +20,5 @@ module.exports =async function(callback) {
 	  swap_add = receipt.logs[0].args._created;
 	  swap = await TokenToTokenSwap.at(swap_add);
 	  console.log('My Swap',swap_add);
-	  await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether')});
+	  await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether')});
 }

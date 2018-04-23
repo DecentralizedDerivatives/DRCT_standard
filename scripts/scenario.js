@@ -27,9 +27,9 @@ module.exports =async function(callback) {
 	  swap_add = receipt.logs[0].args._created;
 	  swap = await TokenToTokenSwap.at(swap_add);
 	  console.log('My Swap',swap_add);
-	  await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether')});
-      await long_token.approve(exchange.address,500);
-      await short_token.approve(exchange.address,500);
-      await exchange.list(long_token_add,500,web3.toWei(.5,'ether'));
-      await exchange.list(short_token_add,500,web3.toWei(.5,'ether'));
+	  await userContract.Initiate(swap_add,100000000000000000,{value: web3.toWei(.2,'ether')});
+      await long_token.approve(exchange.address,50);
+      await short_token.approve(exchange.address,50);
+      await exchange.list(long_token_add,50,web3.toWei(.05,'ether'));
+      await exchange.list(short_token_add,50,web3.toWei(.05,'ether'));
 }
