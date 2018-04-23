@@ -7,8 +7,8 @@ import "./TokenToTokenSwap.sol";
 */
 contract Deployer {
     /*Variables*/
-    address owner;
-    address factory;
+    address internal owner;
+    address internal factory;
     
     /*Functions*/
     /**

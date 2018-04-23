@@ -27,17 +27,17 @@ contract DRCT_Token {
     //Total supply of outstanding tokens in the contract
     uint public total_supply;
     //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
-    mapping(address => Balance[]) swap_balances;
+    mapping(address => Balance[]) internal swap_balances;
     //Mapping from: swap address -> user -> swap_balances index
-    mapping(address => mapping(address => uint)) swap_balances_index;
+    mapping(address => mapping(address => uint)) internal swap_balances_index;
     //Mapping from: user -> dynamic array of swap addresses (index for a particular swap can be found in user_swaps_index)
-    mapping(address => address[]) user_swaps;
+    mapping(address => address[]) internal user_swaps;
     //Mapping from: user -> swap address -> user_swaps index
-    mapping(address => mapping(address => uint)) user_swaps_index;
+    mapping(address => mapping(address => uint)) internal user_swaps_index;
     //Mapping from: user -> total balance accross all entered swaps
-    mapping(address => uint) user_total_balances;
+    mapping(address => uint) internal user_total_balances;
     //Mapping from: owner -> spender -> amount allowed
-    mapping(address => mapping(address => uint)) allowed;
+    mapping(address => mapping(address => uint)) internal allowed;
 
     /*Events*/
     /**
