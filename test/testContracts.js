@@ -8,7 +8,7 @@ var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
-contract('Contracts', function(accounts) {
+contract('Base Tests', function(accounts) {
   let oracle;
   let factory;
   let base1;
@@ -162,7 +162,7 @@ contract('Contracts', function(accounts) {
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
-	  	await base.CreateToken({value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
 	  	await swap.CreateSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
@@ -191,7 +191,7 @@ contract('Contracts', function(accounts) {
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
-	  	await base.CreateToken({value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
 	  	await swap.CreateSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");

@@ -73,7 +73,7 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         require(_price > 0);
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        require(token.transferFrom(msg.sender,address(this),_amount));
+        require(token.allowance(msg.sender,address(this)) >= _amount);
         if(forSale[_tokenadd].length == 0){
             forSale[_tokenadd].push(0);
             }
@@ -103,8 +103,6 @@ contract Exchange{
         Order memory _order = orders[_orderId];
         require(msg.sender== _order.maker || msg.sender == owner);
         unLister(_orderId);
-        ERC20_Interface token = ERC20_Interface(_order.asset);
-        assert(token.transfer(msg.sender,_order.amount));
         emit OrderRemoved(_order.asset,_order.amount,_order.price);
     }
 
@@ -118,9 +116,11 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         address maker = _order.maker;
         ERC20_Interface token = ERC20_Interface(_order.asset);
-        assert(token.transfer(msg.sender, _order.amount));
+        if(token.allowance(_order.maker,address(this)) >= _order.amount){
+            assert(token.transferFrom(_order.maker,msg.sender, _order.amount));
+            maker.transfer(_order.price);
+        }
         unLister(_orderId);
-        maker.transfer(_order.price);
         emit Sale(_order.asset,_order.amount,_order.price);
     }
 

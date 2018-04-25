@@ -2,7 +2,7 @@ pragma solidity ^0.4.17;
 
 
 import "./interfaces/TokenToTokenSwap_Interface.sol";
-import "./interfaces/Factory_Interface.sol";
+import "./Factory.sol";
 import "./Wrapped_Ether.sol";
 import "./libraries/SafeMath.sol";
 
@@ -13,8 +13,8 @@ import "./libraries/SafeMath.sol";
 */
 contract UserContract{
     TokenToTokenSwap_Interface internal swap;
-    Wrapped_Ether internal token;
-    Factory_Interface internal factory;
+    Wrapped_Ether internal baseToken;
+    Factory internal factory;
 
     address public factory_address;
     address internal owner;
@@ -32,16 +32,16 @@ contract UserContract{
     function Initiate(address _swapadd, uint _amount) payable public{
         require(msg.value == _amount * 2);
         swap = TokenToTokenSwap_Interface(_swapadd);
-        address token_address = factory.getBase();
-        token = Wrapped_Ether(token_address);
-        token.CreateToken.value(_amount * 2)();
-        token.transfer(_swapadd,_amount* 2);
+        address token_address = factory.token();
+        baseToken = Wrapped_Ether(token_address);
+        baseToken.createToken.value(_amount * 2)();
+        baseToken.transfer(_swapadd,_amount* 2);
         swap.CreateSwap(_amount, msg.sender);
     }
 
     function setFactory(address _factory_address) public {
         require (msg.sender == owner);
         factory_address = _factory_address;
-        factory = Factory_Interface(factory_address);
+        factory = Factory(factory_address);
     }
 }

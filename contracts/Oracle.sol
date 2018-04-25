@@ -46,7 +46,7 @@ contract Oracle is usingOraclize{
     function pushData() public payable{
         uint _key = now - (now % 86400);
         require(queried[_key] == false);
-        if (oraclize_getPrice("URL") > this.balance) {
+        if (oraclize_getPrice("URL") > address(this).balance) {
             emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");

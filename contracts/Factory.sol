@@ -183,7 +183,7 @@ contract Factory {
         address ltoken = long_tokens[_start_date];
         address stoken = short_tokens[_start_date];
         require(ltoken != address(0) && stoken != address(0));
-            drct_interface = DRCT_Token_Interface(ltoken);
+            DRCT_Token_Interface drct_interface = DRCT_Token_Interface(ltoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
             drct_interface = DRCT_Token_Interface(stoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
@@ -211,12 +211,12 @@ contract Factory {
     *@return the withdrawal fee _val and the balance where is the return function?
     */
     function withdrawFees() public onlyOwner(){
-        token_interface = Wrapped_Ether_Interface(token);
+        Wrapped_Ether_Interface token_interface = Wrapped_Ether_Interface(token);
         uint _val = token_interface.balanceOf(address(this));
         if(_val > 0){
             token_interface.withdraw(_val);
         }
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
      }
 
     /**
@@ -243,7 +243,7 @@ contract Factory {
     */
     function payToken(address _party, address _token_add) public {
         require(created_contracts[msg.sender] > 0);
-        drct_interface = DRCT_Token_Interface(_token_add);
+        DRCT_Token_Interface drct_interface = DRCT_Token_Interface(_token_add);
         drct_interface.pay(_party, msg.sender);
     }
 

@@ -37,7 +37,7 @@ contract Test_Oracle {
         queried[_key] = true;
     }
 
-    function pushData() public view{
+    function pushData() public pure {
         //here for testing purposes
     }
 

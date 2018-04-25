@@ -8,7 +8,7 @@ var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
-contract('Contracts', function(accounts) {
+contract('Oracle Test', function(accounts) {
   let oracle;
   let factory;
   let base1;

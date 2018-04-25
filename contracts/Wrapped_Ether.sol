@@ -33,7 +33,7 @@ contract Wrapped_Ether {
     /**
     @dev This function creates tokens equal in value to the amount sent to the contract
     */
-    function CreateToken() public payable {
+    function createToken() public payable {
         require(msg.value > 0);
         balances[msg.sender] = balances[msg.sender].add(msg.value);
         total_supply = total_supply.add(msg.value);

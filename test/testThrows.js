@@ -32,7 +32,7 @@ async function expectThrow(promise){
 };
 
 
-contract('Contracts', function(accounts) {
+contract('Throw Tests', function(accounts) {
   let oracle;
   let factory;
   let base1;

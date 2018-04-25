@@ -8,7 +8,7 @@ var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Exchange = artifacts.require("Exchange");
-contract('Contracts', function(accounts) {
+contract('Exchange Test', function(accounts) {
   let oracle;
 
   let factory;
@@ -54,13 +54,13 @@ contract('Contracts', function(accounts) {
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});;
+	  	assert.equal(await short_token.allowance(accounts[1],exchange.address),500,"exchange should own tokens");
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	details = await exchange.getOrder(1);
 	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
 	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
 	  	assert.equal(details[2], 500, "Amount listed should be 500");
 	  	assert.equal(details[3], short_token.address, "Short token address should be order");
-	  	assert.equal(await short_token.balanceOf(exchange.address),500,"exchange should own tokens");
 	  	assert.equal(await exchange.getOrderCount(short_token.address),2, "Short Token should have an order");
 	})
 	it("Test Buy", async function(){
@@ -98,7 +98,7 @@ contract('Contracts', function(accounts) {
 		  	await exchange.list(short_token.address,5,web3.toWei(.05,'ether'),{from: accounts[1]});
 	  	}
 	  	assert.equal(await exchange.getOrderCount(short_token.address)-0,101, "There should be 100 orders");
-	  	assert.equal(await short_token.balanceOf(exchange.address)-0,500,"exchange should own tokens");
+	  	assert.equal(await short_token.allowance(accounts[1],exchange.address)-0,500,"exchange should own tokens");
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 	  	for(i=0;i<100;i++){
 			await exchange.buy(i+1,{from: accounts[3], value:web3.toWei(.05,'ether')})
@@ -121,9 +121,8 @@ contract('Contracts', function(accounts) {
 	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 5 ether");
 	  	await short_token.approve(exchange.address,500,{from: accounts[2]});;
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[2]});
-	  	assert.equal(await short_token.balanceOf(accounts[2]),0,"account 2 should have no tokens");
+	  	assert.equal(await short_token.balanceOf(accounts[2])-0,500,"account 2 should still own tokens");
 	  	await exchange.unlist(2,{from: accounts[2]});
-	  	assert.equal(await short_token.balanceOf(accounts[2]),500,"account 2 should have all tokens");
 	  	assert.equal(await exchange.getOrderCount(short_token.address) - 0,0, "Short Token should have no orders");
 	  	await short_token.approve(exchange.address,500,{from: accounts[2]});
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));

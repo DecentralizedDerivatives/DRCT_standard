@@ -138,7 +138,7 @@ contract TokenToTokenSwap {
     *@dev check if the oracle has been queried withing the last day? 
     */
     function oracleQuery() internal returns(bool){
-        oracle = Oracle_Interface(oracle_address);
+        Oracle_Interface oracle = Oracle_Interface(oracle_address);
         uint _today = now - (now % 86400);
         uint i;
         if(_today >= start_date && start_value == 0){
@@ -202,7 +202,7 @@ contract TokenToTokenSwap {
         if(ready){
             Calculate();
             //Loop through the owners of long and short DRCT tokens and pay them
-            drct = DRCT_Token_Interface(long_token_address);
+            DRCT_Token_Interface drct = DRCT_Token_Interface(long_token_address);
             uint count = drct.addressCount(address(this));
             uint loop_count = count < _end ? count : _end;
             //Indexing begins at 1 for DRCT_Token balances
