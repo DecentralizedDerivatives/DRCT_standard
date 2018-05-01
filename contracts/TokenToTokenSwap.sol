@@ -96,14 +96,14 @@ contract TokenToTokenSwap {
     *@param _senderAdd States the owner of this side of the contract (does not have to be msg.sender)
     */
     function CreateSwap(uint _amount, address _senderAdd) public onlyState(SwapState.created) {
-        require(msg.sender == creator || (msg.sender == userContract && _senderAdd == creator));
+        require(msg.sender == creator  && _amount > 0 || (msg.sender == userContract && _senderAdd == creator) && _amount > 0);
         factory = Factory_Interface(factory_address);
         setVars();
         end_date = start_date.add(duration.mul(86400));
         assert(end_date-start_date < 28*86400);
         token_amount = _amount;
         token = ERC20_Interface(token_address);
-        assert(token.balanceOf(address(this)) == _amount*2);
+        assert(token.balanceOf(address(this)) == SafeMath.mul(_amount,2));
         createTokens(creator);
         emit SwapCreation(token_address,start_date,end_date,token_amount);
         current_state = SwapState.started;
