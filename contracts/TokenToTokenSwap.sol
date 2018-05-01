@@ -95,24 +95,19 @@ contract TokenToTokenSwap {
     *@param _amount Amount of Token that should be deposited for the notional
     *@param _senderAdd States the owner of this side of the contract (does not have to be msg.sender)
     */
-  function CreateSwap(
-    uint _amount,
-    address _senderAdd
-    ) public onlyState(SwapState.created) {
-    require(
-      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
-    );
-    factory = Factory_Interface(factory_address);
-    setVars();
-    end_date = start_date.add(duration.mul(86400));
-    assert(end_date-start_date < 28*86400);
-    token_amount = _amount;
-    token = ERC20_Interface(token_address);
-    assert(token.balanceOf(address(this)) == _amount*2);
-    createTokens(creator);
-    emit SwapCreation(token_address,start_date,end_date,token_amount);
-    current_state = SwapState.started;
-  }
+    function CreateSwap(uint _amount, address _senderAdd) public onlyState(SwapState.created) {
+        require(msg.sender == creator || (msg.sender == userContract && _senderAdd == creator));
+        factory = Factory_Interface(factory_address);
+        setVars();
+        end_date = start_date.add(duration.mul(86400));
+        assert(end_date-start_date < 28*86400);
+        token_amount = _amount;
+        token = ERC20_Interface(token_address);
+        assert(token.balanceOf(address(this)) == _amount*2);
+        createTokens(creator);
+        emit SwapCreation(token_address,start_date,end_date,token_amount);
+        current_state = SwapState.started;
+    }
 
     function setVars() internal{
         (oracle_address,duration,multiplier,token_address) = factory.getVariables();
@@ -207,8 +202,9 @@ contract TokenToTokenSwap {
             uint loop_count = count < _end ? count : _end;
             //Indexing begins at 1 for DRCT_Token balances
             for(uint i = loop_count-1; i >= _begin ; i--) {
-                address long_owner = drct.getHolderByIndex(i, address(this));
-                uint to_pay_long = drct.getBalanceByIndex(i, address(this));
+                address long_owner;
+                uint to_pay_long;
+                (to_pay_long, long_owner) = drct.getBalanceAndHolderByIndex(i, address(this));
                 paySwap(long_owner, to_pay_long, true);
             }
 
@@ -216,8 +212,9 @@ contract TokenToTokenSwap {
             count = drct.addressCount(address(this));
             loop_count = count < _end ? count : _end;
             for(uint j = loop_count-1; j >= _begin ; j--) {
-                address short_owner = drct.getHolderByIndex(j, address(this));
-                uint to_pay_short = drct.getBalanceByIndex(j, address(this));
+                address short_owner;
+                uint to_pay_short;
+                (to_pay_short, short_owner) = drct.getBalanceAndHolderByIndex(j, address(this));
                 paySwap(short_owner, to_pay_short, false);
             }
             if (loop_count == count){

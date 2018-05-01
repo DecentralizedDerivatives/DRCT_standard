@@ -300,23 +300,14 @@ contract DRCT_Token {
     }
 
     /**
-    *@dev Gets the owner address by specifying the swap address and index
+    *@dev Gets the owner address and amount by specifying the swap address and index
     *@param _ind specified index in the swap
     *@param _swap specified swap address
     *@return the owner address associated with a particular index in a particular swap
+    *@return the amount to transfer associated with a particular index in a particular swap
     */
-    function getHolderByIndex(uint _ind, address _swap) public constant returns (address) {
-        return swap_balances[_swap][_ind].owner; 
-    }
-
-    /**
-    *@dev Gets the balance by specifying the swap address and index
-    *@param _ind specified index in the swap
-    *@param _swap specified swap address
-    *@return the balance associated with a particular index in a particular swap
-    */
-    function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint) {
-        return swap_balances[_swap][_ind].amount; 
+    function getBalanceAndHolderByIndex(uint _ind, address _swap) public constant returns (uint, address) {
+        return (swap_balances[_swap][_ind].amount, swap_balances[_swap][_ind].owner);
     }
 
     /**
