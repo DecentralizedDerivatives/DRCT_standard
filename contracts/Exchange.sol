@@ -102,7 +102,7 @@ contract Exchange{
         require(forSaleIndex[_orderId] > 0);
         Order memory _order = orders[_orderId];
         require(msg.sender== _order.maker || msg.sender == owner);
-        unLister(_orderId);
+        unLister(_orderId,_order);
         emit OrderRemoved(_order.asset,_order.amount,_order.price);
     }
 
@@ -120,7 +120,7 @@ contract Exchange{
             assert(token.transferFrom(_order.maker,msg.sender, _order.amount));
             maker.transfer(_order.price);
         }
-        unLister(_orderId);
+        unLister(_orderId,_order);
         emit Sale(_order.asset,_order.amount,_order.price);
     }
 
@@ -194,9 +194,9 @@ contract Exchange{
     /*
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order
+    @param _order is the struct containing the details of the order
     */
-    function unLister(uint256 _orderId) internal{
-        Order memory _order = orders[_orderId];
+    function unLister(uint256 _orderId, Order _order) internal{
         uint256 tokenIndex = forSaleIndex[_orderId];
         uint256 lastTokenIndex = forSale[_order.asset].length.sub(1);
         uint256 lastToken = forSale[_order.asset][lastTokenIndex];
