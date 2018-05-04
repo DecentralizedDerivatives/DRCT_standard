@@ -164,7 +164,7 @@ contract('Base Tests', function(accounts) {
 	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
 	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
-	  	await swap.CreateSwap(10000000000000000000,accounts[1],{from: accounts[1]});
+	  	await swap.createSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
@@ -193,7 +193,7 @@ contract('Base Tests', function(accounts) {
 	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
 	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
-	  	await swap.CreateSwap(10000000000000000000,accounts[1],{from: accounts[1]});
+	  	await swap.createSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
@@ -289,7 +289,7 @@ contract('Base Tests', function(accounts) {
 		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
 		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
 		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
-		assert(balance2 >= newbal2 - 1 && balance2 <= newbal2 ,"Balance2 should change correctly");
+		assert(balance2 >= newbal2 - 2 && balance2 <= newbal2 - 1 ,"Balance2 should change correctly");
 	});
 
 		it("Gas Calculation", async function(){

@@ -36,7 +36,7 @@ contract UserContract{
         baseToken = Wrapped_Ether(token_address);
         baseToken.createToken.value(_amount * 2)();
         baseToken.transfer(_swapadd,_amount* 2);
-        swap.CreateSwap(_amount, msg.sender);
+        swap.createSwap(_amount, msg.sender);
     }
 
     function setFactory(address _factory_address) public {
