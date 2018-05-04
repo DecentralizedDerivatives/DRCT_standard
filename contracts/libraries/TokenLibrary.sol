@@ -34,14 +34,11 @@ library TokenLibrary{
         ERC20_Interface token;
         //Enum state of the swap
         SwapState current_state;
-        //Start date, end_date, multiplier duration
-        uint[4] contract_details;
+        //Start date, end_date, multiplier duration,start_value,end_value
+        uint[6] contract_details;
         // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
         uint pay_to_long;
         uint pay_to_short;
-
-        uint start_value;
-        uint end_value;
         //Address of created long and short DRCT tokens
         address long_token_address;
         address short_token_address;
@@ -100,26 +97,26 @@ library TokenLibrary{
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
         uint _today = now - (now % 86400);
         uint i;
-        if(_today >= self.contract_details[0] && self.start_value == 0){
+        if(_today >= self.contract_details[0] && self.contract_details[4] == 0){
             for(i=0;i < (_today- self.contract_details[0])/86400;i++){
                 if(oracle.getQuery(self.contract_details[0]+i*86400)){
-                    self.start_value = oracle.retrieveData(self.contract_details[0]+i*86400);
+                    self.contract_details[4] = oracle.retrieveData(self.contract_details[0]+i*86400);
                     return true;
                 }
             }
-            if(self.start_value ==0){
+            if(self.contract_details[4] ==0){
                 oracle.pushData();
                 return false;
             }
         }
-        if(_today >= self.contract_details[1] && self.end_value == 0){
+        if(_today >= self.contract_details[1] && self.contract_details[5] == 0){
             for(i=0;i < (_today- self.contract_details[1])/86400;i++){
                 if(oracle.getQuery(self.contract_details[1]+i*86400)){
-                    self.end_value = oracle.retrieveData(self.contract_details[1]+i*86400);
+                    self.contract_details[5] = oracle.retrieveData(self.contract_details[1]+i*86400);
                     return true;
                 }
             }
-            if(self.end_value ==0){
+            if(self.contract_details[5] ==0){
                 oracle.pushData();
                 return false;
             }
@@ -135,11 +132,11 @@ library TokenLibrary{
     function Calculate(SwapStorage storage self) internal{
         uint ratio;
         self.token_amount = self.token_amount.mul(995).div(1000);
-        if (self.start_value > 0 && self.end_value > 0)
-            ratio = (self.end_value).mul(100000).div(self.start_value);
-        else if (self.end_value > 0)
+        if (self.contract_details[4] > 0 && self.contract_details[5] > 0)
+            ratio = (self.contract_details[5]).mul(100000).div(self.contract_details[4]);
+        else if (self.contract_details[5] > 0)
             ratio = 10e10;
-        else if (self.start_value > 0)
+        else if (self.contract_details[4] > 0)
             ratio = 0;
         else
             ratio = 100000;
@@ -209,6 +206,11 @@ library TokenLibrary{
             }
         }
     }
+
+    function showCurrentState(SwapStorage storage self)  internal returns(uint) {
+        return uint(self.current_state);
+    }
+    
 
 
 }

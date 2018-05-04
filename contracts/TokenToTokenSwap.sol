@@ -9,8 +9,9 @@ import "./libraries/TokenLibrary.sol";
 contract TokenToTokenSwap {
 
     using TokenLibrary for TokenLibrary.SwapStorage;
+    
 
-    TokenLibrary.SwapStorage swap;
+    TokenLibrary.SwapStorage public swap;
 
     /*Functions*/
     /**
@@ -28,6 +29,13 @@ contract TokenToTokenSwap {
     */
     function showPrivateVars() public view returns (address[5],uint, uint, uint, uint, uint){
         return swap.showPrivateVars();
+    }
+
+    /*
+    @dev A getter function for retriving standardized variables from the factory contract
+    */
+    function currentState() public view returns(uint){
+        return swap.showCurrentState();
     }
 
     /**
