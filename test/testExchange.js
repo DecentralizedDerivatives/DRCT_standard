@@ -4,7 +4,6 @@ var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
-var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Exchange = artifacts.require("Exchange");
@@ -18,7 +17,6 @@ contract('Exchange Test', function(accounts) {
   let long_token;
   let short_token;
   let swap;
-  let tokenDeployer;
   var swap_add;
   let o_startdate, o_enddate, balance1, balance2;
 
@@ -30,11 +28,9 @@ contract('Exchange Test', function(accounts) {
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);
-	    tokenDeployer = await	Tokendeployer.new(factory.address);
 	    await factory.setBaseToken(base.address);
 	    await factory.setUserContract(userContract.address);
 	    await factory.setDeployer(deployer.address);
-	    await factory.setTokenDeployer(tokenDeployer.address);
 	    await factory.setOracleAddress(oracle.address);
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;

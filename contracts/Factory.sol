@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "./interfaces/Deployer_Interface.sol";
-import "./interfaces/DRCT_Token_Interface.sol";
+import "./DRCT_Token.sol";
 import "./libraries/SafeMath.sol";
 import "./interfaces/Wrapped_Ether_Interface.sol";
 
@@ -18,7 +18,6 @@ contract Factory {
     //check www.github.com/DecentralizedDerivatives/Oracles
     address public owner;
     address public oracle_address;
-
     //Address of the user contract
     address public user_contract;
 
@@ -27,8 +26,6 @@ contract Factory {
     //Address of the deployer contract
     address internal deployer_address;
     Deployer_Interface internal deployer;
-    Deployer_Interface internal tokenDeployer;
-    address internal token_deployer_address;
 
     address public token;
 
@@ -94,14 +91,6 @@ contract Factory {
     }
 
     /*
-    * Sets the token_deployer address
-    * @param "_tdeployer": The new token deployer address
-    */  
-    function setTokenDeployer(address _tdeployer) public onlyOwner() {
-        token_deployer_address = _tdeployer;
-        tokenDeployer = Deployer_Interface(_tdeployer);
-    }
-    /*
     * Sets the user_contract address
     * @param "_userContract": The new userContract address
     */
@@ -155,12 +144,12 @@ contract Factory {
         require(_start_date % 86400 == 0);
         if (_long){
             require(long_tokens[_start_date] == address(0));
-            _token = tokenDeployer.newToken();
+            _token = new DRCT_Token(address(this));
             long_tokens[_start_date] = _token;
         }
         else{
             require(short_tokens[_start_date] == address(0));
-            _token = tokenDeployer.newToken();
+            _token = new DRCT_Token(address(this));
             short_tokens[_start_date] = _token;
         }
         if(short_tokens[_start_date] != address(0) && long_tokens[_start_date] != address(0)){
@@ -183,9 +172,9 @@ contract Factory {
         address ltoken = long_tokens[_start_date];
         address stoken = short_tokens[_start_date];
         require(ltoken != address(0) && stoken != address(0));
-            DRCT_Token_Interface drct_interface = DRCT_Token_Interface(ltoken);
+            DRCT_Token drct_interface = DRCT_Token(ltoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
-            drct_interface = DRCT_Token_Interface(stoken);
+            drct_interface = DRCT_Token(stoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
         return (ltoken, stoken, token_ratio);
     }
@@ -243,7 +232,7 @@ contract Factory {
     */
     function payToken(address _party, address _token_add) public {
         require(created_contracts[msg.sender] > 0);
-        DRCT_Token_Interface drct_interface = DRCT_Token_Interface(_token_add);
+        DRCT_Token drct_interface = DRCT_Token(_token_add);
         drct_interface.pay(_party, msg.sender);
     }
 

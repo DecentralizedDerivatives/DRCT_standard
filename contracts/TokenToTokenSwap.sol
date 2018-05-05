@@ -9,7 +9,6 @@ import "./libraries/TokenLibrary.sol";
 contract TokenToTokenSwap {
 
     using TokenLibrary for TokenLibrary.SwapStorage;
-    
 
     TokenLibrary.SwapStorage public swap;
 
