@@ -4,7 +4,6 @@ var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
-var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
@@ -17,7 +16,6 @@ contract('Oracle Test', function(accounts) {
   let long_token;
   let short_token;
   let swap;
-  let tokenDeployer;
   var swap_add;
   let o_startdate, o_enddate, balance1, balance2;
 
@@ -28,11 +26,9 @@ contract('Oracle Test', function(accounts) {
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);
-	    tokenDeployer = await	Tokendeployer.new(factory.address);
 	    await factory.setBaseToken(base.address);
 	    await factory.setUserContract(userContract.address);
 	    await factory.setDeployer(deployer.address);
-	    await factory.setTokenDeployer(tokenDeployer.address);
 	    await factory.setOracleAddress(oracle.address);
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
@@ -60,13 +56,13 @@ contract('Oracle Test', function(accounts) {
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	assert.equal(await swap.current_state.call(),0,"Current State should be 0");
+	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
 	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
-	  	assert.equal(await swap.current_state.call(),1,"Current State should be 1");
+	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
 		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.current_state.call(),2,"Current State should be 2");
+	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
