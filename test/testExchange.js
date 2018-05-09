@@ -7,9 +7,11 @@ var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Exchange = artifacts.require("Exchange");
+var MemberCoin = artifacts.require("MemberCoin");
+
 contract('Exchange Test', function(accounts) {
   let oracle;
-
+  let memberCoin;
   let factory;
   let base1;
   let deployer;
@@ -24,6 +26,9 @@ contract('Exchange Test', function(accounts) {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
 	    exchange = await Exchange.new();
+	    memberCoin = await MemberCoin.new();
+	    await factory.setMemberContract(memberCoin.address);
+	    await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
@@ -37,8 +42,7 @@ contract('Exchange Test', function(accounts) {
     	o_enddate = 1515369600;
     	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
   		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
-   		await factory.deployTokenContract(o_startdate,true);
-    	await factory.deployTokenContract(o_startdate,false);
+   		await factory.deployTokenContract(o_startdate);
     	long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
 	    long_token =await DRCT_Token.at(long_token_add);
@@ -128,6 +132,37 @@ contract('Exchange Test', function(accounts) {
 	  	var balance1_2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
 	  	assert.equal(balance1, balance1_2 - 5,"account 2 should get 5 ether");
 
+	});
+
+	it("Test Whitelist", async function(){
+		await factory.setWhitelistedMemberTypes([1,100,200]);
+		await memberCoin.setMember(accounts[1],1);
+		await memberCoin.setMember(accounts[2],100);
+		await memberCoin.setMember(accounts[3],200);
+		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
+	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
+	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
+	  	await exchange.buy(1,{from: accounts[2], value:web3.toWei(5,'ether')})
+	  	assert.equal(await short_token.balanceOf(accounts[2]),500,"account 2 should own tokens");
+	  	var balance1_2 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
+	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 5 ether");
+	  	await short_token.approve(exchange.address,500,{from: accounts[2]});;
+	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[2]});
+	  	assert.equal(await short_token.balanceOf(accounts[2])-0,500,"account 2 should still own tokens");
+	  	await exchange.unlist(2,{from: accounts[2]});
+	  	assert.equal(await exchange.getOrderCount(short_token.address) - 0,0, "Short Token should have no orders");
+	  	await short_token.approve(exchange.address,500,{from: accounts[2]});
+	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[2]});
+	  	await exchange.buy(3,{from: accounts[1], value:web3.toWei(5,'ether')})
+	  	assert.equal(await short_token.balanceOf(accounts[1]),1000,"account 1 should own all tokens");
+	  	var balance1_2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+	  	assert.equal(balance1, balance1_2 - 5,"account 2 should get 5 ether");
+	  	await short_token.transfer(accounts[3],500,{from:accounts[1]});
 	});
 });
 

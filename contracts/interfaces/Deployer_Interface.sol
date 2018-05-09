@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
 //Swap Deployer functions - descriptions can be found in Deployer.sol
 interface Deployer_Interface {

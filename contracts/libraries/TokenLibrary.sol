@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
 import "../interfaces/Oracle_Interface.sol";
 import "../interfaces/DRCT_Token_Interface.sol";
@@ -207,7 +207,7 @@ library TokenLibrary{
         }
     }
 
-    function showCurrentState(SwapStorage storage self)  internal returns(uint) {
+    function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);
     }
     

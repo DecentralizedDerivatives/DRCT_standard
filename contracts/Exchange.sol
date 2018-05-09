@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
  import "./libraries/SafeMath.sol";
  import "./interfaces/ERC20_Interface.sol";
@@ -49,9 +49,9 @@ contract Exchange{
     }
 
     /*Events*/
-    event OrderPlaced(address _token, uint256 _amount, uint256 _price);
-    event Sale(address _token, uint256 _amount, uint256 _price);
-    event OrderRemoved(address _token, uint256 _amount, uint256 _price);
+    event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
+    event Sale(address _sender,address _token, uint256 _amount, uint256 _price);
+    event OrderRemoved(address _sender,address _token, uint256 _amount, uint256 _price);
 
     /*Functions*/
     /*
@@ -85,7 +85,7 @@ contract Exchange{
             price: _price,
             amount:_amount
         });
-        emit OrderPlaced(_tokenadd,_amount,_price);
+        emit OrderPlaced(msg.sender,_tokenadd,_amount,_price);
         if(openBookIndex[_tokenadd] == 0 ){    
             openBookIndex[_tokenadd] = openBooks.length;
             openBooks.push(_tokenadd);
@@ -103,7 +103,7 @@ contract Exchange{
         Order memory _order = orders[_orderId];
         require(msg.sender== _order.maker || msg.sender == owner);
         unLister(_orderId,_order);
-        emit OrderRemoved(_order.asset,_order.amount,_order.price);
+        emit OrderRemoved(msg.sender,_order.asset,_order.amount,_order.price);
     }
 
     /**
@@ -121,7 +121,7 @@ contract Exchange{
             maker.transfer(_order.price);
         }
         unLister(_orderId,_order);
-        emit Sale(_order.asset,_order.amount,_order.price);
+        emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
     }
 
     /*
