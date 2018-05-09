@@ -4,7 +4,6 @@ var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
-var Tokendeployer = artifacts.require("Tokendeployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var days_future = 0;
