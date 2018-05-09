@@ -1,9 +1,10 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
 import "./interfaces/Deployer_Interface.sol";
 import "./DRCT_Token.sol";
 import "./libraries/SafeMath.sol";
 import "./interfaces/Wrapped_Ether_Interface.sol";
+import "./interfaces/MemberCoin_Interface.sol";
 
 
 /**
@@ -12,7 +13,6 @@ import "./interfaces/Wrapped_Ether_Interface.sol";
 */
 contract Factory {
     using SafeMath for uint256;
-  
     /*Variables*/
     //Addresses of the Factory owner and oracle. For oracle information, 
     //check www.github.com/DecentralizedDerivatives/Oracles
@@ -20,15 +20,10 @@ contract Factory {
     address public oracle_address;
     //Address of the user contract
     address public user_contract;
-
-
-
     //Address of the deployer contract
     address internal deployer_address;
     Deployer_Interface internal deployer;
-
     address public token;
-
     //A fee for creating a swap in wei.  Plan is for this to be zero, however can be raised to prevent spam
     uint public fee;
     //Duration of swap contract in days
@@ -37,12 +32,13 @@ contract Factory {
     uint public multiplier;
     //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
     uint public token_ratio;
-
-
     //Array of deployed contracts
     address[] public contracts;
     uint[] public startDates;
+    address public memberContract;
+    mapping(uint => bool) whitelistedTypes;
     mapping(address => uint) public created_contracts;
+    mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
     mapping(uint => address) public short_tokens;
 
@@ -63,6 +59,23 @@ contract Factory {
     function Factory() public {
         owner = msg.sender;
     }
+
+    function setMemberContract(address _memberContract) public onlyOwner() {
+        memberContract = _memberContract;
+    }
+
+    function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
+        whitelistedTypes[0] = false;
+        for(uint i = 0; i<_memberTypes.length;i++){
+            whitelistedTypes[_memberTypes[i]] = true;
+        }
+    }
+
+    function isWhitelisted(address _member) public view returns (bool){
+        MemberCoin_Interface Member = MemberCoin_Interface(memberContract);
+        return whitelistedTypes[Member.getMemberType(_member)];
+    }
+    
 
     /**
     *@dev Gets long and short token addresses based on specified date
@@ -124,7 +137,7 @@ contract Factory {
     *@return returns the newly created swap address and calls event 'ContractCreation'
     */
     function deployContract(uint _start_date) public payable returns (address) {
-        require(msg.value >= fee);
+        require(msg.value >= fee && isWhitelisted(msg.sender));
         require(_start_date % 86400 == 0);
         address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
         contracts.push(new_contract);
@@ -139,23 +152,15 @@ contract Factory {
     *@param long if true
     *@return returns token address of deployed contract
     */
-    function deployTokenContract(uint _start_date, bool _long) public returns(address) {
+    function deployTokenContract(uint _start_date) public{
         address _token;
         require(_start_date % 86400 == 0);
-        if (_long){
-            require(long_tokens[_start_date] == address(0));
-            _token = new DRCT_Token(address(this));
-            long_tokens[_start_date] = _token;
-        }
-        else{
-            require(short_tokens[_start_date] == address(0));
-            _token = new DRCT_Token(address(this));
-            short_tokens[_start_date] = _token;
-        }
-        if(short_tokens[_start_date] != address(0) && long_tokens[_start_date] != address(0)){
-            startDates.push(_start_date);
-        }
-        return _token;
+        require(long_tokens[_start_date] == address(0) && short_tokens[_start_date] == address(0));
+        _token = new DRCT_Token(address(this));
+        long_tokens[_start_date] = _token;
+        _token = new DRCT_Token(address(this));
+        short_tokens[_start_date] = _token;
+        startDates.push(_start_date);
     }
 
     /*

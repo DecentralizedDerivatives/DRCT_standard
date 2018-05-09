@@ -1,6 +1,7 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
 import "./SafeMath.sol";
+import "../interfaces/Factory_Interface.sol";
 
 /**
 *The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
@@ -19,7 +20,7 @@ library DRCTLibrary{
     struct Balance {
         address owner;
         uint amount;
-    }
+        }
 
     struct TokenStorage{
         //This is the factory contract that the token is standardized at
@@ -56,6 +57,11 @@ library DRCTLibrary{
     */
     function startToken(TokenStorage storage self,address _factory) public {
         self.master_contract = _factory;
+    }
+
+    function isWhitelisted(TokenStorage storage self,address _member) internal view returns(bool){
+        Factory_Interface _factory = Factory_Interface(self.master_contract);
+        return _factory.isWhitelisted(_member);
     }
 
   /**
@@ -229,6 +235,7 @@ library DRCTLibrary{
         }
     }
 
+
     /**
     *ERC20 compliant transfer function
     *@param _to Address to send funds to
@@ -236,6 +243,7 @@ library DRCTLibrary{
     *@return true for successful
     */
     function transfer(TokenStorage storage self, address _to, uint _amount) public returns (bool) {
+        require(isWhitelisted(self,_to));
         uint balance_owner = self.user_total_balances[msg.sender];
         if (
             _to == msg.sender ||
@@ -249,7 +257,6 @@ library DRCTLibrary{
         emit Transfer(msg.sender, _to, _amount);
         return true;
     }
-
     /**
     *@dev ERC20 compliant transferFrom function
     *@param _from address to send funds from (must be allowed, see approve function)
@@ -258,6 +265,7 @@ library DRCTLibrary{
     *@return true for successful
     */
     function transferFrom(TokenStorage storage self, address _from, address _to, uint _amount) public returns (bool) {
+        require(isWhitelisted(self,_to));
         uint balance_owner = self.user_total_balances[_from];
         uint sender_allowed = self.allowed[_from][msg.sender];
         if (

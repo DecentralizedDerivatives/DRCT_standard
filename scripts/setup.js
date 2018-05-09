@@ -9,7 +9,6 @@ var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
-var Tokendeployer = artifacts.require("Tokendeployer");
 
 module.exports =async function(callback) {
       let oracle;
@@ -17,7 +16,6 @@ module.exports =async function(callback) {
     let base;
     let deployer;
     let userContract;
-    let tokenDeployer;
       oracle = await Test_Oracle.deployed();
       factory = await Factory.deployed();
       console.log('This is your factory address  :  ',factory.address)
@@ -25,11 +23,9 @@ module.exports =async function(callback) {
       base = await Wrapped_Ether.deployed();
       userContract = await UserContract.deployed();
       deployer = await Deployer.new(factory.address);
-      tokenDeployer = await Tokendeployer.deployed(factory.address);
       await factory.setBaseToken(base.address);
       await factory.setUserContract(userContract.address);
       await factory.setDeployer(deployer.address);
-      await factory.setTokenDeployer(tokenDeployer.address);
       await factory.setOracleAddress(oracle.address);
       await userContract.setFactory(factory.address);
 

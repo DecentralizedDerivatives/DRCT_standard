@@ -6,6 +6,7 @@ var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
+var MemberCoin = artifacts.require("MemberCoin");
 
 contract('Base Tests', function(accounts) {
   let oracle;
@@ -17,11 +18,15 @@ contract('Base Tests', function(accounts) {
   let short_token;
   let swap;
   var swap_add;
+  let memberCoin;
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
+	    memberCoin = await MemberCoin.new();
+	    await factory.setMemberContract(memberCoin.address);
+	    await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
@@ -35,8 +40,7 @@ contract('Base Tests', function(accounts) {
     	o_enddate = 1515369600;
     	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
   		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
-   		await factory.deployTokenContract(o_startdate,true);
-    	await factory.deployTokenContract(o_startdate,false);
+   		await factory.deployTokenContract(o_startdate);
     	long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
 	    long_token =await DRCT_Token.at(long_token_add);

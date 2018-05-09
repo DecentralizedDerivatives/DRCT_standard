@@ -1,6 +1,6 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
-import "oraclize/usingOraclize.sol";
+import "oraclize-api/usingOraclize.sol";
 
 /**
 *The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 

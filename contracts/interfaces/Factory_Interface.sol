@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
 //Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {
@@ -7,4 +7,5 @@ interface Factory_Interface {
   function deployContract(uint _start_date) external payable returns (address);
    function getBase() external view returns(address);
   function getVariables() external view returns (address, uint, uint, address);
+  function isWhitelisted(address _member) external view returns (bool);
 }
