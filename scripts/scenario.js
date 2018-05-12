@@ -1,6 +1,3 @@
-
-var Test_Oracle = artifacts.require("Test_Oracle");
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");

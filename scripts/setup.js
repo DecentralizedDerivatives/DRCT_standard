@@ -4,11 +4,12 @@ Owner account
 AD - 0x711e2b65be4a0201bb8c8e26646366d066d42daa
 PK - e495a0d39ae99327ea09eace1f6096a5a3cddeec3b52a3ff80b719831be3d695
 */
-var Test_Oracle = artifacts.require("Test_Oracle");
+var Oracle = artifacts.require("Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
+var MemberCoin = artifacts.require("MemberCoin");
 
 module.exports =async function(callback) {
       let oracle;
@@ -16,10 +17,14 @@ module.exports =async function(callback) {
     let base;
     let deployer;
     let userContract;
-      oracle = await Test_Oracle.deployed();
+    let memberCoin;
+    memberCoin = await MemberCoin.deployed();
+      oracle = await Oracle.deployed();
       factory = await Factory.deployed();
       console.log('This is your factory address  :  ',factory.address)
       await factory.setVariables(1000000000000000,7,1);
+      await factory.setMemberContract(memberCoin.address);
+      await factory.setWhitelistedMemberTypes([0]);
       base = await Wrapped_Ether.deployed();
       userContract = await UserContract.deployed();
       deployer = await Deployer.new(factory.address);

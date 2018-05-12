@@ -157,9 +157,11 @@ contract Factory {
         require(_start_date % 86400 == 0);
         require(long_tokens[_start_date] == address(0) && short_tokens[_start_date] == address(0));
         _token = new DRCT_Token(address(this));
+        token_dates[_token] = _start_date;
         long_tokens[_start_date] = _token;
         _token = new DRCT_Token(address(this));
         short_tokens[_start_date] = _token;
+        token_dates[_token] = _start_date;
         startDates.push(_start_date);
     }
 
