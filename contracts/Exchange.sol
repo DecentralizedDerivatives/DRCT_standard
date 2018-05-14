@@ -33,7 +33,7 @@ contract Exchange{
     //mapping of address to position in openBooks
     mapping (address => uint) internal openBookIndex;
     //mapping of user to their orders
-    mapping(address => uint[]) internal userOrders;
+    mapping(address => uint[]) public userOrders;
     //mapping from orderId to userOrder position
     mapping(uint => uint) internal userOrderIndex;
     //A list of the blacklisted addresses
