@@ -1,0 +1,132 @@
+pragma solidity ^0.4.21;
+import "./libraries/SafeMath.sol";
+
+contract Membership {
+    using SafeMath for uint256;
+    
+    /*Variables*/
+    address public owner;
+    
+    //Memebership fees
+    uint public memberFee;
+
+    /*Structs*/
+    /**
+    *@dev Keeps member information 
+    */
+    struct Member {
+        uint memberId;
+        uint membershipType;
+    }
+    
+    /*Mappings*/
+    //Members information
+    mapping(address => Member) public members;
+    address[] public membersAccts;
+
+    /*Events*/
+    event UpdateMemberAddress(address _from, address _to);
+    event NewMember(address _address, uint _memberId, uint _membershipType);
+
+    /*Modifiers*/
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+    _;
+    }
+    
+    /*Functions*/
+    /**
+    *@dev Constructor - Sets owner
+    */
+    function Membership() public {
+        owner = msg.sender;
+    }
+
+    /*
+    *@dev Updates the fee amount
+    *@param _memberFee fee amount for member
+    */
+    function setFee(uint _memberFee) public onlyOwner() {
+        //define fee structure for the three membership types
+        memberFee = _memberFee;
+    }
+    
+    /**
+    *@notice Allows a user to become DDA members if they pay the fee. However, they still have to complete
+    complete KYC/AML verification off line
+    *@dev this creates and transfers the token to the msg.sender
+    */
+    function requestMembership() public payable {
+        Member storage sender = members[msg.sender];
+        require(msg.value >= memberFee && sender.membershipType == 0 );
+        membersAccts.push(msg.sender);
+        sender.memberId = membersAccts.length;
+        sender.membershipType = 1;
+        emit NewMember(msg.sender, sender.memberId, sender.membershipType);
+    }
+    
+    /**
+    *@dev This overload transferFrom function is required on ERC721.org
+    *@param _from is the current member address
+    *@param _to is the address the member would like to update their current address with
+    */
+    function updateMemberAddress(address _from, address _to) public onlyOwner {
+        require (_to != address(0));
+        Member storage currentAddress = members[_from];
+        Member storage newAddress = members[_to];
+        newAddress.memberId = currentAddress.memberId;
+        newAddress.membershipType = currentAddress.membershipType;
+		membersAccts[currentAddress.memberId - 1] = _to;
+        currentAddress.memberId = 0;
+        currentAddress.membershipType = 0;
+        emit UpdateMemberAddress(_from, _to);
+    }
+
+    /**
+    *@dev Use this function to set membershipType for the member
+    *@param _memberAddress address of member that we need to update membershipType
+    *@param _membershipType type of membership to assign to member
+    **/
+    function setMembershipType(address _memberAddress,  uint _membershipType) public onlyOwner{
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.membershipType = _membershipType;
+    }
+
+    /**
+    *@dev getter function to get all membersAccts
+    **/
+    function getMembers() view public returns (address[]){
+        return membersAccts;
+    }
+    
+    /**
+    *@dev Get member information. could be the ownerOf funciton
+    *@param _memberAddress address to pull the memberId, membershipType and membership
+    **/
+    function getMember(address _memberAddress) view public returns(uint, uint) {
+        return(members[_memberAddress].memberId, members[_memberAddress].membershipType);
+    }
+
+    /**
+    @dev gets length of array containing all member accounts or total supply
+    **/
+    function countMembers() view public returns(uint) {
+        return membersAccts.length;
+    }
+
+    /**
+    *@dev gets membership type
+    *@param _memberAddress address to view the membershipType
+    **/
+    function getMembershipType(address _memberAddress) public constant returns(uint){
+        return members[_memberAddress].membershipType;
+    }
+    
+    /**
+    *@dev Allows the owner to set a new owner address
+    *@param _new_owner the new owner address
+    */
+    function setOwner(address _new_owner) public onlyOwner() { 
+        owner = _new_owner; 
+    }
+}

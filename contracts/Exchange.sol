@@ -183,12 +183,21 @@ contract Exchange{
     }
 
     /*
-    *@dev getOrderCount allows parties to query how many orders are on the book
-    *@param _token address used to count the number of orders?
-    *@return _uint of the number of orders in the orderbook
+    *@dev getOrders allows parties to get an array of all orderId's open for a given token
+    *@param _token address of the drct token
+    *@return _uint[] an array of the orders in the orderbook
     */
     function getOrders(address _token) public constant returns(uint[]) {
         return forSale[_token];
+    }
+
+    /*
+    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
+    *@param _token address of the user
+    *@return _uint[] an array of the orders in the orderbook for the user
+    */
+    function getUserOrders(address _user) public constant returns(uint[]) {
+        return userOrders[_user];
     }
 
     /*
