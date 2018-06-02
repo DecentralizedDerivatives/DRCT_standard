@@ -27,6 +27,7 @@ contract Membership {
     /*Events*/
     event UpdateMemberAddress(address _from, address _to);
     event NewMember(address _address, uint _memberId, uint _membershipType);
+    event Refund(address _address, uint _amount);
 
     /*Modifiers*/
     modifier onlyOwner() {
@@ -54,7 +55,7 @@ contract Membership {
     /**
     *@notice Allows a user to become DDA members if they pay the fee. However, they still have to complete
     complete KYC/AML verification off line
-    *@dev this creates and transfers the token to the msg.sender
+    *@dev This creates and transfers the token to the msg.sender
     */
     function requestMembership() public payable {
         Member storage sender = members[msg.sender];
@@ -66,7 +67,7 @@ contract Membership {
     }
     
     /**
-    *@dev This overload transferFrom function is required on ERC721.org
+    *@dev This updates/transfers the member address 
     *@param _from is the current member address
     *@param _to is the address the member would like to update their current address with
     */
@@ -100,7 +101,7 @@ contract Membership {
     }
     
     /**
-    *@dev Get member information. could be the ownerOf funciton
+    *@dev Get member information
     *@param _memberAddress address to pull the memberId, membershipType and membership
     **/
     function getMember(address _memberAddress) view public returns(uint, uint) {
@@ -108,14 +109,14 @@ contract Membership {
     }
 
     /**
-    @dev gets length of array containing all member accounts or total supply
+    @dev Gets length of array containing all member accounts or total supply
     **/
     function countMembers() view public returns(uint) {
         return membersAccts.length;
     }
 
     /**
-    *@dev gets membership type
+    *@dev Gets membership type
     *@param _memberAddress address to view the membershipType
     **/
     function getMembershipType(address _memberAddress) public constant returns(uint){
@@ -129,4 +130,29 @@ contract Membership {
     function setOwner(address _new_owner) public onlyOwner() { 
         owner = _new_owner; 
     }
+
+    /**
+    @dev Refund money if KYC/AML fails
+    @param _to address to send refund
+    @param _amount to refund. If no amount  is specified the current memberFee is refunded
+    **/
+    function refund(address _to, uint _amount) public onlyOwner {
+        require (_to != address(0));
+        if (_amount == 0) {_amount = memberFee;}
+        Member storage currentAddress = members[_to];
+        membersAccts[currentAddress.memberId-1] = 0;
+        currentAddress.memberId = 0;
+        currentAddress.membershipType = 0;
+        _to.transfer(_amount);
+        emit Refund(_to, _amount);
+    }
+
+    /**
+    @dev Allow owner to withdraw funds
+    @param _to address to send funds
+    @param _amount to send
+    **/
+    function withdraw(address _to, uint _amount) public onlyOwner {
+        _to.transfer(_amount);
+    }    
 }
