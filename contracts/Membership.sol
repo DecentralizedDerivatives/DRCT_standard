@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 import "./libraries/SafeMath.sol";
 
 contract Membership {
@@ -38,7 +38,7 @@ contract Membership {
     /**
     *@dev Constructor - Sets owner
     */
-    function Membership() public {
+     constructor() public {
         owner = msg.sender;
     }
 

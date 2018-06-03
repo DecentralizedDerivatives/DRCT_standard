@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "oraclize-api/usingOraclize.sol";
 
@@ -27,7 +27,7 @@ contract Oracle is usingOraclize{
     /*
     *@dev - Constructor, sets public api string
     */
-    function Oracle() public{
+     constructor() public{
         API = "https://api.gdax.com/products/BTC-USD/ticker).price";
     }
 

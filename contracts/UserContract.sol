@@ -19,7 +19,7 @@ contract UserContract{
     address public factory_address;
     address internal owner;
 
-    function UserContract() public {
+     constructor() public {
         owner = msg.sender;
     }
 

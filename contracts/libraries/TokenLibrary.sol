@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "../interfaces/Oracle_Interface.sol";
 import "../interfaces/DRCT_Token_Interface.sol";
@@ -11,18 +11,20 @@ import "./SafeMath.sol";
 *This contract is the specific DRCT base contract that holds the funds of the contract and
 *redistributes them based upon the change in the underlying values
 */
+
 library TokenLibrary{
 
     using SafeMath for uint256;
 
+    /*Variables*/
     enum SwapState {
             created,
             started,
             ended
     }
-
+    
+    /*Structs*/
     struct SwapStorage{
-        /*Variables*/
         //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
         address oracle_address;
         //Address of the Factory that created this contract
@@ -34,8 +36,8 @@ library TokenLibrary{
         ERC20_Interface token;
         //Enum state of the swap
         SwapState current_state;
-        //Start date, end_date, multiplier duration,start_value,end_value
-        uint[6] contract_details;
+        //Start date, end_date, multiplier duration,start_value,end_value,fee
+        uint[7] contract_details;
         // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
         uint pay_to_long;
         uint pay_to_short;
@@ -49,19 +51,28 @@ library TokenLibrary{
         address userContract;
 
     }
-
+    /*Events*/
     event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
     //Emitted when the swap has been paid out
     event PaidOut(uint pay_to_long, uint pay_to_short);
 
+    /*Functions*/
+    /**
+    *@param _factory_address
+    *@param _creator address of swap creator
+    *@param _userContract 
+    *@param _start_date swap start date
+    */
     function startSwap (SwapStorage storage self, address _factory_address, address _creator, address _userContract, uint _start_date) internal {
+        require(self.creator == address(0));
         self.creator = _creator;
         self.factory_address = _factory_address;
         self.userContract = _userContract;
         self.contract_details[0] = _start_date;
         self.current_state = SwapState.created;
     }
-     /*
+
+     /**
     @dev A getter function for retriving standardized variables from the factory contract
     */
     function showPrivateVars(SwapStorage storage self) internal view returns (address[5],uint, uint, uint, uint, uint){
@@ -76,7 +87,7 @@ library TokenLibrary{
     function createSwap(SwapStorage storage self,uint _amount, address _senderAdd) internal{
         require(self.current_state == SwapState.created && msg.sender == self.creator  && _amount > 0 || (msg.sender == self.userContract && _senderAdd == self.creator) && _amount > 0);
         self.factory = Factory_Interface(self.factory_address);
-        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address) = self.factory.getVariables();
+        getVariables(self);
         self.contract_details[1] = self.contract_details[0].add(self.contract_details[3].mul(86400));
         assert(self.contract_details[1]-self.contract_details[0] < 28*86400);
         self.token_amount = _amount;
@@ -90,8 +101,15 @@ library TokenLibrary{
         self.current_state = SwapState.started;
     }
 
-    /*
-    *@dev check if the oracle has been queried withing the last day? 
+    /**
+    *@dev Getter function for contract details saved in the SwapStorage struct
+    */
+    function getVariables(SwapStorage storage self) internal{
+        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address) = self.factory.getVariables();
+    }
+
+    /**
+    *@dev check if the oracle has been queried withing the last day 
     */
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
@@ -124,16 +142,23 @@ library TokenLibrary{
         return true;
     }
 
-    /*
+    /**
     *@dev This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
     *The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
     *of the Oracle.
     */
     function Calculate(SwapStorage storage self) internal{
         uint ratio;
-        self.token_amount = self.token_amount.mul(995).div(1000);
+        self.token_amount = self.token_amount.mul(10000-self.contract_details[6]).div(10000);
         if (self.contract_details[4] > 0 && self.contract_details[5] > 0)
             ratio = (self.contract_details[5]).mul(100000).div(self.contract_details[4]);
+            if (ratio > 100000){
+                ratio = (self.contract_details[2].mul(ratio - 100000)).add(100000);
+            }
+            else if (ratio < 100000){
+                    ratio = SafeMath.min(100000,(self.contract_details[2].mul(100000-ratio)));
+                    ratio = 100000 - ratio;
+            }
         else if (self.contract_details[5] > 0)
             ratio = 10e10;
         else if (self.contract_details[4] > 0)
@@ -145,7 +170,7 @@ library TokenLibrary{
         self.pay_to_short = (SafeMath.sub(200000,ratio).mul(self.token_amount)).div(self.num_DRCT_tokens).div(100000);
     }
 
-    /*
+    /**
     *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
@@ -187,7 +212,7 @@ library TokenLibrary{
         return ready;
     }
 
-    /*
+    /**
     *This function pays the receiver an amount determined by the Calculate function
     *@param _receiver The recipient of the payout
     *@param _amount The amount of token the recipient holds
@@ -207,6 +232,9 @@ library TokenLibrary{
         }
     }
 
+    /**
+    @dev Getter function for swap state
+    */
     function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);
     }

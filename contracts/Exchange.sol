@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
  import "./libraries/SafeMath.sol";
  import "./interfaces/ERC20_Interface.sol";
@@ -57,7 +57,7 @@ contract Exchange{
     /*
     *@dev the constructor argument to set the owner and initialize the array.
     */
-    function Exchange() public{
+    constructor() public{
         owner = msg.sender;
         openBooks.push(address(0));
         order_nonce = 1;

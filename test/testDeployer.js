@@ -9,10 +9,9 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var MemberCoin = artifacts.require("MemberCoin");
 var MasterDeployer = artifacts.require("MasterDeployer");
 
-contract('Oracle Test', function(accounts) {
+contract('Deployer Tests', function(accounts) {
   let oracle;
   let factory;
-  let memberCoin;
   let base1;
   let deployer;
   let userContract;
@@ -20,6 +19,7 @@ contract('Oracle Test', function(accounts) {
   let short_token;
   let swap;
   var swap_add;
+  let memberCoin;
   let masterDeployer;
   let o_startdate, o_enddate, balance1, balance2;
 
@@ -53,34 +53,36 @@ contract('Oracle Test', function(accounts) {
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
    })
-	it("Test Oracle", async function(){
-	  	await oracle.StoreDocument(o_startdate,1000);
-	    await oracle.StoreDocument(o_enddate,1500);
-	    assert.equal(await factory.user_contract.call(),userContract.address,"User Contract address not set correctly");
-	    assert.equal(await oracle.retrieveData(o_startdate),1000,"Result should equal end value");
-	    assert.equal(await oracle.retrieveData(o_enddate),1500,"Result should equal start value");
-		})
-  	
-	it("Missed Dates", async function(){
-		await oracle.StoreDocument(o_startdate + 86400,1000);
-	    await oracle.StoreDocument(o_enddate + 86400,1500);
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
-	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
-	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
-	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
-	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
-		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
-	  	for (i = 0; i < 5; i++){
-		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
+  	it("Deploy Multiple Factories", async function(){
+		for(var i = 0;i<10;i++){
+			await masterDeployer.deployFactory();
 		}
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
-		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
-		assert(balance1 >= newbal - 5.5 && balance1 <= newbal - 4.5 ,"Balance1 should change correctly");
-		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
+		assert.equal(await masterDeployer.getFactoryCount() - 0 ,11,"Ten New Factories should be created");
+		let res = await masterDeployer.deployFactory();
+	    res = res.logs[0].args._factory;
+	    assert.equal(await masterDeployer.getFactorybyIndex(12),res,"Getting the factory should work");
 	});
-});
 
+
+   	 it("Remove Factory", async function(){
+  	   	let res = await masterDeployer.deployFactory();
+	    res = res.logs[0].args._factory;
+	    var _res = await masterDeployer.factory_index.call(res);
+	    assert.equal(_res.c[0],2,"Factory Should be there");
+		for(var i = 0;i<10;i++){
+			await masterDeployer.deployFactory();
+		}
+		await masterDeployer.removeFactory(res);
+		var _res = await masterDeployer.factory_index.call(res);
+		console.log(_res);
+	    assert.equal(_res.c[0],0,"Factory Should be removed");
+	});
+   	 it("Gas Calculation",async function(){
+   	 	balance1 = await (web3.eth.getBalance(accounts[0]));
+   	 	await deployer.newContract(factory.address,accounts[0],o_startdate);
+   	 	balance2 = await (web3.eth.getBalance(accounts[0]));
+   	 	console.log('gas for swap deployment (wei)',balance1-balance2);
+   	 });
+
+
+});

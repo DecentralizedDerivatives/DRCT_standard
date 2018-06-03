@@ -56,8 +56,14 @@ contract Factory {
     /**
     *@dev Constructor - Sets owner
     */
-    function Factory() public {
+     constructor() public {
         owner = msg.sender;
+    }
+
+    /*How do we prevent someone else from starting this?*/
+    function init(address _owner) public{
+        require(owner == address(0));
+        owner = _owner;
     }
 
     function setMemberContract(address _memberContract) public onlyOwner() {

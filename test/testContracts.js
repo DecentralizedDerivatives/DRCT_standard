@@ -7,6 +7,7 @@ var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var MemberCoin = artifacts.require("MemberCoin");
+var MasterDeployer = artifacts.require("MasterDeployer");
 
 contract('Base Tests', function(accounts) {
   let oracle;
@@ -19,12 +20,18 @@ contract('Base Tests', function(accounts) {
   let swap;
   var swap_add;
   let memberCoin;
+  let masterDeployer;
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
 	    memberCoin = await MemberCoin.new();
+	    masterDeployer = await MasterDeployer.new();
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory();
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1);
@@ -38,8 +45,8 @@ contract('Base Tests', function(accounts) {
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
     	o_enddate = 1515369600;
-    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
    		await factory.deployTokenContract(o_startdate);
     	long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
@@ -103,7 +110,8 @@ contract('Base Tests', function(accounts) {
 
     it("Big Up Move", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
-	    await oracle.StoreDocument(o_enddate,2500);
+	    await oracle.StoreDocument(o_enddate,1750);
+	    await factory.setVariables(1000000000000000,7,2);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
@@ -186,7 +194,8 @@ contract('Base Tests', function(accounts) {
 	});
 	it("Test Manual Down", async function(){
 		await oracle.StoreDocument(o_startdate,1000);
-	    await oracle.StoreDocument(o_enddate,600);
+	    await oracle.StoreDocument(o_enddate,800);
+	    await factory.setVariables(1000000000000000,7,2);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
@@ -208,10 +217,12 @@ contract('Base Tests', function(accounts) {
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
-		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
-		assert(balance2 >= newbal2 - 3 && balance2 <= newbal2 - 2 ,"Balance2 should change correctly");
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
+		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+		console.log('b1',balance1,newbal);
+		console.log('b2',balance2,newbal2);
+		assert(balance1 >= newbal + 1.5 && balance1 <= newbal + 2.5 ,"Balance1 should change correctly");
+		assert(balance2 >= newbal2 - 2.5 && balance2 <= newbal2 - 1.5 ,"Balance2 should change correctly");
 	});	
 	it("Test Multiple Swaps", async function(){
 		await oracle.StoreDocument(o_startdate,1000);
@@ -286,8 +297,8 @@ contract('Base Tests', function(accounts) {
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
-		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
+		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
 		assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 - 2 && balance2 <= newbal2 - 1 ,"Balance2 should change correctly");
 	});

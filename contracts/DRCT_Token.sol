@@ -20,7 +20,7 @@ contract DRCT_Token {
     *master_contract, the swap.
     *@param _factory 
     */
-    function DRCT_Token(address _factory) public {
+    constructor(address _factory) public {
         drct.startToken(_factory);
     }
 
