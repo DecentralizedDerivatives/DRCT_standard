@@ -55,7 +55,7 @@ contract Membership {
     /**
     *@notice Allows a user to become DDA members if they pay the fee. However, they still have to complete
     complete KYC/AML verification off line
-    *@dev this creates and transfers the token to the msg.sender
+    *@dev This creates and transfers the token to the msg.sender
     */
     function requestMembership() public payable {
         Member storage sender = members[msg.sender];
@@ -67,7 +67,7 @@ contract Membership {
     }
     
     /**
-    *@dev This overload transferFrom function is required on ERC721.org
+    *@dev This updates/transfers the member address 
     *@param _from is the current member address
     *@param _to is the address the member would like to update their current address with
     */
@@ -101,7 +101,7 @@ contract Membership {
     }
     
     /**
-    *@dev Get member information. could be the ownerOf funciton
+    *@dev Get member information
     *@param _memberAddress address to pull the memberId, membershipType and membership
     **/
     function getMember(address _memberAddress) view public returns(uint, uint) {
@@ -109,14 +109,14 @@ contract Membership {
     }
 
     /**
-    @dev gets length of array containing all member accounts or total supply
+    @dev Gets length of array containing all member accounts or total supply
     **/
     function countMembers() view public returns(uint) {
         return membersAccts.length;
     }
 
     /**
-    *@dev gets membership type
+    *@dev Gets membership type
     *@param _memberAddress address to view the membershipType
     **/
     function getMembershipType(address _memberAddress) public constant returns(uint){
@@ -154,6 +154,5 @@ contract Membership {
     **/
     function withdraw(address _to, uint _amount) public onlyOwner {
         _to.transfer(_amount);
-    }
-
+    }    
 }
