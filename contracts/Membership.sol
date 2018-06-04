@@ -27,6 +27,7 @@ contract Membership {
     /*Events*/
     event UpdateMemberAddress(address _from, address _to);
     event NewMember(address _address, uint _memberId, uint _membershipType);
+    event Refund(address _address, uint _amount);
 
     /*Modifiers*/
     modifier onlyOwner() {
@@ -129,4 +130,30 @@ contract Membership {
     function setOwner(address _new_owner) public onlyOwner() { 
         owner = _new_owner; 
     }
+
+    /**
+    @dev Refund money if KYC/AML fails
+    @param _to address to send refund
+    @param _amount to refund. If no amount  is specified the current memberFee is refunded
+    **/
+    function refund(address _to, uint _amount) public onlyOwner {
+        require (_to != address(0));
+        if (_amount == 0) {_amount = memberFee;}
+        Member storage currentAddress = members[_to];
+        membersAccts[currentAddress.memberId-1] = 0;
+        currentAddress.memberId = 0;
+        currentAddress.membershipType = 0;
+        _to.transfer(_amount);
+        emit Refund(_to, _amount);
+    }
+
+    /**
+    @dev Allow owner to withdraw funds
+    @param _to address to send funds
+    @param _amount to send
+    **/
+    function withdraw(address _to, uint _amount) public onlyOwner {
+        _to.transfer(_amount);
+    }
+
 }

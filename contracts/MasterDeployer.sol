@@ -7,17 +7,20 @@ import "./CloneFactory.sol";
 /*This contract deploys a factory contract*/
 
 contract MasterDeployer is CloneFactory{
-
+    /*Variables*/
     using SafeMath for uint256;
 	address[] factory_contracts;
 	address private factory;
 	mapping(address => uint) public factory_index;
 
+    /*Events*/
 	event NewFactory(address _factory);
 
+    /*Functions*/
 	constructor() public {
 		factory_contracts.push(address(0));
 	}
+	
 	function setFactory(address _factory) public onlyOwner(){
 		factory = _factory;
 	}

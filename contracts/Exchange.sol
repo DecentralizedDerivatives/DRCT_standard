@@ -203,7 +203,7 @@ contract Exchange{
     /*
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order
-    @param _order is the struct containing the details of the order
+    *@param _order is the struct containing the details of the order
     */
     function unLister(uint256 _orderId, Order _order) internal{
         uint256 tokenIndex = forSaleIndex[_orderId];

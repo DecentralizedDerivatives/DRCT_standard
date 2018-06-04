@@ -12,9 +12,12 @@ contract Deployer is CloneFactory {
     address internal factory;
     address public swap;
     
+    /*Events*/
+    event Deployed(address indexed master, address indexed clone);
+
     /*Functions*/
     /**
-     *@dev Deploys the factory contract 
+     *@dev Deploys the factory contract and swap address
      *@param _factory is the address of the factory contract
     */    
     constructor(address _factory) public {
@@ -25,10 +28,7 @@ contract Deployer is CloneFactory {
     function updateSwap(address _addr) public onlyOwner() {
         swap = _addr;
     }
-    
-    event Deployed(address indexed master, address indexed clone);
-    
-    //"0xca35b7d915458ef540"ade6068dfe2f44e8fa733c","0xca35b7d915458ef540ade6068dfe2f44e8fa733c",1527811200
+        
     /**
     *@notice The function creates a new contract
     *@dev It ensures the new contract can only be created by the factory
