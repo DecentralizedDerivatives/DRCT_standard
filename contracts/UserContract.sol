@@ -16,9 +16,11 @@ contract UserContract{
     Wrapped_Ether internal baseToken;
     Factory internal factory;
 
+    /*Variables*/
     address public factory_address;
     address internal owner;
 
+    /*Functions*/
      constructor() public {
         owner = msg.sender;
     }

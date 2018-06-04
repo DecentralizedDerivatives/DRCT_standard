@@ -109,7 +109,7 @@ library TokenLibrary{
     }
 
     /**
-    *@dev check if the oracle has been queried withing the last day 
+    *@dev check if the oracle has been queried within the last day 
     */
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
