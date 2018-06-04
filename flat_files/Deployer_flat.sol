@@ -58,9 +58,9 @@ contract Deployer is CloneFactory {
         swap = _addr;
     }
     
-    event Deployed(address indexed master, address indexed clone);
+    event Deployed(address _swap, address _clone);
     
-    //"0xca35b7d915458ef540"ade6068dfe2f44e8fa733c","0xca35b7d915458ef540ade6068dfe2f44e8fa733c",1527811200
+    //"0xca35b7d915458ef540ade6068dfe2f44e8fa733c","0xca35b7d915458ef540ade6068dfe2f44e8fa733c",1527811200
     /**
     *@notice The function creates a new contract
     *@dev It ensures the new contract can only be created by the factory
@@ -71,7 +71,7 @@ contract Deployer is CloneFactory {
     */
     function newContract(address _party, address _user, uint _start) public returns (address) {
         address new_swap = createClone(swap);
-        TokenToTokenSwap(new_swap).init(factory, _party, _user, _start);
+        //TokenToTokenSwap(new_swap).init(factory, _party, _user, _start);
         emit Deployed(swap, new_swap);
         return new_swap;
     }
@@ -109,7 +109,7 @@ interface Factory_Interface {
   function payToken(address _party, address _token_add) external;
   function deployContract(uint _start_date) external payable returns (address);
    function getBase() external view returns(address);
-  function getVariables() external view returns (address, uint, uint, address,uint);
+  function getVariables() external view returns (address, uint, uint, address);
   function isWhitelisted(address _member) external view returns (bool);
 }
 
@@ -204,7 +204,6 @@ library TokenLibrary{
     *@param _start_date swap start date
     */
     function startSwap (SwapStorage storage self, address _factory_address, address _creator, address _userContract, uint _start_date) internal {
-        require(self.creator == address(0));
         self.creator = _creator;
         self.factory_address = _factory_address;
         self.userContract = _userContract;
@@ -245,7 +244,7 @@ library TokenLibrary{
     *@dev Getter function for contract details saved in the SwapStorage struct
     */
     function getVariables(SwapStorage storage self) internal{
-        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
+        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address) = self.factory.getVariables();
     }
 
     /**
@@ -292,6 +291,13 @@ library TokenLibrary{
         self.token_amount = self.token_amount.mul(10000-self.contract_details[6]).div(10000);
         if (self.contract_details[4] > 0 && self.contract_details[5] > 0)
             ratio = (self.contract_details[5]).mul(100000).div(self.contract_details[4]);
+            if (ratio > 100000){
+                ratio = (self.contract_details[2].mul(ratio - 100000)).add(100000);
+            }
+            else if (ratio < 100000){
+                    ratio = SafeMath.min(100000,(self.contract_details[2].mul(100000-ratio)));
+                    ratio = 100000 - ratio;
+            }
         else if (self.contract_details[5] > 0)
             ratio = 10e10;
         else if (self.contract_details[4] > 0)
