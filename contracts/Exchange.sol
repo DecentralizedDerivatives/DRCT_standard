@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
  import "./libraries/SafeMath.sol";
  import "./interfaces/ERC20_Interface.sol";
@@ -57,7 +57,7 @@ contract Exchange{
     /*
     *@dev the constructor argument to set the owner and initialize the array.
     */
-    function Exchange() public{
+    constructor() public{
         owner = msg.sender;
         openBooks.push(address(0));
         order_nonce = 1;
@@ -203,7 +203,7 @@ contract Exchange{
     /*
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order
-    @param _order is the struct containing the details of the order
+    *@param _order is the struct containing the details of the order
     */
     function unLister(uint256 _orderId, Order _order) internal{
         uint256 tokenIndex = forSaleIndex[_orderId];

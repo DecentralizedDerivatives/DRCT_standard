@@ -8,9 +8,11 @@ const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Exchange = artifacts.require("Exchange");
 var MemberCoin = artifacts.require("MemberCoin");
+var MasterDeployer = artifacts.require("MasterDeployer");
 
 contract('Exchange Test', function(accounts) {
   let oracle;
+  let exchange;
   let memberCoin;
   let factory;
   let base1;
@@ -20,13 +22,19 @@ contract('Exchange Test', function(accounts) {
   let short_token;
   let swap;
   var swap_add;
+  let masterDeployer;
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
-	    exchange = await Exchange.new();
 	    memberCoin = await MemberCoin.new();
+	    masterDeployer = await MasterDeployer.new();
+	     exchange = await Exchange.new();
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory();
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1);
@@ -40,8 +48,8 @@ contract('Exchange Test', function(accounts) {
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
     	o_enddate = 1515369600;
-    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
    		await factory.deployTokenContract(o_startdate);
     	long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
@@ -118,7 +126,7 @@ contract('Exchange Test', function(accounts) {
 	  	await exchange.buy(1,{from: accounts[2], value:web3.toWei(5,'ether')})
 	  	assert.equal(await short_token.balanceOf(accounts[2]),500,"account 2 should own tokens");
 	  	var balance1_2 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 5 ether");
+	  	assert(balance1 >= balance1_2 - 5 && balance1 <= balance1_2 - 4 ,"account 1 should get 5 ether");
 	  	await short_token.approve(exchange.address,500,{from: accounts[2]});;
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[2]});
 	  	assert.equal(await short_token.balanceOf(accounts[2])-0,500,"account 2 should still own tokens");

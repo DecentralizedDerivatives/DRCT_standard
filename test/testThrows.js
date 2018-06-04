@@ -8,6 +8,7 @@ const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var MemberCoin = artifacts.require("MemberCoin");
 var Exchange = artifacts.require("Exchange");
+var MasterDeployer = artifacts.require("MasterDeployer");
 
 
 async function expectThrow(promise){
@@ -45,15 +46,21 @@ contract('Throw Tests', function(accounts) {
   let swap;
   let exchange;
   var swap_add;
+  let masterDeployer;
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
 	    memberCoin = await MemberCoin.new();
+	    masterDeployer = await MasterDeployer.new();
 	    exchange = await Exchange.new();
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory();
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
-		await factory.setWhitelistedMemberTypes([0]);
+	    await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
@@ -65,16 +72,13 @@ contract('Throw Tests', function(accounts) {
 	    await userContract.setFactory(factory.address);
         o_startdate = 1514764800;
     	o_enddate = 1515369600;
-    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
    		await factory.deployTokenContract(o_startdate);
     	long_token_add =await factory.long_tokens(o_startdate);
 	    short_token_add =await factory.short_tokens(o_startdate);
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
-	    await expectThrow(factory.createToken(10000000000000000000,accounts[2],o_startdate,{from: accounts[2]}));
-	    await expectThrow(factory.deployTokenContract(o_startdate,{from: accounts[2]}));
-	    await expectThrow(factory.setBaseToken(accounts[2],{from: accounts[2]}));
    })
         it("Throw testing upmove", async function() {
 	  	await oracle.StoreDocument(o_startdate,1000);

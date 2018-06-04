@@ -24,7 +24,7 @@ contract Test_Oracle {
     }
 
     //Constructor - Sets owner
-    function Test_Oracle() public {
+     constructor() public {
         owner = msg.sender;
         API = "https://api.gdax.com/products/BTC-USD/ticker).price";
     }

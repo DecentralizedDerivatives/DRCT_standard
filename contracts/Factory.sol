@@ -56,8 +56,14 @@ contract Factory {
     /**
     *@dev Constructor - Sets owner
     */
-    function Factory() public {
+     constructor() public {
         owner = msg.sender;
+    }
+
+    /*How do we prevent someone else from starting this?*/
+    function init(address _owner) public{
+        require(owner == address(0));
+        owner = _owner;
     }
 
     function setMemberContract(address _memberContract) public onlyOwner() {
@@ -133,7 +139,7 @@ contract Factory {
 
     /**
     *@dev Allows a user to deploy a new swap contract, if they pay the fee
-    *@param _start_date the contract start date or date contract was created?
+    *@param _start_date the contract start date 
     *@return returns the newly created swap address and calls event 'ContractCreation'
     */
     function deployContract(uint _start_date) public payable returns (address) {
@@ -169,9 +175,9 @@ contract Factory {
     *@dev Deploys new tokens on a DRCT_Token contract -- called from within a swap
     *@param _supply The number of tokens to create
     *@param _party the address to send the tokens to
-    *@param _start_date the start date of the contract?       
-    *@returns ltoken the address of the created DRCT long tokens?
-    *@returns stoken the address of the created DRCT short tokens?
+    *@param _start_date the start date of the contract      
+    *@returns ltoken the address of the created DRCT long tokens
+    *@returns stoken the address of the created DRCT short tokens
     *@returns token_ratio The ratio of the created DRCT token
     */
     function createToken(uint _supply, address _party, uint _start_date) public returns (address, address, uint) {
@@ -233,9 +239,9 @@ contract Factory {
     }
 
     /*
-    * Pays out to a DRCT token
-    * @param "_party": The address being paid
-    * @param "_long": Whether the _party is long or not
+    *Pays out to a DRCT token
+    *@param _party The address being paid
+    *@param _token_add 
     */
     function payToken(address _party, address _token_add) public {
         require(created_contracts[msg.sender] > 0);
