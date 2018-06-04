@@ -70,18 +70,4 @@ contract('Membership', function(accounts) {
         assert(newbal2 > balance2, "balance2 should be less");
     });
 
-    it("Should refund amount to user that did not pass KYC/AML", async function () {
-        balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
-        await membership.refund(accounts[1], 1000000000000000000, {from: accounts[5]});
-        var newbal1 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0)));
-        assert(newbal1 > balance1, "balance1 should be less");
-    });
-
-    it("Should allow owner to withdraw funds to address specified", async function () {
-        balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[7]), 'ether').toFixed(0));
-        await membership.withdraw(accounts[7], 4000000000000000000, {from: accounts[5]});
-        var newbal2 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[7]), 'ether').toFixed(0)));
-        assert(newbal2 > balance2, "balance2 should be less");
-    });
-
 })
