@@ -7,7 +7,7 @@ var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Exchange = artifacts.require("Exchange");
-var MemberCoin = artifacts.require("MemberCoin");
+var Membership = artifacts.require("Membership");
 var MasterDeployer = artifacts.require("MasterDeployer");
 
 contract('Exchange Test', function(accounts) {
@@ -28,7 +28,7 @@ contract('Exchange Test', function(accounts) {
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
-	    memberCoin = await MemberCoin.new();
+	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	     exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
@@ -144,9 +144,9 @@ contract('Exchange Test', function(accounts) {
 
 	it("Test Whitelist", async function(){
 		await factory.setWhitelistedMemberTypes([1,100,200]);
-		await memberCoin.setMember(accounts[1],1);
-		await memberCoin.setMember(accounts[2],100);
-		await memberCoin.setMember(accounts[3],200);
+		await memberCoin.setMembershipType(accounts[1],1);
+		await memberCoin.setMembershipType(accounts[2],100);
+		await memberCoin.setMembershipType(accounts[3],200);
 		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);

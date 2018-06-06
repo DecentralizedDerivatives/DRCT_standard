@@ -4,7 +4,7 @@ import "./interfaces/Deployer_Interface.sol";
 import "./DRCT_Token.sol";
 import "./libraries/SafeMath.sol";
 import "./interfaces/Wrapped_Ether_Interface.sol";
-import "./interfaces/MemberCoin_Interface.sol";
+import "./interfaces/Membership_Interface.sol";
 
 
 /**
@@ -78,8 +78,8 @@ contract Factory {
     }
 
     function isWhitelisted(address _member) public view returns (bool){
-        MemberCoin_Interface Member = MemberCoin_Interface(memberContract);
-        return whitelistedTypes[Member.getMemberType(_member)];
+        Membership_Interface Member = Membership_Interface(memberContract);
+        return whitelistedTypes[Member.getMembershipType(_member)];
     }
     
 

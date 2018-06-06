@@ -6,7 +6,7 @@ var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
-var MemberCoin = artifacts.require("MemberCoin");
+var Membership = artifacts.require("Membership");
 var MasterDeployer = artifacts.require("MasterDeployer");
 
 contract('Base Tests', function(accounts) {
@@ -26,7 +26,7 @@ contract('Base Tests', function(accounts) {
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new();
 	    factory = await Factory.new();
-	    memberCoin = await MemberCoin.new();
+	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    await masterDeployer.setFactory(factory.address);
 	    let res = await masterDeployer.deployFactory();
