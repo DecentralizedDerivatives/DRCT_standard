@@ -1,7 +1,8 @@
 var Oracle = artifacts.require("Oracle");
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
- 
+var _date = Date.now()/1000- (Date.now()/1000)%86400;
+
 module.exports =async function(callback) {
  
     let masterDeployer = await MasterDeployer.deployed();
@@ -14,9 +15,8 @@ module.exports =async function(callback) {
         let factory = await Factory.at(factory_address);
         let oracle_address = await factory.oracle_address.call();
         console.log('Oracle Address:', oracle_address);
-		 let oracle = await Oracle.at(oracle_address);
- 		await oracle.fund({value: web3.toWei(.25,'ether')});
-  		await oracle.pushData();
-  		 		contract.log('Oracle Call');
+     let oracle = await Oracle.at(oracle_address);
+ 		  var value =  await oracle.retrieveData(_date);
+      console.log('Oracle result -',value);
   	}
 }
