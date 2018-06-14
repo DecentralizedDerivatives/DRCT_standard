@@ -26,9 +26,11 @@ contract Oracle is usingOraclize{
     /*Functions*/
     /*
     *@dev - Constructor, sets public api string
+    * eg - "json(https://api.gdax.com/products/BTC-USD/ticker).price"
+    "json(https://api.gdax.com/products/ETH-USD/ticker).price"
     */
-     constructor() public{
-        API = "https://api.gdax.com/products/BTC-USD/ticker).price";
+     constructor(string _api) public{
+        API = _api;
     }
 
     /*
@@ -50,7 +52,7 @@ contract Oracle is usingOraclize{
             emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");
-            queryID = oraclize_query("URL", "json(https://api.gdax.com/products/BTC-USD/ticker).price");
+            queryID = oraclize_query("URL", API);
             queried[_key] = true;
         }
     }

@@ -50,7 +50,7 @@ contract('Throw Tests', function(accounts) {
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
-		oracle = await Test_Oracle.new();
+		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
 	    factory = await Factory.new();
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
