@@ -3,11 +3,11 @@ var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
 var TokenToTokenSwap = artifacts.require("TokenToTokenSwap");
 var _date = Date.now()/1000- (Date.now()/1000)%86400;
-
+var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
 
 module.exports =async function(callback) {
  
-    let masterDeployer = await MasterDeployer.deployed();
+    let masterDeployer = await MasterDeployer.at(_master);
     var count = parseInt(await masterDeployer.getFactoryCount());
     console.log('There are',count,' total existing factories');
  

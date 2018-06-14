@@ -1,10 +1,12 @@
 var Oracle = artifacts.require("Oracle");
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
- 
+ var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
+
+
 module.exports =async function(callback) {
  
-    let masterDeployer = await MasterDeployer.deployed();
+    let masterDeployer = await MasterDeployer.at(_master);
     var count = parseInt(await masterDeployer.getFactoryCount());
     console.log('There are',count,' total existing factories');
  
@@ -15,7 +17,7 @@ module.exports =async function(callback) {
         let oracle_address = await factory.oracle_address.call();
         console.log('Oracle Address:', oracle_address);
 		 let oracle = await Oracle.at(oracle_address);
- 		await oracle.fund({value: web3.toWei(.25,'ether')});
+ 		   //await oracle.fund({value: web3.toWei(.25,'ether')});
   		await oracle.pushData();
   		 		contract.log('Oracle Call');
   	}
