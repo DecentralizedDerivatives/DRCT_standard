@@ -1,14 +1,16 @@
 
-var Factory = artifacts.require("Factory");
+var Factory = artifacts.require("./Factory.sol");
 var UserContract= artifacts.require("UserContract");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
-var days_future = 0;
+      var o_startdate ="1528416000";
+var factory_address= "0x15bd4d9dd2dfc5e01801be8ed17392d8404f9642";
 
 module.exports =async function(callback) {
       let swap;
-      let factory = await Factory.deployed();
-      let userContract = await UserContract.deployed();
+      let factory = await Factory.at(factory_address);
+      let u_address = await factory.user_contract.call();
+      let userContract = await UserContract.at(u_address);
       var swap_add;
       var accounts;
 // in web front-end, use an onload listener and similar to this manual flow ... 
@@ -19,8 +21,6 @@ web3.eth.getAccounts(function(err,res) {
       console.log('My Account: ',res);
       accounts = res; 
 });
-      var o_startdate = Date.now()/1000+86400*days_future - (Date.now()/1000)%86400;
-      var o_enddate = o_startdate + 86400*7+86400*days_future;
       var receipt = await factory.deployContract(o_startdate);
 	  swap_add = receipt.logs[0].args._created;
 	  swap = await TokenToTokenSwap.at(swap_add);

@@ -5,16 +5,15 @@ var Exchange = artifacts.require("Exchange");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Migrations = artifacts.require("../contracts/Migrations.sol");
-var days_future = 7;
-
+      var o_startdate ="1528416000";
+var factory_address= "0x15bd4d9dd2dfc5e01801be8ed17392d8404f9642";
 module.exports =async function(callback) {
       let swap;
-      let factory = await Factory.deployed();
-      let userContract = await UserContract.deployed();
+      let factory = await Factory.at(factory_address);
+      let u_address = await factory.user_contract.call();
+      let userContract = await UserContract.at(u_address);
       let exchange = await Exchange.deployed();
       var swap_add;
-      var o_startdate = Date.now()/1000+86400*days_future - (Date.now()/1000)%86400;
-      var o_enddate = o_startdate + 86400*7+86400*days_future;
       var long_token_add =await factory.long_tokens(o_startdate);
       var short_token_add =await factory.short_tokens(o_startdate);
       let long_token =await DRCT_Token.at(long_token_add);

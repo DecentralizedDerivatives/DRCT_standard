@@ -6,7 +6,7 @@ var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
-var MemberCoin = artifacts.require("MemberCoin");
+var Membership = artifacts.require("Membership");
 var Exchange = artifacts.require("Exchange");
 var MasterDeployer = artifacts.require("MasterDeployer");
 
@@ -50,9 +50,9 @@ contract('Throw Tests', function(accounts) {
   let o_startdate, o_enddate, balance1, balance2;
 
 	beforeEach('Setup contract for each test', async function () {
-		oracle = await Test_Oracle.new();
+		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
 	    factory = await Factory.new();
-	    memberCoin = await MemberCoin.new();
+	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
@@ -106,15 +106,15 @@ contract('Throw Tests', function(accounts) {
 		});
 		it("Throw on unwhitelisted - Create", async function() {
 			await factory.setWhitelistedMemberTypes([1,2,3]);
-			await memberCoin.setMember(accounts[1],1000)
+			await memberCoin.setMembershipType(accounts[1],1000)
 			console.log('test', await factory.isWhitelisted(accounts[1]))
-			console.log('test2',await memberCoin.getMemberType(accounts[1]))
+			console.log('test2',await memberCoin.getMembershipType(accounts[1]))
 	  		await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
 
 		it("Throw on unwhitelisted - Transfer", async function() {
 			await factory.setWhitelistedMemberTypes([1,100,200]);
-			await memberCoin.setMember(accounts[1],1);
+			await memberCoin.setMembershipType(accounts[1],1);
 			await oracle.StoreDocument(o_startdate,1000);
 		    await oracle.StoreDocument(o_enddate,1500);
 		  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
@@ -125,7 +125,7 @@ contract('Throw Tests', function(accounts) {
 		});
 		it("Throw on unwhitelisted - Sell", async function() {
 			await factory.setWhitelistedMemberTypes([1000]);
-			await memberCoin.setMember(accounts[1],1000);
+			await memberCoin.setMembershipType(accounts[1],1000);
 			var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 		  	swap_add = receipt.logs[0].args._created;
 			swap = await TokenToTokenSwap.at(swap_add);

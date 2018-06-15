@@ -24,9 +24,9 @@ contract Test_Oracle {
     }
 
     //Constructor - Sets owner
-     constructor() public {
+     constructor(string _api) public {
         owner = msg.sender;
-        API = "https://api.gdax.com/products/BTC-USD/ticker).price";
+        API = _api;
     }
 
     //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
