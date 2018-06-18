@@ -31,9 +31,11 @@ contract MasterDeployer is CloneFactory{
 		factory_contracts.push(_new_fac);
 		Factory(_new_fac).init(msg.sender);
 		emit NewFactory(_new_fac);
+		return _new_fac;
 	}
 
 	function removeFactory(address _factory) public onlyOwner(){
+		require(_factory != address(0) && factory_index[_factory] != 0);
 		uint256 fIndex = factory_index[_factory];
         uint256 lastFactoryIndex = factory_contracts.length.sub(1);
         address lastFactory = factory_contracts[lastFactoryIndex];
