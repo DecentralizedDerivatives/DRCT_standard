@@ -30,7 +30,7 @@ contract Wrapped_Ether {
     /*Functions*/
 
     /**
-    @dev This function creates tokens equal in value to the amount sent to the contract
+    *@dev This function creates tokens equal in value to the amount sent to the contract
     */
     function createToken() public payable {
         require(msg.value > 0);
@@ -39,8 +39,8 @@ contract Wrapped_Ether {
     }
 
     /*
-    *This function 'unwraps' an _amount of Ether in the sender's balance by transferring Ether to them
-    *@param "_amount": The amount of the token to unwrap
+    *@dev This function 'unwraps' an _amount of Ether in the sender's balance by transferring Ether to them
+    *@param _amount The amount of the token to unwrap
     */
     function withdraw(uint _value) public {
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -48,14 +48,16 @@ contract Wrapped_Ether {
         msg.sender.transfer(_value);
     }
 
-    //Returns the balance associated with the passed in _owner
+    /*
+    *@return Returns the balance associated with the passed in _owner
+    */
     function balanceOf(address _owner) public constant returns (uint bal) { return balances[_owner]; }
 
     /*
     *Allows for a transfer of tokens to _to
     *
-    *@param "_to": The address to send tokens to
-    *@param "_amount": The amount of tokens to send
+    *@param _to The address to send tokens to
+    *@param _amount The amount of tokens to send
     */
     function transfer(address _to, uint _amount) public returns (bool) {
         if (balances[msg.sender] >= _amount
@@ -92,7 +94,7 @@ contract Wrapped_Ether {
     }
 
     /*
-    @dev this function Approves a _spender an _amount of tokens to use
+    *@dev this function Approves a _spender an _amount of tokens to use
     */
     function approve(address _spender, uint _amount) public returns (bool) {
         allowed[msg.sender][_spender] = _amount;
@@ -105,4 +107,12 @@ contract Wrapped_Ether {
     */
     function allowance(address _owner, address _spender) public view returns (uint) {
        return allowed[_owner][_spender]; }
+
+    /**
+    *@dev Getter for the total_supply of wrapped ether
+    *@return total supply
+    */
+    function totalSupply() public constant returns (uint) {
+       return total_supply;
+    }
 }

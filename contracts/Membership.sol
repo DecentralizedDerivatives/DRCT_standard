@@ -72,9 +72,10 @@ contract Membership {
     *@param _to is the address the member would like to update their current address with
     */
     function updateMemberAddress(address _from, address _to) public onlyOwner {
-        require (_to != address(0));
+        require(_to != address(0));
         Member storage currentAddress = members[_from];
         Member storage newAddress = members[_to];
+        require(newAddress.memberId == 0);
         newAddress.memberId = currentAddress.memberId;
         newAddress.membershipType = currentAddress.membershipType;
 		membersAccts[currentAddress.memberId - 1] = _to;
