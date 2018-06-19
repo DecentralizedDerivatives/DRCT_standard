@@ -12,6 +12,9 @@ import "./libraries/SafeMath.sol";
 *calls
 */
 contract UserContract{
+
+    using SafeMath for uint256;
+
     TokenToTokenSwap_Interface internal swap;
     Wrapped_Ether internal baseToken;
     Factory internal factory;
@@ -32,12 +35,12 @@ contract UserContract{
     *swap. For wrapped Ether, this is wei.
     */
     function Initiate(address _swapadd, uint _amount) payable public{
-        require(msg.value == _amount * 2);
+        require(msg.value == _amount.mul(2));
         swap = TokenToTokenSwap_Interface(_swapadd);
         address token_address = factory.token();
         baseToken = Wrapped_Ether(token_address);
-        baseToken.createToken.value(_amount * 2)();
-        baseToken.transfer(_swapadd,_amount* 2);
+        baseToken.createToken.value(_amount.mul(2))();
+        baseToken.transfer(_swapadd,_amount.mul(2));
         swap.createSwap(_amount, msg.sender);
     }
 
