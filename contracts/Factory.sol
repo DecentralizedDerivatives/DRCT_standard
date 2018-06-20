@@ -26,6 +26,8 @@ contract Factory {
     address public token;
     //A fee for creating a swap in wei.  Plan is for this to be zero, however can be raised to prevent spam
     uint public fee;
+    //swap fee
+    uint public swapFee;
     //Duration of swap contract in days
     uint public duration;
     //Multiplier of reference rate.  2x refers to a 50% move generating a 100% move in the contract payout values
@@ -101,6 +103,14 @@ contract Factory {
     }
 
     /*
+    * Updates the fee amount
+    * @param "_fee": The new fee amount
+    */
+    function setSwapFee(uint _swapFee) public onlyOwner() {
+        swapFee = _swapFee;
+    }   
+
+    /*
     * Sets the deployer address
     * @param "_deployer": The new deployer address
     */
@@ -123,10 +133,11 @@ contract Factory {
     *@param _duration the duration of the swap, in days
     *@param _multiplier the multiplier used for the swap
     */
-    function setVariables(uint _token_ratio, uint _duration, uint _multiplier) public onlyOwner() {
+    function setVariables(uint _token_ratio, uint _duration, uint _multiplier, uint _swapFee) public onlyOwner() {
         token_ratio = _token_ratio;
         duration = _duration;
         multiplier = _multiplier;
+        swapFee = _swapFee;
     }
 
     /*

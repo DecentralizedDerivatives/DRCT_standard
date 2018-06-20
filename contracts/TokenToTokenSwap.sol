@@ -14,6 +14,7 @@ contract TokenToTokenSwap {
     /*Variables*/
     TokenLibrary.SwapStorage public swap;
 
+
     /*Functions*/
     /**
     *@dev Constructor - Run by the factory at contract creation
@@ -63,4 +64,6 @@ contract TokenToTokenSwap {
     function forcePay(uint _begin, uint _end) public returns (bool) {
        swap.forcePay([_begin,_end]);
     }
+
+
 }

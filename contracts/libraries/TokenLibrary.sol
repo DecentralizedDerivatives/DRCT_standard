@@ -106,7 +106,7 @@ library TokenLibrary{
     *@dev Getter function for contract details saved in the SwapStorage struct
     */
     function getVariables(SwapStorage storage self) internal{
-        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address) = self.factory.getVariables();
+        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
     }
 
     /**
@@ -239,7 +239,6 @@ library TokenLibrary{
     function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);
     }
+
     
-
-
 }

@@ -22,6 +22,13 @@ contract Exchange{
         address asset;
     }
 
+    struct ListAsset {
+        uint price;
+        uint amount;
+    }
+
+    mapping(address => ListAsset) public listOfAssets;
+
     //Maps an OrderID to the list of orders
     mapping(uint256 => Order) public orders;
     //An mapping of a token address to the orderID's
@@ -94,6 +101,34 @@ contract Exchange{
         userOrders[msg.sender].push(order_nonce);
         order_nonce += 1;
     }
+    /*
+    *@dev list allows a party to place an order on the orderbook
+    *@param _tokenadd address of the drct tokens
+    *@param _amount number of DRCT tokens
+    *@param _price uint256 price per unit in wei
+    */
+    //Then you would have a mapping from an asset to its price/ quantity when you list it.
+    function listDda(address _asset, uint256 _amount, uint256 _price) public onlyOwner() {
+        require(blacklist[msg.sender] == false);
+        ListAsset storage listing = listOfAssets[_asset];
+        listing.price = _price;
+        listing.amount= _amount;
+    }
+
+    /**
+    *@dev buy allows a party to fill an order
+    *@param _asset is the address of the assset
+    *@param _amount is the amount to buy
+    */
+    //subtract the amount from the quantity for sale (a max of the amount for sale) 
+    //and charge them the price
+    function buyPerUnit(address _asset, uint256 _amount) external payable {
+        require(blacklist[msg.sender] == false);
+        ListAsset storage listing = listOfAssets[_asset];
+        require(_amount <= listing.amount);
+        require(msg.value == _amount.mul(listing.price));
+        listing.amount= listing.amount.sub(_amount);
+    }
     /**
     *@dev unlist allows a party to remove their order from the orderbook
     *@param _orderId is the uint256 ID of order
@@ -123,6 +158,8 @@ contract Exchange{
         unLister(_orderId,_order);
         emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
     }
+
+
 
     /*
     *@dev getOrder lists the price,amount, and maker of a specific token for a sale
