@@ -34,7 +34,7 @@ contract('Oracle Test', function(accounts) {
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
-	    await factory.setVariables(1000000000000000,7,1);
+	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);
@@ -72,8 +72,8 @@ contract('Oracle Test', function(accounts) {
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
-		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
+		await swap.forcePay(50,{from:accounts[0]});
+	  	assert.equal(await swap.currentState() - 0,2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}

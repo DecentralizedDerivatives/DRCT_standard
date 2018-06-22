@@ -6,6 +6,6 @@ interface Factory_Interface {
   function payToken(address _party, address _token_add) external;
   function deployContract(uint _start_date) external payable returns (address);
    function getBase() external view returns(address);
-  function getVariables() external view returns (address, uint, uint, address);
+  function getVariables() external view returns (address, uint, uint, address,uint);
   function isWhitelisted(address _member) external view returns (bool);
 }

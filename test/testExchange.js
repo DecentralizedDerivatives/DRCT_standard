@@ -37,7 +37,7 @@ contract('Exchange Test', function(accounts) {
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
-	    await factory.setVariables(1000000000000000,7,1);
+	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);

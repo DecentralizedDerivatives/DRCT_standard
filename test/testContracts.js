@@ -34,7 +34,7 @@ contract('Base Tests', function(accounts) {
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
-	    await factory.setVariables(1000000000000000,7,1);
+	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);
@@ -70,7 +70,7 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -97,7 +97,7 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -111,7 +111,7 @@ contract('Base Tests', function(accounts) {
     it("Big Up Move", async function(){
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1750);
-	    await factory.setVariables(1000000000000000,7,2);
+	    await factory.setVariables(1000000000000000,7,2,0);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
@@ -126,7 +126,7 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -153,8 +153,8 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
-	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
+		await swap.forcePay(50,{from:accounts[0]});
+	  	assert.equal(await swap.currentState() - 0,2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
@@ -182,7 +182,7 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -195,7 +195,7 @@ contract('Base Tests', function(accounts) {
 	it("Test Manual Down", async function(){
 		await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,800);
-	    await factory.setVariables(1000000000000000,7,2);
+	    await factory.setVariables(1000000000000000,7,2,0);
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
@@ -212,15 +212,13 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
 		}
 		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
 		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
-		console.log('b1',balance1,newbal);
-		console.log('b2',balance2,newbal2);
 		assert(balance1 >= newbal + 1.5 && balance1 <= newbal + 2.5 ,"Balance1 should change correctly");
 		assert(balance2 >= newbal2 - 2.5 && balance2 <= newbal2 - 1.5 ,"Balance2 should change correctly");
 	});	
@@ -251,7 +249,7 @@ contract('Base Tests', function(accounts) {
 		assert.equal(await short_token.balanceOf(accounts[1]),0,"first guy cashes out should send tokens");
 		assert.equal(await short_token.balanceOf(accounts[2]),5000,"half of short tokens should be sent");
 	  	for (i=1;i<=4;i++){
-			await swaps[i].forcePay(1,100,{from:accounts[0]});
+			await swaps[i].forcePay(50,{from:accounts[0]});
 	  		assert.equal(await swaps[i].currentState(),2,"Current State of Swap "+i+" should be 2");
 	  	}
 	  	for (i = 0; i <= 8; i++){
@@ -289,10 +287,10 @@ contract('Base Tests', function(accounts) {
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5500,"second balance should send tokens");
 	  	assert.equal(await long_token.balanceOf(accounts[3]),0,"third balance should send tokens");
 	  	assert.equal(await short_token.balanceOf("0x100d7EFfEFdB084DfEB1621348c8C70cc4e871Eb"),50,"One of the transfers should work");
-	  	await swap.forcePay(1,20,{from:accounts[0]});
-	  	await swap.forcePay(21,50,{from:accounts[0]});
-	  	await swap.forcePay(51,80,{from:accounts[0]});
-	  	await swap.forcePay(81,100,{from:accounts[0]});
+	  	await swap.forcePay(20,{from:accounts[0]});
+	  	await swap.forcePay(30,{from:accounts[0]});
+	  	await swap.forcePay(30,{from:accounts[0]});
+	  	await swap.forcePay(30,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -318,11 +316,11 @@ contract('Base Tests', function(accounts) {
 	  		await short_token.transfer(new_add2,50,{from:accounts[4]});
 	  	}
 	  	var gas_base = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(14)));
-		await swap.forcePay(1,20,{from:accounts[0]});
+		await swap.forcePay(20,{from:accounts[0]});
 		var gas_20 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(14)));
-	  	await swap.forcePay(21,50,{from:accounts[0]});
+	  	await swap.forcePay(30,{from:accounts[0]});
 	  	var gas_50 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(14)));
-	  	await swap.forcePay(51,80,{from:accounts[0]});
+	  	await swap.forcePay(35,{from:accounts[0]});
 	  	var gas_80 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(14)));
 	  	console.log('First 20 cost',gas_base - gas_20);
 	  	console.log('First 50 cost',gas_base - gas_50);
@@ -363,7 +361,7 @@ contract('Base Tests', function(accounts) {
 		assert.equal(await short_token.balanceOf(accounts[2]),5000,"half of short tokens should be sent");
 		assert.equal(await long_token.balanceOf(accounts[2]),10000,"half of short tokens should be sent");
 	  	for (i=1;i<=4;i++){
-			await swaps[i].forcePay(1,100,{from:accounts[0]});
+			await swaps[i].forcePay(50,{from:accounts[0]});
 	  		assert.equal(await swaps[i].currentState(),2,"Current State of Swap "+i+" should be 2");
 	  	}
 	  	for (i = 0; i <= 8; i++){
@@ -395,7 +393,7 @@ contract('Base Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
 	  	assert.equal(await long_token.balanceOf(accounts[1]),5000,"second balance should send tokens");
 	  	assert.equal(await short_token.balanceOf(accounts[4]),5000,"half of short tokens should be sent");
-		await swap.forcePay(1,100,{from:accounts[0]});
+		await swap.forcePay(50,{from:accounts[0]});
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -416,7 +414,7 @@ contract('Base Tests', function(accounts) {
 		  	assert.equal(await swap.currentState(),0,"Current State should be 0");
 		  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
 		  	assert.equal(await long_token.balanceOf(accounts[1]),10000,"second balance should send tokens");
-			await swap.forcePay(1,100,{from:accounts[0]});
+			await swap.forcePay(50,{from:accounts[0]});
 		  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 		  	for (i = 0; i < 5; i++){
 			  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});

@@ -58,11 +58,10 @@ contract TokenToTokenSwap {
     *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
-    *@param _begin start date of swap
-    *@param _end end date of swap
+    *@param _topay number of contracts to try and pay (run it again if its not enough)
     */
-    function forcePay(uint _begin, uint _end) public returns (bool) {
-       swap.forcePay([_begin,_end]);
+    function forcePay(uint _topay) public returns (bool) {
+       swap.forcePay(_topay);
     }
 
 
