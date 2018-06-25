@@ -37,7 +37,7 @@ library TokenLibrary{
         //Enum state of the swap
         SwapState current_state;
         //Start date, end_date, multiplier duration,start_value,end_value,fee
-        uint[7] contract_details;
+        uint[8] contract_details;
         // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
         uint pay_to_long;
         uint pay_to_short;
@@ -70,6 +70,7 @@ library TokenLibrary{
         self.userContract = _userContract;
         self.contract_details[0] = _start_date;
         self.current_state = SwapState.created;
+        self.contract_details[7] = 0;
     }
 
      /**
@@ -86,7 +87,7 @@ library TokenLibrary{
     *@param _senderAdd States the owner of this side of the contract (does not have to be msg.sender)
     */
     function createSwap(SwapStorage storage self,uint _amount, address _senderAdd) internal{
-        require(self.current_state == SwapState.created && msg.sender == self.creator  && _amount > 0 || (msg.sender == self.userContract && _senderAdd == self.creator) && _amount > 0);
+       require(self.current_state == SwapState.created && msg.sender == self.creator  && _amount > 0 || (msg.sender == self.userContract && _senderAdd == self.creator) && _amount > 0);
         self.factory = Factory_Interface(self.factory_address);
         getVariables(self);
         self.contract_details[1] = self.contract_details[0].add(self.contract_details[3].mul(86400));
@@ -97,7 +98,6 @@ library TokenLibrary{
         uint tokenratio = 1;
         (self.long_token_address,self.short_token_address,tokenratio) = self.factory.createToken(self.token_amount,self.creator,self.contract_details[0]);
         self.num_DRCT_tokens = self.token_amount.div(tokenratio);
-        oracleQuery(self);
         emit SwapCreation(self.token_address,self.contract_details[0],self.contract_details[1],self.token_amount);
         self.current_state = SwapState.started;
     }
@@ -115,32 +115,30 @@ library TokenLibrary{
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
         uint _today = now - (now % 86400);
-        uint i;
-        if(_today >= self.contract_details[0] && self.contract_details[4] == 0){
-            for(i=0;i < (_today- self.contract_details[0])/86400;i++){
+        uint i = 0;
+        if(_today >= self.contract_details[0]){
+            while(i < (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
                 if(oracle.getQuery(self.contract_details[0]+i*86400)){
                     self.contract_details[4] = oracle.retrieveData(self.contract_details[0]+i*86400);
-                    return true;
                 }
-            }
-            if(self.contract_details[4] ==0){
-                oracle.pushData();
-                return false;
+                i++;
             }
         }
-        if(_today >= self.contract_details[1] && self.contract_details[5] == 0){
-            for(i=0;i < (_today- self.contract_details[1])/86400;i++){
+        i = 0;
+        if(_today >= self.contract_details[1]){
+            while(i < (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
                 if(oracle.getQuery(self.contract_details[1]+i*86400)){
                     self.contract_details[5] = oracle.retrieveData(self.contract_details[1]+i*86400);
-                    return true;
                 }
-            }
-            if(self.contract_details[5] ==0){
-                oracle.pushData();
-                return false;
+                i++;
             }
         }
-        return true;
+        if(self.contract_details[4] != 0 && self.contract_details[5] != 0){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     /**
@@ -177,7 +175,7 @@ library TokenLibrary{
     *The function then pays every token holder of both the long and short DRCT tokens
     *What should we do about zeroed out values? 
     */
-    function forcePay(SwapStorage storage self,uint[2] _range) internal returns (bool) {
+    function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
        //Calls the Calculate function first to calculate short and long shares
         require(self.current_state == SwapState.started && now >= self.contract_details[1]);
         bool ready = oracleQuery(self);
@@ -185,30 +183,33 @@ library TokenLibrary{
             Calculate(self);
             //Loop through the owners of long and short DRCT tokens and pay them
             DRCT_Token_Interface drct = DRCT_Token_Interface(self.long_token_address);
-            uint count = drct.addressCount(address(this));
-            uint loop_count = count < _range[1] ? count : _range[1];
+            uint[6] memory counts;
+            address token_owner;
+            counts[0] = drct.addressCount(address(this));
+            counts[1] = counts[0] < self.contract_details[7].add(_numtopay) ? counts[0] : self.contract_details[7].add(_numtopay);
             //Indexing begins at 1 for DRCT_Token balances
-            for(uint i = loop_count-1; i >= _range[0] ; i--) {
-                address long_owner;
-                uint to_pay_long;
-                (to_pay_long, long_owner) = drct.getBalanceAndHolderByIndex(i, address(this));
-                paySwap(self,long_owner, to_pay_long, true);
+            if(self.contract_details[7] < counts[1]){
+                for(uint i = counts[1]-1; i > self.contract_details[7] ; i--) {
+                    (counts[4], token_owner) = drct.getBalanceAndHolderByIndex(i, address(this));
+                    paySwap(self,token_owner,counts[4], true);
+                }
             }
 
             drct = DRCT_Token_Interface(self.short_token_address);
-            count = drct.addressCount(address(this));
-            loop_count = count < _range[1] ? count : _range[1];
-            for(uint j = loop_count-1; j >= _range[0] ; j--) {
-                address short_owner;
-                uint to_pay_short;
-                (to_pay_short, short_owner) = drct.getBalanceAndHolderByIndex(j, address(this));
-                paySwap(self,short_owner, to_pay_short, false);
+            counts[2] = drct.addressCount(address(this));
+            counts[3] = counts[2] < self.contract_details[7].add(_numtopay) ? counts[2] : self.contract_details[7].add(_numtopay);
+            if(self.contract_details[7] < counts[3]){
+                for(uint j = counts[3]-1; j > self.contract_details[7] ; j--) {
+                    (counts[5], token_owner) = drct.getBalanceAndHolderByIndex(j, address(this));
+                    paySwap(self,token_owner,counts[5], false);
+                }
             }
-            if (loop_count == count){
+            if (counts[0] == counts[1] && counts[2] == counts[3]){
                 self.token.transfer(self.factory_address, self.token.balanceOf(address(this)));
                 emit PaidOut(self.pay_to_long,self.pay_to_short);
                 self.current_state = SwapState.ended;
             }
+            self.contract_details[7] = self.contract_details[7].add(_numtopay);
         }
         return ready;
     }

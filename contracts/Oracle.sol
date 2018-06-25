@@ -14,10 +14,14 @@ contract Oracle is usingOraclize{
     bytes32 private queryID;
     string public API;
 
-
+    struct QueryInfo {
+        uint value;
+        bool queried;
+        uint date;
+    }  
     //Mapping of documents stored in the oracle
-    mapping(uint => uint) public oracle_values;
-    mapping(uint => bool) public queried;
+    mapping(uint => bytes32) public queryIds;
+    mapping(bytes32 => QueryInfo ) public info;
 
     /*Events*/
     event DocumentStored(uint _key, uint _value);
@@ -38,8 +42,8 @@ contract Oracle is usingOraclize{
     *@param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
     */
     function retrieveData(uint _date) public constant returns (uint) {
-        uint value = oracle_values[_date];
-        return value;
+        QueryInfo storage currentQuery = info[queryIds[_date]];
+        return currentQuery.value;
     }
 
     /**
@@ -47,13 +51,16 @@ contract Oracle is usingOraclize{
     */
     function pushData() public payable{
         uint _key = now - (now % 86400);
-        require(queried[_key] == false);
+        QueryInfo storage currentQuery = info[queryIds[_key]];
+        require(currentQuery.queried == false);
         if (oraclize_getPrice("URL") > address(this).balance) {
             emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");
             queryID = oraclize_query("URL", API);
-            queried[_key] = true;
+            queryIds[_key] = queryID;
+            currentQuery.queried = true;
+            currentQuery.date = _key;
         }
     }
 
@@ -63,11 +70,13 @@ contract Oracle is usingOraclize{
     *@param _result Result of API call in string format
     */
     function __callback(bytes32 _oraclizeID, string _result) public {
+        QueryInfo storage currentQuery = info[_oraclizeID];
         require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
-        uint _value = parseInt(_result,3);
-        uint _key = now - (now % 86400);
-        oracle_values[_key] = _value;
-        emit DocumentStored(_key, _value);
+        currentQuery.value = parseInt(_result,3);
+        if(currentQuery.value == 0){
+            currentQuery.value = 1;
+        }
+        emit DocumentStored(currentQuery.date, currentQuery.value);
     }
 
     /**
@@ -84,6 +93,7 @@ contract Oracle is usingOraclize{
     *initialized (or completed) for given date
     */
     function getQuery(uint _date) public view returns(bool){
-        return queried[_date];
+        QueryInfo storage currentQuery = info[queryIds[_date]];
+        return currentQuery.queried;
     }
 }

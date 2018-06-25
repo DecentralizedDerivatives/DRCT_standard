@@ -61,7 +61,7 @@ contract('Throw Tests', function(accounts) {
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
 	    await factory.setWhitelistedMemberTypes([0]);
-	    await factory.setVariables(1000000000000000,7,1);
+	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
 	    deployer = await Deployer.new(factory.address);
@@ -94,8 +94,8 @@ contract('Throw Tests', function(accounts) {
 	  	await web3.eth.sendTransaction({from:accounts[3],to:accounts[1], value:web3.toWei(5, "ether")});
 	  	await short_token.transfer(accounts[4],5000,{from:accounts[2]});
 	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
-		await swap.forcePay(1,100,{from:accounts[0]});
-		await expectThrow(swap.forcePay(1,100,{from:accounts[0]}));
+		await swap.forcePay(50,{from:accounts[0]});
+		await expectThrow(swap.forcePay(50,{from:accounts[0]}));
 	  	assert.equal(await swap.currentState(),2,"Current State should be 2");
 	  	for (i = 0; i < 5; i++){
 		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
@@ -107,8 +107,6 @@ contract('Throw Tests', function(accounts) {
 		it("Throw on unwhitelisted - Create", async function() {
 			await factory.setWhitelistedMemberTypes([1,2,3]);
 			await memberCoin.setMembershipType(accounts[1],1000)
-			console.log('test', await factory.isWhitelisted(accounts[1]))
-			console.log('test2',await memberCoin.getMembershipType(accounts[1]))
 	  		await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
 

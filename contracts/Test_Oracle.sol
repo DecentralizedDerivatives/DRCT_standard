@@ -32,6 +32,9 @@ contract Test_Oracle {
     //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
     //represent underlying values at a specified date (key).
     function StoreDocument(uint _key, uint _value) public onlyOwner() {
+        if(_value == 0){
+            _value = 1;
+        }
         oracle_values[_key] = _value;
         emit DocumentStored(_key, _value);
         queried[_key] = true;

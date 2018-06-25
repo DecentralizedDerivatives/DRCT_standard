@@ -245,8 +245,8 @@ contract Factory {
     *@returns multiplier The multiplier for the swap
     *@returns token The address of token 
     */
-    function getVariables() public view returns (address, uint, uint, address){
-        return (oracle_address,duration, multiplier, token);
+    function getVariables() public view returns (address, uint, uint, address,uint){
+        return (oracle_address,duration, multiplier, token,swapFee);
     }
 
     /*
