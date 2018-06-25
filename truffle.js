@@ -1,6 +1,6 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
-var mnemonic = "governments of the industrial world you weary giants of flesh and steel";
+var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
 //this is for ropsten only (hence it's public)
 //don't store real Ether here
 //don't steal all my Ropsten eth

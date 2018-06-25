@@ -63,8 +63,8 @@ contract Wrapped_Ether {
         if (balances[msg.sender] >= _amount
         && _amount > 0
         && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] = balances[msg.sender].sub(_amount);
-            balances[_to] = balances[_to].add(_amount);
+            balances[msg.sender] = balances[msg.sender] - _amount;
+            balances[_to] = balances[_to] + _amount;
             emit Transfer(msg.sender, _to, _amount);
             return true;
         } else {
@@ -83,9 +83,9 @@ contract Wrapped_Ether {
         && allowed[_from][msg.sender] >= _amount
         && _amount > 0
         && balances[_to] + _amount > balances[_to]) {
-            balances[_from] = balances[_from].sub(_amount);
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-            balances[_to] = balances[_to].add(_amount);
+            balances[_from] = balances[_from] - _amount;
+            allowed[_from][msg.sender] = allowed[_from][msg.sender] - _amount;
+            balances[_to] = balances[_to] + _amount;
             emit Transfer(_from, _to, _amount);
             return true;
         } else {
