@@ -134,6 +134,7 @@ contract Factory {
     *@param _multiplier the multiplier used for the swap
     */
     function setVariables(uint _token_ratio, uint _duration, uint _multiplier, uint _swapFee) public onlyOwner() {
+        require(_swapFee < 10000);
         token_ratio = _token_ratio;
         duration = _duration;
         multiplier = _multiplier;

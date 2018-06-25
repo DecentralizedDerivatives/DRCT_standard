@@ -107,6 +107,7 @@ library DRCTLibrary{
     function pay(TokenStorage storage self,address _party, address _swap) public{
         require(msg.sender == self.master_contract);
         uint party_balance_index = self.swap_balances_index[_swap][_party];
+        require(party_balance_index > 0);
         uint party_swap_balance = self.swap_balances[_swap][party_balance_index].amount;
         //reduces the users totals balance by the amount in that swap
         self.user_total_balances[_party] = self.user_total_balances[_party].sub(party_swap_balance);

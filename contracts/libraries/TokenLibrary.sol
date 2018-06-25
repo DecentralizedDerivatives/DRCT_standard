@@ -186,7 +186,7 @@ library TokenLibrary{
             uint[6] memory counts;
             address token_owner;
             counts[0] = drct.addressCount(address(this));
-            counts[1] = counts[0] < self.contract_details[7].add(_numtopay) ? counts[0] : self.contract_details[7].add(_numtopay);
+            counts[1] = counts[0] <= self.contract_details[7].add(_numtopay) ? counts[0] : self.contract_details[7].add(_numtopay).add(1);
             //Indexing begins at 1 for DRCT_Token balances
             if(self.contract_details[7] < counts[1]){
                 for(uint i = counts[1]-1; i > self.contract_details[7] ; i--) {
@@ -197,7 +197,7 @@ library TokenLibrary{
 
             drct = DRCT_Token_Interface(self.short_token_address);
             counts[2] = drct.addressCount(address(this));
-            counts[3] = counts[2] < self.contract_details[7].add(_numtopay) ? counts[2] : self.contract_details[7].add(_numtopay);
+            counts[3] = counts[2] <= self.contract_details[7].add(_numtopay) ? counts[2] : self.contract_details[7].add(_numtopay).add(1);
             if(self.contract_details[7] < counts[3]){
                 for(uint j = counts[3]-1; j > self.contract_details[7] ; j--) {
                     (counts[5], token_owner) = drct.getBalanceAndHolderByIndex(j, address(this));
