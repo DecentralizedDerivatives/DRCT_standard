@@ -424,8 +424,32 @@ contract('Base Tests', function(accounts) {
 			var newbal0 = eval(await web3.fromWei(web3.eth.getBalance(accounts[0]), 'ether').toFixed(0));
 			assert(balance1 >= newbal + 1 && balance1 <= newbal + 2 ,"Balance1 should change correctly");
 			assert(balance0 >= newbal0 - 2 && balance0 <= newbal0 - 1 ,"Balance0 should change correctly");
-			});
-
-
-
+		});
+		  	it("Force Pay Increments", async function(){
+	  	await oracle.StoreDocument(o_startdate,1000);
+	    await oracle.StoreDocument(o_enddate,1500);
+	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
+	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
+	  	await long_token.transfer(accounts[3],5000,{from:accounts[1]});
+	  	await web3.eth.sendTransaction({from:accounts[3],to:accounts[1], value:web3.toWei(5, "ether")});
+	  	await short_token.transfer(accounts[4],5000,{from:accounts[2]});
+	  	await web3.eth.sendTransaction({from:accounts[4],to:accounts[2], value:web3.toWei(5, "ether")});
+	  	var state = 0;
+	  	while(state<2){
+	  		await swap.forcePay(1,{from:accounts[0]});
+	  		state = await swap.currentState();
+	  	}
+	  	for (i = 0; i < 5; i++){
+		  	await base.withdraw(await base.balanceOf(accounts[i]),{from:accounts[i]});
+		}
+		
+		var newbal = eval(await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1)));
+		var newbal2 = eval(await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1)));
+		assert(balance1 >= newbal - 3 && balance1 <= newbal - 2 ,"Balance1 should change correctly");
+		assert(balance2 >= newbal2 + 2 && balance2 <= newbal2 + 3 ,"Balance2 should change correctly");
+		});
 });

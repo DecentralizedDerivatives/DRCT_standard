@@ -11,7 +11,7 @@ var MasterDeployer = artifacts.require("MasterDeployer");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 
-var _oracle_api = "https://api.gdax.com/products/ETH-USD/ticker).price";
+var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker​).price";
 var  duration = 7;
 var multiplier = 5;
 var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";

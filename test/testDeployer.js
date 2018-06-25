@@ -74,7 +74,6 @@ contract('Deployer Tests', function(accounts) {
 		}
 		await masterDeployer.removeFactory(res);
 		var _res = await masterDeployer.factory_index.call(res);
-		console.log(_res);
 	    assert.equal(_res.c[0],0,"Factory Should be removed");
 	});
    	 it("Gas Calculation",async function(){
