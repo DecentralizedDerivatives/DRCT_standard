@@ -147,6 +147,7 @@ contract Exchange{
     */
     function buy(uint256 _orderId) external payable {
         Order memory _order = orders[_orderId];
+        require(_order.price != 0 && _order.maker != address(0) && _order.asset != address(0) && _order.amount != 0);
         require(msg.value == _order.price);
         require(blacklist[msg.sender] == false);
         address maker = _order.maker;
