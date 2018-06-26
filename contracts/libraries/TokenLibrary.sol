@@ -106,8 +106,8 @@ library TokenLibrary{
 
     /**
     *@dev Getter function for contract details saved in the SwapStorage struct
-    *that gets the oracle address, duration, multiplier, base token address, and fee
-    *and uses these values in the Factory.getVariables function.
+    *Gets the oracle address, duration, multiplier, base token address, and fee
+    *and from the Factory.getVariables function.
     */
     function getVariables(SwapStorage storage self) internal{
         (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
@@ -178,7 +178,6 @@ library TokenLibrary{
     *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
-    *What should we do about zeroed out values? 
     */
     function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
        //Calls the Calculate function first to calculate short and long shares
