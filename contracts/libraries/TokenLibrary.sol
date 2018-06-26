@@ -8,8 +8,9 @@ import "./SafeMath.sol";
 
 
 /**
-*This contract is the specific DRCT base contract that holds the funds of the contract and
-*redistributes them based upon the change in the underlying values
+*The TokenLibrary contains the reference code used to create the specific DRCT base contract 
+*that holds the funds of the contract and redistributes them based upon the change in the
+*underlying values
 */
 
 library TokenLibrary{
@@ -18,9 +19,9 @@ library TokenLibrary{
 
     /*Variables*/
     enum SwapState {
-            created,
-            started,
-            ended
+        created,
+        started,
+        ended
     }
     
     /*Structs*/
@@ -49,8 +50,8 @@ library TokenLibrary{
         //The notional that the payment is calculated on from the change in the reference rate
         uint token_amount;
         address userContract;
-
     }
+
     /*Events*/
     event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
     //Emitted when the swap has been paid out
@@ -60,7 +61,7 @@ library TokenLibrary{
     /**
     *@param _factory_address
     *@param _creator address of swap creator
-    *@param _userContract 
+    *@param _userContract address
     *@param _start_date swap start date
     */
     function startSwap (SwapStorage storage self, address _factory_address, address _creator, address _userContract, uint _start_date) internal {
@@ -73,13 +74,14 @@ library TokenLibrary{
         self.contract_details[7] = 0;
     }
 
-     /**
-    @dev A getter function for retriving standardized variables from the factory contract
+    /**
+    *@dev A getter function for retriving standardized variables from the factory contract
+    *@return 
+    *[userContract, Long Token addresss, short token address, oracle address, base token address], number DRCT tokens, , multiplier, duration, Start date, end_date
     */
     function showPrivateVars(SwapStorage storage self) internal view returns (address[5],uint, uint, uint, uint, uint){
         return ([self.userContract, self.long_token_address,self.short_token_address, self.oracle_address, self.token_address], self.num_DRCT_tokens, self.contract_details[2], self.contract_details[3], self.contract_details[0], self.contract_details[1]);
     }
-    // [userContract, Long Token addresss, short token address, oracle address, base token address], number DRCT tokens,  duration,start_value, Start date, end_date, multiplier
 
     /**
     *@dev Allows the sender to create the terms for the swap
@@ -104,6 +106,8 @@ library TokenLibrary{
 
     /**
     *@dev Getter function for contract details saved in the SwapStorage struct
+    *that gets the oracle address, duration, multiplier, base token address, and fee
+    *and uses these values in the Factory.getVariables function.
     */
     function getVariables(SwapStorage storage self) internal{
         (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
@@ -111,6 +115,7 @@ library TokenLibrary{
 
     /**
     *@dev check if the oracle has been queried within the last day 
+    *@return true if it was queried and the start and end values are not zero
     */
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
@@ -216,9 +221,9 @@ library TokenLibrary{
 
     /**
     *This function pays the receiver an amount determined by the Calculate function
-    *@param _receiver The recipient of the payout
-    *@param _amount The amount of token the recipient holds
-    *@param _is_long Whether or not the reciever holds a long or short token
+    *@param _receiver is the recipient of the payout
+    *@param _amount is the amount of token the recipient holds
+    *@param _is_long is true if the reciever holds a long token
     */
     function paySwap(SwapStorage storage self,address _receiver, uint _amount, bool _is_long) internal {
         if (_is_long) {
@@ -235,11 +240,10 @@ library TokenLibrary{
     }
 
     /**
-    @dev Getter function for swap state
+    *@dev Getter function for swap state
     */
     function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);
     }
-
     
 }
