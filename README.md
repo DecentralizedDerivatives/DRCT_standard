@@ -46,9 +46,11 @@ You're ready to create DRCT tokens and contracts!
 ### Overview of Contracts for Dynamic Rate Cash Transaction Tokens
 
 **Contracts Process Flow**
+
 ![Contracts Flow](./public/DRCT_Standard_contracts_flow.png)
 
 **General Process Flow**
+
 ![Contracts Flow](./public/DRCT_Standard_process_flow.png)
 
 **Contracts Description**
@@ -65,6 +67,7 @@ You're ready to create DRCT tokens and contracts!
  * Oracle.sol - Provides the reference rates for the contract.  Our oracle contract uses daily UNIX timestamp values as keys for specific values.
  * Test_Oracle.sol - Allows the operator to store custom values for testing functionallity.
  * Exchange.sol - Facilitates the direct sale of DRCT Tokens by allowing the users to buy and place DRCT tokens up for sale at a specified price.  
+ * Membership.sol - Allows users to become a member of the DDA Cooperative. 
 
 
 ## Documentation
