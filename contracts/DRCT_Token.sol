@@ -13,6 +13,7 @@ contract DRCT_Token {
 
     using DRCTLibrary for DRCTLibrary.TokenStorage;
 
+    /*Variables*/
     DRCTLibrary.TokenStorage public drct;
 
     /*Functions*/
