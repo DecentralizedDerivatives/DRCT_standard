@@ -29,7 +29,7 @@ contract Migrations {
     }
 
     /**
-    @param new_address
+    @param new_address is the new address
     */
     function upgrade(address new_address) public restricted {
         Migrations upgraded = Migrations(new_address);
