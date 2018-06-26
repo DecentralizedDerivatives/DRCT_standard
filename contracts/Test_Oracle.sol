@@ -18,19 +18,24 @@ contract Test_Oracle {
     /*Events*/
     event DocumentStored(uint _key, uint _value);
 
+    /*Modifiers*/
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-    //Constructor - Sets owner
+    /**
+    *@dev Constructor - Sets owner
+    */
      constructor(string _api) public {
         owner = msg.sender;
         API = _api;
     }
 
-    //Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
-    //represent underlying values at a specified date (key).
+    /**
+    *@dev Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
+    *represent underlying values at a specified date (key).
+    */
     function StoreDocument(uint _key, uint _value) public onlyOwner() {
         if(_value == 0){
             _value = 1;

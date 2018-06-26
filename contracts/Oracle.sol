@@ -14,6 +14,7 @@ contract Oracle is usingOraclize{
     bytes32 private queryID;
     string public API;
 
+    /*Structs*/
     struct QueryInfo {
         uint value;
         bool queried;
@@ -28,18 +29,18 @@ contract Oracle is usingOraclize{
     event newOraclizeQuery(string description);
 
     /*Functions*/
-    /*
-    *@dev - Constructor, sets public api string
-    * eg - "json(https://api.gdax.com/products/BTC-USD/ticker).price"
-    "json(https://api.gdax.com/products/ETH-USD/ticker).price"
+    /**
+    *@dev Constructor, sets public api string
+    *e.g. "json(https://api.gdax.com/products/BTC-USD/ticker).price"
+    * or "json(https://api.gdax.com/products/ETH-USD/ticker).price"
     */
      constructor(string _api) public{
         API = _api;
     }
 
-    /*
+    /**
     *@dev RetrieveData - Returns stored value by given key
-    *@param "_date": Daily unix timestamp of key storing value (GMT 00:00:00)
+    *@param _date Daily unix timestamp of key storing value (GMT 00:00:00)
     */
     function retrieveData(uint _date) public constant returns (uint) {
         QueryInfo storage currentQuery = info[queryIds[_date]];
@@ -89,7 +90,7 @@ contract Oracle is usingOraclize{
     /**
     *@dev Determine if the Oracle was queried
     *@param _date Daily unix timestamp of key storing value (GMT 00:00:00)
-    *@return Returns true or false based upon whether an API query has been 
+    *@return true or false based upon whether an API query has been 
     *initialized (or completed) for given date
     */
     function getQuery(uint _date) public view returns(bool){

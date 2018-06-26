@@ -117,6 +117,7 @@ library TokenLibrary{
     /**
     *@dev check if the oracle has been queried within the last day 
     *@return true if it was queried and the start and end values are not zero
+    *and false if they are.
     */
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
@@ -179,6 +180,8 @@ library TokenLibrary{
     *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
+    *@param _numtopay number of contracts to try and pay (run it again if its not enough)
+    *@return true if the oracle was called or false once all contracts are paid out
     */
     function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
        //Calls the Calculate function first to calculate short and long shares
@@ -241,6 +244,7 @@ library TokenLibrary{
 
     /**
     *@dev Getter function for swap state
+    *@return current state of swap
     */
     function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);

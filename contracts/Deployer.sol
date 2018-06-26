@@ -3,7 +3,8 @@ pragma solidity ^0.4.23;
 import "./TokenToTokenSwap.sol";
 import "./CloneFactory.sol";
 
-/**Swap Deployer Contract - purpose is to save gas for deployment of Factory contract.
+/**
+*Swap Deployer Contract - purpose is to save gas for deployment of Factory contract.
 *It ensures only the factory can create new contracts and uses CloneFactory to clone 
 *the swap specified.
 */

@@ -4,7 +4,8 @@ import "./libraries/SafeMath.sol";
 import './Factory.sol';
 import "./CloneFactory.sol";
 
-/**This contract deploys a factory contract and uses CloneFactory to clone the factory
+/**
+*This contract deploys a factory contract and uses CloneFactory to clone the factory
 *specified.
 */
 
