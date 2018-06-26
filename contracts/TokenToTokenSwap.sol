@@ -69,7 +69,7 @@ contract TokenToTokenSwap {
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
     *@param _topay number of contracts to try and pay (run it again if its not enough)
-    *@return true if the oracle was called or false once all contracts are paid out
+    *@return true if the oracle was called and all contracts were paid out or false once ?
     */
     function forcePay(uint _topay) public returns (bool) {
        swap.forcePay(_topay);

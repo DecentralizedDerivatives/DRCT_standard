@@ -181,7 +181,7 @@ library TokenLibrary{
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
     *@param _numtopay number of contracts to try and pay (run it again if its not enough)
-    *@return true if the oracle was called or false once all contracts are paid out
+    *@return true if the oracle was called and all contracts are paid or false ?
     */
     function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
        //Calls the Calculate function first to calculate short and long shares
