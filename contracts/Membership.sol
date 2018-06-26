@@ -1,6 +1,11 @@
 pragma solidity ^0.4.23;
 import "./libraries/SafeMath.sol";
 
+/**
+*This contract allows users to sign up for the DDA Cooperative Membership.
+*To complete membership DDA will provide instructions to complete KYC/AML verification
+*through a system external to this contract.
+*/
 contract Membership {
     using SafeMath for uint256;
     
