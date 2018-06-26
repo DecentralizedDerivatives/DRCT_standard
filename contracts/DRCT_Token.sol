@@ -7,6 +7,7 @@ import "./libraries/DRCTLibrary.sol";
 *specified in the Factory contract.
 *Each Factory contract is specified one DRCT Token and the token address can contain many
 *different swap contracts that are standardized at the Factory level.
+*The logic for the functions in this contract is housed in the DRCTLibary.sol.
 */
 contract DRCT_Token {
 
@@ -24,21 +25,21 @@ contract DRCT_Token {
         drct.startToken(_factory);
     }
 
-  /**
+    /**
     *@dev Token Creator - This function is called by the factory contract and creates new tokens
     *for the user
     *@param _supply amount of DRCT tokens created by the factory contract for this swap
-    *@param _owner
-    *@param _swap
-  */
-  function createToken(uint _supply, address _owner, address _swap) public{
+    *@param _owner address
+    *@param _swap address
+    */
+    function createToken(uint _supply, address _owner, address _swap) public{
         drct.createToken(_supply,_owner,_swap);
     }
 
     /**
     *@dev Called by the factory contract, and pays out to a _party
     *@param _party being paid
-    *@param _swap
+    *@param _swap address
     */
     function pay(address _party, address _swap) public{
         drct.pay(_party,_swap);
@@ -76,7 +77,7 @@ contract DRCT_Token {
     *@param _from address to send funds from (must be allowed, see approve function)
     *@param _to address to send funds to
     *@param _amount amount of token to send
-    *@return true for successful
+    *@return true for successful transfer
     */
     function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
         return drct.transferFrom(_from,_to,_amount);
@@ -105,8 +106,8 @@ contract DRCT_Token {
     *@dev Gets the owner address and amount by specifying the swap address and index
     *@param _ind specified index in the swap
     *@param _swap specified swap address
-    *@return the owner address associated with a particular index in a particular swap
     *@return the amount to transfer associated with a particular index in a particular swap
+    *@return the owner address associated with a particular index in a particular swap
     */
     function getBalanceAndHolderByIndex(uint _ind, address _swap) public constant returns (uint, address) {
         return drct.getBalanceAndHolderByIndex(_ind,_swap);
@@ -124,8 +125,8 @@ contract DRCT_Token {
 
     /**
     *@dev Look up how much the spender or contract is allowed to spend?
-    *@param _owner 
-    *@param _spender party or contract? approved for transfering funds 
+    *@param _owner address
+    *@param _spender party approved for transfering funds 
     *@return the allowed amount _spender can spend of _owner's balance
     */
     function allowance(address _owner, address _spender) public constant returns (uint) {
