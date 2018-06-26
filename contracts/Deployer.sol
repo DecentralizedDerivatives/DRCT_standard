@@ -4,7 +4,8 @@ import "./TokenToTokenSwap.sol";
 import "./CloneFactory.sol";
 
 /**Swap Deployer Contract - purpose is to save gas for deployment of Factory contract.
-*It also ensures only the factory can create new contracts.
+*It ensures only the factory can create new contracts and uses CloneFactory to clone 
+*the swap specified.
 */
 
 contract Deployer is CloneFactory {
@@ -17,14 +18,18 @@ contract Deployer is CloneFactory {
 
     /*Functions*/
     /**
-     *@dev Deploys the factory contract and swap address
-     *@param _factory is the address of the factory contract
+    *@dev Deploys the factory contract and swap address
+    *@param _factory is the address of the factory contract
     */    
     constructor(address _factory) public {
         factory = _factory;
         swap = new TokenToTokenSwap(address(this),msg.sender,address(this),now);
     }
 
+    /**
+    *@dev Set swap address to clone
+    *@param _addr swap address to clone
+    */
     function updateSwap(address _addr) public onlyOwner() {
         swap = _addr;
     }
@@ -45,9 +50,9 @@ contract Deployer is CloneFactory {
     }
 
     /**
-     *@dev Set variables if the owner is the factory contract
-     *@param _factory address
-     *@param _owner address
+    *@dev Set variables if the owner is the factory contract
+    *@param _factory address
+    *@param _owner address
     */
     function setVars(address _factory, address _owner) public {
         require (msg.sender == owner);
