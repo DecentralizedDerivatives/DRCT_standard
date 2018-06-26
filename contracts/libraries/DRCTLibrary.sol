@@ -4,10 +4,8 @@ import "./SafeMath.sol";
 import "../interfaces/Factory_Interface.sol";
 
 /**
-*The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
-*specified in the Factory contract.
-*Each Factory contract is specified one DRCT Token and the token address can contain many
-*different swap contracts that are standardized at the Factory level.
+*The DRCTLibrary contains the reference code used in the DRCT_Token (an ERC20 compliant token
+*representing the payout of the swap contract specified in the Factory contract).
 */
 library DRCTLibrary{
 
@@ -59,20 +57,24 @@ library DRCTLibrary{
         self.master_contract = _factory;
     }
 
+    /**
+    *@dev ensures the member is whitelisted
+    *@param _member is the member address that is chekced agaist the whitelist
+    */
     function isWhitelisted(TokenStorage storage self,address _member) internal view returns(bool){
         Factory_Interface _factory = Factory_Interface(self.master_contract);
         return _factory.isWhitelisted(_member);
     }
 
-  /**
+    /**
     *@dev Token Creator - This function is called by the factory contract and creates new tokens
     *for the user
     *@param _supply amount of DRCT tokens created by the factory contract for this swap
-    *@param _owner
-    *@param _swap
-  */
-  function createToken(TokenStorage storage self,uint _supply, address _owner, address _swap) public{
-    require(msg.sender == self.master_contract);
+    *@param _owner address
+    *@param _swap address
+    */
+    function createToken(TokenStorage storage self,uint _supply, address _owner, address _swap) public{
+        require(msg.sender == self.master_contract);
         //Update total supply of DRCT Tokens
         self.total_supply = self.total_supply.add(_supply);
         //Update the total balance of the owner
@@ -102,7 +104,7 @@ library DRCTLibrary{
     /**
     *@dev Called by the factory contract, and pays out to a _party
     *@param _party being paid
-    *@param _swap
+    *@param _swap address
     */
     function pay(TokenStorage storage self,address _party, address _swap) public{
         require(msg.sender == self.master_contract);
@@ -236,9 +238,8 @@ library DRCTLibrary{
         }
     }
 
-
     /**
-    *ERC20 compliant transfer function
+    *@dev ERC20 compliant transfer function
     *@param _to Address to send funds to
     *@param _amount Amount of token to send
     *@return true for successful
@@ -329,7 +330,7 @@ library DRCTLibrary{
     /**
     *@dev Look up how much the spender or contract is allowed to spend?
     *@param _owner 
-    *@param _spender party or contract? approved for transfering funds 
+    *@param _spender party approved for transfering funds 
     *@return the allowed amount _spender can spend of _owner's balance
     */
     function allowance(TokenStorage storage self, address _owner, address _spender) public constant returns (uint) {

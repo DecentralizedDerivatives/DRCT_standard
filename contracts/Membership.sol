@@ -32,7 +32,7 @@ contract Membership {
     /*Modifiers*/
     modifier onlyOwner() {
         require(msg.sender == owner);
-    _;
+        _;
     }
     
     /*Functions*/

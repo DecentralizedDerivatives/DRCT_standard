@@ -5,15 +5,14 @@ pragma solidity ^0.4.23;
 
 /**
 *Exchange creates an exchange for the swaps.
-*@To do:
-*Allow partial fills
 */
 contract Exchange{ 
     using SafeMath for uint256;
 
-    /*VARIABLES*/
+    /*Variables*/
     address public owner; //The owner of the market contract
     
+    /*Structs*/
     //This is the base data structure for an order (the maker of the order and the price)
     struct Order {
         address maker;// the placer of the order
@@ -28,7 +27,6 @@ contract Exchange{
     }
 
     mapping(address => ListAsset) public listOfAssets;
-
     //Maps an OrderID to the list of orders
     mapping(uint256 => Order) public orders;
     //An mapping of a token address to the orderID's
@@ -48,20 +46,22 @@ contract Exchange{
     //order_nonce;
     uint internal order_nonce;
 
-    /*Modifiers*/
-    /// @dev Access modifier for Owner functionality
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
     /*Events*/
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
     event Sale(address _sender,address _token, uint256 _amount, uint256 _price);
     event OrderRemoved(address _sender,address _token, uint256 _amount, uint256 _price);
 
+    /*Modifiers*/
+    /**
+    *@dev Access modifier for Owner functionality
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
     /*Functions*/
-    /*
+    /**
     *@dev the constructor argument to set the owner and initialize the array.
     */
     constructor() public{
@@ -70,7 +70,7 @@ contract Exchange{
         order_nonce = 1;
     }
 
-    /*
+    /**
     *@dev list allows a party to place an order on the orderbook
     *@param _tokenadd address of the drct tokens
     *@param _amount number of DRCT tokens
@@ -101,9 +101,10 @@ contract Exchange{
         userOrders[msg.sender].push(order_nonce);
         order_nonce += 1;
     }
-    /*
-    *@dev list allows a party to place an order on the orderbook
-    *@param _tokenadd address of the drct tokens
+
+    /**
+    *@dev list allows a party to list an order on the orderbook
+    *@param _asset address of the drct tokens
     *@param _amount number of DRCT tokens
     *@param _price uint256 price per unit in wei
     */
@@ -116,12 +117,10 @@ contract Exchange{
     }
 
     /**
-    *@dev buy allows a party to fill an order
-    *@param _asset is the address of the assset
-    *@param _amount is the amount to buy
+    *@dev buy allows a party to partially fill an order
+    *@param _asset is the address of the assset listed
+    *@param _amount is the amount of tokens to buy
     */
-    //subtract the amount from the quantity for sale (a max of the amount for sale) 
-    //and charge them the price
     function buyPerUnit(address _asset, uint256 _amount) external payable {
         require(blacklist[msg.sender] == false);
         ListAsset storage listing = listOfAssets[_asset];
@@ -129,6 +128,7 @@ contract Exchange{
         require(msg.value == _amount.mul(listing.price));
         listing.amount= listing.amount.sub(_amount);
     }
+
     /**
     *@dev unlist allows a party to remove their order from the orderbook
     *@param _orderId is the uint256 ID of order
@@ -160,9 +160,7 @@ contract Exchange{
         emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
     }
 
-
-
-    /*
+    /**
     *@dev getOrder lists the price,amount, and maker of a specific token for a sale
     *@param _orderId uint256 ID of order
     *@return address of the party selling
@@ -175,7 +173,7 @@ contract Exchange{
         return (_order.maker,_order.price,_order.amount,_order.asset);
     }
 
-    /*
+    /**
     *@dev allows the owner to change who the owner is
     *@param _owner is the address of the new owner
     */
@@ -183,18 +181,17 @@ contract Exchange{
         owner = _owner;
     }
 
-    /*
+    /**
     *@notice This allows the owner to stop a malicious party from spamming the orderbook
     *@dev Allows the owner to blacklist addresses from using this exchange
     *@param _address the address of the party to blacklist
     *@param _motion true or false depending on if blacklisting or not
-
     */
     function blacklistParty(address _address, bool _motion) public onlyOwner() {
         blacklist[_address] = _motion;
     }
 
-    /*
+    /**
     *@dev Allows parties to see if one is blacklisted
     *@param _address the address of the party to blacklist
     *@return bool true for is blacklisted
@@ -203,16 +200,16 @@ contract Exchange{
         return blacklist[_address];
     }
 
-    /*
+    /**
     *@dev getOrderCount allows parties to query how many orders are on the book
-    *@param _token address used to count the number of orders?
+    *@param _token address used to count the number of orders
     *@return _uint of the number of orders in the orderbook
     */
     function getOrderCount(address _token) public constant returns(uint) {
         return forSale[_token].length;
     }
 
-    /*
+    /**
     *@dev Gets number of open orderbooks
     *@return _uint of the number of tokens with open orders
     */
@@ -220,7 +217,7 @@ contract Exchange{
         return openBooks.length;
     }
 
-    /*
+    /**
     *@dev getOrders allows parties to get an array of all orderId's open for a given token
     *@param _token address of the drct token
     *@return _uint[] an array of the orders in the orderbook
@@ -229,16 +226,16 @@ contract Exchange{
         return forSale[_token];
     }
 
-    /*
+    /**
     *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
-    *@param _token address of the user
+    *@param _user address 
     *@return _uint[] an array of the orders in the orderbook for the user
     */
     function getUserOrders(address _user) public constant returns(uint[]) {
         return userOrders[_user];
     }
 
-    /*
+    /**
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order
     *@param _order is the struct containing the details of the order
