@@ -54,7 +54,7 @@ contract Membership {
     
     /**
     *@notice Allows a user to become DDA members if they pay the fee. However, they still have to complete
-    complete KYC/AML verification off line
+    *complete KYC/AML verification off line
     *@dev This creates and transfers the token to the msg.sender
     */
     function requestMembership() public payable {

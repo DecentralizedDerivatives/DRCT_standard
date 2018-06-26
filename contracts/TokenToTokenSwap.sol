@@ -27,6 +27,9 @@ contract TokenToTokenSwap {
         swap.startSwap(_factory_address,_creator,_userContract,_start_date);
     }
     
+    /**
+    *@dev Acts as a constructor for cloning the swap
+    */
     function init (address _factory_address, address _creator, address _userContract, uint _start_date) public {
         swap.startSwap(_factory_address,_creator,_userContract,_start_date);
     }

@@ -59,6 +59,7 @@ library TokenLibrary{
 
     /*Functions*/
     /**
+    *@dev Acts the constructor function in the cloned swap
     *@param _factory_address
     *@param _creator address of swap creator
     *@param _userContract address
