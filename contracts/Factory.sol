@@ -13,6 +13,7 @@ import "./interfaces/Membership_Interface.sol";
 */
 contract Factory {
     using SafeMath for uint256;
+    
     /*Variables*/
     //Addresses of the Factory owner and oracle. For oracle information, 
     //check www.github.com/DecentralizedDerivatives/Oracles
@@ -62,16 +63,26 @@ contract Factory {
         owner = msg.sender;
     }
 
-    /*How do we prevent someone else from starting this?*/
+    /**
+    *@dev constructor function for cloned factory
+    */
     function init(address _owner) public{
         require(owner == address(0));
         owner = _owner;
     }
 
+    /**
+    *@dev Sets the Membership contract address
+    *@param _memberContract The new membership address
+    */
     function setMemberContract(address _memberContract) public onlyOwner() {
         memberContract = _memberContract;
     }
 
+    /**
+    *@dev Sets the member types/permissions for those whitelisted
+    *@param _memberTypes is the list of member types
+    */
     function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
         whitelistedTypes[0] = false;
         for(uint i = 0; i<_memberTypes.length;i++){
@@ -79,59 +90,63 @@ contract Factory {
         }
     }
 
+    /**
+    *@dev Checks the membership type/permissions for whitelisted members
+    *@param _member address to get membership type from
+    */
     function isWhitelisted(address _member) public view returns (bool){
         Membership_Interface Member = Membership_Interface(memberContract);
         return whitelistedTypes[Member.getMembershipType(_member)];
     }
-    
-
+ 
     /**
     *@dev Gets long and short token addresses based on specified date
-    *@param uint_date
+    *@param _date 
     *@return short and long tokens' addresses
     */
     function getTokens(uint _date) public view returns(address, address){
         return(long_tokens[_date],short_tokens[_date]);
     }
 
-    /*
-    * Updates the fee amount
-    * @param "_fee": The new fee amount
+    /**
+    *@dev Updates the fee amount
+    *@param _fee is the new fee amount
     */
     function setFee(uint _fee) public onlyOwner() {
         fee = _fee;
     }
 
-    /*
-    * Updates the fee amount
-    * @param "_fee": The new fee amount
+    /**
+    *@dev Updates the swap fee amount
+    *@param _swapFee is the new swap fee amount
     */
     function setSwapFee(uint _swapFee) public onlyOwner() {
         swapFee = _swapFee;
     }   
 
-    /*
-    * Sets the deployer address
-    * @param "_deployer": The new deployer address
+    /**
+    *@dev Sets the deployer address
+    *@param _deployer is the new deployer address
     */
     function setDeployer(address _deployer) public onlyOwner() {
         deployer_address = _deployer;
         deployer = Deployer_Interface(_deployer);
     }
 
-    /*
-    * Sets the user_contract address
-    * @param "_userContract": The new userContract address
+    /**
+    *@dev Sets the user_contract address
+    *@param _userContract is the new userContract address
     */
     function setUserContract(address _userContract) public onlyOwner() {
         user_contract = _userContract;
     }
 
-    /*
-    *@dev Sets token ratio, swap duration, and multiplier variables for a swap
+    /**
+    *@dev Sets token ratio, swap duration, and multiplier variables for a swap.
     *@param _token_ratio the ratio of the tokens
     *@param _duration the duration of the swap, in days
     *@param _multiplier the multiplier used for the swap
+    *@param _swapFee the swap fee
     */
     function setVariables(uint _token_ratio, uint _duration, uint _multiplier, uint _swapFee) public onlyOwner() {
         require(_swapFee < 10000);
@@ -141,8 +156,8 @@ contract Factory {
         swapFee = _swapFee;
     }
 
-    /*
-    *@dev Sets the addresses of the tokens used for the swap
+    /**
+    *@dev Sets the address of the base tokens used for the swap
     *@param _token The address of a token to be used  as collateral
     */
     function setBaseToken(address _token) public onlyOwner() {
@@ -152,7 +167,8 @@ contract Factory {
     /**
     *@dev Allows a user to deploy a new swap contract, if they pay the fee
     *@param _start_date the contract start date 
-    *@return returns the newly created swap address and calls event 'ContractCreation'
+    *@return new_contract address for he newly created swap address and calls 
+    *event 'ContractCreation'
     */
     function deployContract(uint _start_date) public payable returns (address) {
         require(msg.value >= fee && isWhitelisted(msg.sender));
@@ -167,8 +183,6 @@ contract Factory {
     /**
     *@dev Deploys DRCT tokens for given start date
     *@param _start_date of contract
-    *@param long if true
-    *@return returns token address of deployed contract
     */
     function deployTokenContract(uint _start_date) public{
         address _token;
@@ -183,7 +197,7 @@ contract Factory {
         startDates.push(_start_date);
     }
 
-    /*
+    /**
     *@dev Deploys new tokens on a DRCT_Token contract -- called from within a swap
     *@param _supply The number of tokens to create
     *@param _party the address to send the tokens to
@@ -239,21 +253,23 @@ contract Factory {
     function() public payable {
     }
 
-    /*
-    *@dev Returns a tuple of many private variables
-    *@returns oracle_adress": The address of the oracle
-    *@returns duration The duration of the swap
-    *@returns multiplier The multiplier for the swap
-    *@returns token The address of token 
+    /**
+    *@dev Returns a tuple of many private variables.
+    *The variables from this function are pass through to the TokenLibrary.getVariables function
+    *@returns oracle_adress is the address of the oracle
+    *@returns duration is the duration of the swap
+    *@returns multiplier is the multiplier for the swap
+    *@returns token is the address of token
+    *@returns _swapFee is the swap fee 
     */
     function getVariables() public view returns (address, uint, uint, address,uint){
         return (oracle_address,duration, multiplier, token,swapFee);
     }
 
-    /*
-    *Pays out to a DRCT token
-    *@param _party The address being paid
-    *@param _token_add 
+    /**
+    *@dev Pays out to a DRCT token
+    *@param _party is the address being paid
+    *@param _token_add token to pay out
     */
     function payToken(address _party, address _token_add) public {
         require(created_contracts[msg.sender] > 0);

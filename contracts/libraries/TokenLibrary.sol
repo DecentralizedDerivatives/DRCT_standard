@@ -59,6 +59,7 @@ library TokenLibrary{
 
     /*Functions*/
     /**
+    *@dev Acts the constructor function in the cloned swap
     *@param _factory_address
     *@param _creator address of swap creator
     *@param _userContract address
@@ -106,8 +107,8 @@ library TokenLibrary{
 
     /**
     *@dev Getter function for contract details saved in the SwapStorage struct
-    *that gets the oracle address, duration, multiplier, base token address, and fee
-    *and uses these values in the Factory.getVariables function.
+    *Gets the oracle address, duration, multiplier, base token address, and fee
+    *and from the Factory.getVariables function.
     */
     function getVariables(SwapStorage storage self) internal{
         (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
@@ -116,6 +117,7 @@ library TokenLibrary{
     /**
     *@dev check if the oracle has been queried within the last day 
     *@return true if it was queried and the start and end values are not zero
+    *and false if they are.
     */
     function oracleQuery(SwapStorage storage self) internal returns(bool){
         Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
@@ -178,7 +180,8 @@ library TokenLibrary{
     *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
     *If the Calculate function has not yet been called, this function will call it.
     *The function then pays every token holder of both the long and short DRCT tokens
-    *What should we do about zeroed out values? 
+    *@param _numtopay number of contracts to try and pay (run it again if its not enough)
+    *@return true if the oracle was called and all contracts are paid or false ?
     */
     function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
        //Calls the Calculate function first to calculate short and long shares
@@ -241,6 +244,7 @@ library TokenLibrary{
 
     /**
     *@dev Getter function for swap state
+    *@return current state of swap
     */
     function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
         return uint(self.current_state);

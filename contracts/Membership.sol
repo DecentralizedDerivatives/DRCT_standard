@@ -1,12 +1,16 @@
 pragma solidity ^0.4.23;
 import "./libraries/SafeMath.sol";
 
+/**
+*This contract allows users to sign up for the DDA Cooperative Membership.
+*To complete membership DDA will provide instructions to complete KYC/AML verification
+*through a system external to this contract.
+*/
 contract Membership {
     using SafeMath for uint256;
     
     /*Variables*/
     address public owner;
-    
     //Memebership fees
     uint public memberFee;
 
@@ -54,7 +58,7 @@ contract Membership {
     
     /**
     *@notice Allows a user to become DDA members if they pay the fee. However, they still have to complete
-    complete KYC/AML verification off line
+    *complete KYC/AML verification off line
     *@dev This creates and transfers the token to the msg.sender
     */
     function requestMembership() public payable {
@@ -88,7 +92,7 @@ contract Membership {
     *@dev Use this function to set membershipType for the member
     *@param _memberAddress address of member that we need to update membershipType
     *@param _membershipType type of membership to assign to member
-    **/
+    */
     function setMembershipType(address _memberAddress,  uint _membershipType) public onlyOwner{
         Member storage memberAddress = members[_memberAddress];
         memberAddress.membershipType = _membershipType;
@@ -96,7 +100,7 @@ contract Membership {
 
     /**
     *@dev getter function to get all membersAccts
-    **/
+    */
     function getMembers() view public returns (address[]){
         return membersAccts;
     }
@@ -104,14 +108,14 @@ contract Membership {
     /**
     *@dev Get member information
     *@param _memberAddress address to pull the memberId, membershipType and membership
-    **/
+    */
     function getMember(address _memberAddress) view public returns(uint, uint) {
         return(members[_memberAddress].memberId, members[_memberAddress].membershipType);
     }
 
     /**
-    @dev Gets length of array containing all member accounts or total supply
-    **/
+    *@dev Gets length of array containing all member accounts or total supply
+    */
     function countMembers() view public returns(uint) {
         return membersAccts.length;
     }
@@ -119,7 +123,7 @@ contract Membership {
     /**
     *@dev Gets membership type
     *@param _memberAddress address to view the membershipType
-    **/
+    */
     function getMembershipType(address _memberAddress) public constant returns(uint){
         return members[_memberAddress].membershipType;
     }
@@ -133,10 +137,10 @@ contract Membership {
     }
 
     /**
-    @dev Refund money if KYC/AML fails
-    @param _to address to send refund
-    @param _amount to refund. If no amount  is specified the current memberFee is refunded
-    **/
+    *@dev Refund money if KYC/AML fails
+    *@param _to address to send refund
+    *@param _amount to refund. If no amount  is specified the current memberFee is refunded
+    */
     function refund(address _to, uint _amount) public onlyOwner {
         require (_to != address(0));
         if (_amount == 0) {_amount = memberFee;}
@@ -149,10 +153,10 @@ contract Membership {
     }
 
     /**
-    @dev Allow owner to withdraw funds
-    @param _to address to send funds
-    @param _amount to send
-    **/
+    *@dev Allow owner to withdraw funds
+    *@param _to address to send funds
+    *@param _amount to send
+    */
     function withdraw(address _to, uint _amount) public onlyOwner {
         _to.transfer(_amount);
     }    
