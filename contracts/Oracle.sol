@@ -13,12 +13,15 @@ contract Oracle is usingOraclize{
     //Private queryId for Oraclize callback
     bytes32 private queryID;
     string public API;
+    string public API2;
 
     /*Structs*/
     struct QueryInfo {
         uint value;
         bool queried;
         uint date;
+        uint calledTime;
+        uint countCalls;
     }  
     //Mapping of documents stored in the oracle
     mapping(uint => bytes32) public queryIds;
@@ -30,12 +33,15 @@ contract Oracle is usingOraclize{
 
     /*Functions*/
     /**
-    *@dev Constructor, sets public api string
+    *@dev Constructor, sets two public api strings
     *e.g. "json(https://api.gdax.com/products/BTC-USD/ticker).price"
+    * "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price"
     * or "json(https://api.gdax.com/products/ETH-USD/ticker).price"
+    * "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price"
     */
-     constructor(string _api) public{
+     constructor(string _api, string _api2) public{
         API = _api;
+        API2 = _api2;
     }
 
     /**
@@ -52,16 +58,25 @@ contract Oracle is usingOraclize{
     */
     function pushData() public payable{
         uint _key = now - (now % 86400);
+        uint _calledTime = now;
         QueryInfo storage currentQuery = info[queryIds[_key]];
-        require(currentQuery.queried == false);
+        require(currentQuery.queried == false  && currentQuery.calledTime == 0 || 
+            currentQuery.calledTime != 0 && _calledTime >= (currentQuery.calledTime + 3600) &&
+            currentQuery.value == 0);
         if (oraclize_getPrice("URL") > address(this).balance) {
             emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");
-            queryID = oraclize_query("URL", API);
+           if (currentQuery.countCalls % 2 == 0 ){
+                queryID = oraclize_query("URL", API);
+            } else {
+                queryID = oraclize_query("URL", API2);
+            }
             queryIds[_key] = queryID;
             currentQuery.queried = true;
             currentQuery.date = _key;
+            currentQuery.calledTime = _calledTime;
+            currentQuery.countCalls++;
         }
     }
 
