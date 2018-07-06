@@ -5,7 +5,7 @@ var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var o_startdate =1531440000;
-var hdate = "07/13/2018"
+var hdate = "07/13/2018";
 
 //var type = "ETH/USD";
 //var factory_address= "0xd47823a9769bec0bc31d3ef8b076d820865f39d0";

@@ -1,6 +1,13 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+
+/**
+Brenda's Infura API
+Test Ethereum Network (Rinkeby)
+https://rinkeby.infura.io/PM3RtHbQjHxWydyhDi37
+
+*/
 //this is for ropsten only (hence it's public)
 //don't store real Ether here
 //don't steal all my Ropsten eth
