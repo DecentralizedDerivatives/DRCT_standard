@@ -9,7 +9,7 @@ module.exports =async function(callback) {
  
     let masterDeployer = await MasterDeployer.at(_master);
     var count = parseInt(await masterDeployer.getFactoryCount());
-    console.log("Factory_count, UTCtime, factory_address, oracle_address, value");
+    console.log("Factory_count, UTCtime, factory_address, oracle_address, value, link");
 
     for(i = 1; i <= count; i++){
         var factory_address = await masterDeployer. getFactorybyIndex(i);
