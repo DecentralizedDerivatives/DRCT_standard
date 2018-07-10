@@ -1,12 +1,13 @@
 /**
-*Use this for setting up contracts for testing
-*Truffle migration still has to be ran to link the DRCTLibrary and Factory
+*@dev Use this for setting up contracts for testing
+* This will deploy all contracts needed to deploy two factories (one ETH and one BTC) and 
+*create tokens for the factories.
 
-*These are the two commands that need to be ran:
+*These commands that need to be ran:
 *truffle migrate --network rinkeby
-*truffle exec scripts/Test_js_migration.js --network rinkeby
+*truffle exec scripts/Migrate_1.js --network rinkeby
+*truffle exec scripts/Migrate_2.js --network rinkeby
 */
-
 
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
@@ -18,10 +19,20 @@ var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
+
+/**
+*@dev Update o_startdate as epoch date to create tokens for 
+*Update hdate to reflect the epoch date as a human readable date
+*/
 var o_startdate =1531440000;
 var hdate = "07/13/2018"; //human readable date
 
+
 module.exports =async function(callback) {
+    /**
+    *@dev Deploy dudd factory, membership, masterDeployer, wrapped_ether, 
+    *and exchange contracts
+    */
     let factory;
     let membership;
     let masterDeployer;
@@ -39,6 +50,11 @@ module.exports =async function(callback) {
         console.log("factory:  ",factory.address)
         await masterDeployer.setFactory(factory.address);
 
+
+    /**
+    *@dev Deploy two factories: one for BTC/USD and one for ETH/USD
+    *Update the variables below as needed.
+    */
     var swapFee = 0;
     var  duration = 7;
 
@@ -91,18 +107,24 @@ module.exports =async function(callback) {
       userContract2 = await UserContract.new();
       deployer2 = await Deployer.new(factory2.address);
       oracle2 = await Oracle.new(_oracle_api3,_oracle_api4);
-      await factory2.setBaseToken(base.address);
-      await factory2.setUserContract(userContract.address);
-      await factory2.setDeployer(deployer.address);
-      await factory2.setOracleAddress(oracle.address);
+      await factory2.setBaseToken(base2.address);
+      await factory2.setUserContract(userContract2.address);
+      await factory2.setDeployer(deployer2.address);
+      await factory2.setOracleAddress(oracle2.address);
       await userContract2.setFactory(factory2.address);
 
+    //Save contract addresses to console
     console.log("MasterDeployer, Type,duration, multiplier, swapFee, Factory, Oracle, Deployer, UserContract, BaseToken")
     var  ar = [masterDeployer.address,type,duration,multiplier, swapFee, factory1.address, oracle.address, deployer.address, userContract.address, base.address];
     var  ar2 = [masterDeployer.address,type2,duration,multiplier2, swapFee, factory2.address, oracle2.address, deployer2.address, userContract2.address, base2.address];
     console.log(ar.join(', '));
     console.log(ar2.join(', '));
 
+    /**
+    *@dev Create tokens for the two created factories above
+    *based on the o_startdate provided above and print the 
+    *human readable date on the console.
+    */
     console.log('token date: ',hdate)
     await factory1.deployTokenContract(o_startdate);
     var long_token_add =await factory1.long_tokens(o_startdate);
@@ -115,7 +137,4 @@ module.exports =async function(callback) {
     var short_token_add2 =await factory2.short_tokens(o_startdate);
     console.log('Long Token ETH/USD: ',long_token_add2);
     console.log('Short Token ETH/USD: ',short_token_add2);
-
-
-
 }

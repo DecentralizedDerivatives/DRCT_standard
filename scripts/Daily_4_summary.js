@@ -1,8 +1,16 @@
+/**
+*Daily summary.
+*/
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
 var TokenToTokenSwap = artifacts.require("TokenToTokenSwap");
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var _date = Date.now()/1000- (Date.now()/1000)%86400;
+
+/**
+*@dev Update the Master Deployer contract. This will loop through each
+*factory associated with the master deployer and provide a summary.
+*/
 var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
 
 module.exports =async function(callback) {
@@ -91,6 +99,4 @@ module.exports =async function(callback) {
     }
 
 
-    //Total users--count unique addresses?
-
-
+ 
