@@ -1,9 +1,7 @@
-// use ganache-cli -m waxfang
-/*
-Owner account
-AD - 0x711e2b65be4a0201bb8c8e26646366d066d42daa
-PK - e495a0d39ae99327ea09eace1f6096a5a3cddeec3b52a3ff80b719831be3d695
+/**
+Deploy new factory
 */
+ 
 var Oracle = artifacts.require("Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
@@ -12,25 +10,33 @@ var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
 
 /**
-*oracle API's:
-*e.g. "json(https://api.gdax.com/products/BTC-USD/ticker).price"
+*@dev Current Oracle API's that can be used for BTC/USD or ETH/USD:
+* "json(https://api.gdax.com/products/BTC-USD/ticker).price"
 * "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price"
-* or "json(https://api.gdax.com/products/ETH-USD/ticker).price"
+* "json(https://api.gdax.com/products/ETH-USD/ticker).price"
 * "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price"
 */
-var _oracle_api = "json(https://api.gdax.com/products/BTC-USD/ticker).price";
-var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price";
-var type = "BTC/USD";
+
+/**
+*@dev Update oracle APIs(two are needed, the second one is used as backup),
+*and factory details(duration, multiplier, swapFee)
+*the type is only used to print to the console.
+*/
+var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
+var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
+var type = "ETH/USD";
 var  duration = 7;
-var multiplier = 1;
+var multiplier = 5;
 var swapFee = 0;
 
 /**
-*@dev Get these addresses from the log after running 3_Deploy_setup.js
+*@dev Update the addresses below. get these addresses from the log after running 
+*4_Admin_setup.js
 */
-var _master = "0xf9ed40905386323f14317f1fa42ac21ffd29cba5";
-var _member = "0xe4c559b57f9af24ed13d40d1c63b3eb94778e8f8";
-var _wrapped = "0x22eecfc947de216ddd2aaccbda463e461884dbf9";
+
+var _master = "0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8";
+var _member = "0xb28b547e8c1c8b551e6c057465bfd802b1567939";
+var _wrapped = "0xfe0756975401152e9f14dba904062e6658cccb33";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")
@@ -62,5 +68,8 @@ module.exports =async function(callback) {
       console.log('Deployer: ',deployer.address);
       console.log('UserContract: ',userContract.address);
       console.log('BaseToken: ',base.address);
+    console.log("MasterDeployer, Type,duration, multiplier, swapFee, Factory, Oracle, Deployer, UserContract, BaseToken")
+    var  ar = [masterDeployer.address,type,duration,multiplier, swapFee, factory.address, oracle.address, deployer.address, userContract.address, base.address];
+    console.log(ar.join(', '));
 
 }

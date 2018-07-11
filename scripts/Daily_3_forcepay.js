@@ -1,8 +1,17 @@
+/**
+*Check which contracts expired and force pay them.
+*/
 var Oracle = artifacts.require("Oracle");
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
 var TokenToTokenSwap = artifacts.require("TokenToTokenSwap");
 var _date = Date.now()/1000- (Date.now()/1000)%86400;
+
+/**
+*@dev Update the Master Deployer contract. This will loop through each
+*factory associated with the master deployer(_master) specified and each
+*swap and force pay them.
+*/
 var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
 
 module.exports =async function(callback) {

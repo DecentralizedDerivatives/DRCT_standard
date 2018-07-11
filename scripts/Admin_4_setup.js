@@ -3,14 +3,6 @@
 *the factory and DRCTLibrary are linked by Truffle with 4_further_deployments2.js).
 */
 
-/**shouold this stay?? **************/
-// use ganache-cli -m waxfang
-/*
-Use this to deploy DDA contracts
-Owner account?
-AD - 0x711e2b65be4a0201bb8c8e26646366d066d42daa?
-PK - e495a0d39ae99327ea09eace1f6096a5a3cddeec3b52a3ff80b719831be3d695?
-*/
 
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
