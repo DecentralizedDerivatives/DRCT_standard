@@ -179,3 +179,6 @@ If the contract is not tokenized, parties may exit the contract (assuming both a
 **Step 11: Operator - Redeem your wrapped Ether**
 
      WrappedEther.withdraw(amount);  //enter amount in wei
+
+     Nick Test
+     
