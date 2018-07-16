@@ -12,7 +12,7 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 *factory associated with the master deployer(_master) specified and each
 *swap and force pay them.
 */
-var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
+var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579"; 
 
 module.exports =async function(callback) {
 

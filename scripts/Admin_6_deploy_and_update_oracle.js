@@ -18,13 +18,11 @@ var Factory = artifacts.require("Factory");
 
 var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
 var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
-var _factory = "0xd47823a9769bec0bc31d3ef8b076d820865f39d0";
+var _factory = "0xdfb380afc0948e9551fd17b486681122b5936c2a";
 
 //var _oracle_api = "json(https://api.gdax.com/products/BTC-USD/ticker).price";
 //var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price";
-//var _factory = "0xb4dab81e95719ea69f08616c221e42489e84da3a";
-
-
+//var _factory = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
 
 module.exports =async function(callback) {
     let factory;

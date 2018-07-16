@@ -11,8 +11,7 @@ var Factory = artifacts.require("Factory");
 *factory associated with the master deployer(_master) specified.
 *_nowUTC is only used to display a human readable date on the console.
 */
-var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
-//var _master ="0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8"; //two api oracle
+var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579"; 
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 

@@ -7,10 +7,15 @@ const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
 /**
-*@dev Update the swap start date and factory address
+*@dev Update the swap start date, hdate(human readable date is used only in 
+* the console) and factory address
 */
-var o_startdate ="1528416000";//swap start date in epoch time
-var factory_address= "0x15bd4d9dd2dfc5e01801be8ed17392d8404f9642";
+
+var o_startdate =1532044800; //epoch time
+var hdate ="7/20/2018"; //human readable date
+var factory_address= "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";//BTC
+//var factory_address = "0xdfb380afc0948e9551fd17b486681122b5936c2a";//ETH
+console.log(hdate);
 
 module.exports =async function(callback) {
     let swap;

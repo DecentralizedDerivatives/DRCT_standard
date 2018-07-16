@@ -1,8 +1,8 @@
 /****Uncomment the body below to run this with Truffle migrate for truffle testing*/
-/*
+
 var Factory = artifacts.require("./Factory.sol");
 var DRCTLibrary = artifacts.require("./libraries/DRCTLibrary.sol");
-*/
+
 /****Uncomment the body to run this with Truffle migrate for truffle testing*/
 
 /**
@@ -17,11 +17,11 @@ var DRCTLibrary = artifacts.require("./libraries/DRCTLibrary.sol");
 
 /****Uncomment the body below to run this with Truffle migrate for truffle testing*/
 
-/*
+
 module.exports = function(deployer) {
 	deployer.deploy(DRCTLibrary);
 	deployer.link(DRCTLibrary,Factory);
 	deployer.deploy(Factory);
 }
-*/
+
 /****Uncomment the body to run this with Truffle migrate for truffle testing*/

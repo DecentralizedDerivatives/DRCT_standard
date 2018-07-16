@@ -34,15 +34,15 @@ var swapFee = 0;
 *4_Admin_setup.js
 */
 //BTC oracle
-var _oracle = "0xb666c8682cc9f279f1133476eaf0365778dc3c71";
+var _oracle = "0xf6d293faa7321d671b24a3a6abb224b1b1aaefde";
 
 //ETH oracle
-//var _oracle = "0xb9348a358ad2e632084f26206390332f8bb34de8";
+//var _oracle = "0xf0d3fdb12f118ed3f64c6f0c373365ae21849206";
 
 
-var _master = "0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8";
-var _member = "0xb28b547e8c1c8b551e6c057465bfd802b1567939";
-var _wrapped = "0xfe0756975401152e9f14dba904062e6658cccb33";
+var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579";
+var _member = "0xdcff3a825f6ab9a861bdf481017d91b25ac980a4";
+var _wrapped = "0xc733a8ba37590e71096f10b23a049f3a30386c6f";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")

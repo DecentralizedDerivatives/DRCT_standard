@@ -14,16 +14,19 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 *Update hdate to reflect the epoch date as a human readable date and type
 *both hdate and type are only used to output to the console
 */
+
+//var o_startdate =1532044800;
+//var hdate = "7/20/2018"; //human readable date
+
 var o_startdate = 1532649600;
 var hdate = "07/27/2018";
 
-//var type = "ETH/USD";
-//var factory_address= "0xd47823a9769bec0bc31d3ef8b076d820865f39d0";
-//var factory_address="0xf45902281e917bcbeb70ebb574b6949e5ac8c8b2"; //two api oracle
+var type = "ETH/USD";
+var factory_address= "0xdfb380afc0948e9551fd17b486681122b5936c2a";
 
-var type = "BTC/USD";
-//var factory_address= "0xb4dab81e95719ea69f08616c221e42489e84da3a"; //old
-var factory_address = "0x8822b11262fb2f6c201e6fed8a3098b32851cc42";
+
+//var type = "BTC/USD";
+//var factory_address = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
 
 console.log(hdate, type, factory_address);
 module.exports =async function(callback) {
