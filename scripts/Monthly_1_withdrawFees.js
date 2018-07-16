@@ -8,7 +8,7 @@ var Factory = artifacts.require("Factory");
 *@dev Update the master deployer address (_master). This will loop through each
 *factory associated with the master deployer(_master) specified and witdraw fees.
 */
-var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
+var _master = "0xfce97feb873355d43e9102bbef83a1ed758edddf";
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
 module.exports =async function(callback) {

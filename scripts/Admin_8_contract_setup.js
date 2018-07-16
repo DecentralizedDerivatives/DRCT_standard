@@ -17,13 +17,15 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var o_startdate = 1532649600;
 var hdate = "07/27/2018";
 
+//var o_startdate =1532044800;
+//var hdate 7/20/2018;
+
 //var type = "ETH/USD";
-//var factory_address= "0xd47823a9769bec0bc31d3ef8b076d820865f39d0";
-//var factory_address="0xf45902281e917bcbeb70ebb574b6949e5ac8c8b2"; //two api oracle
+//var factory_address= "0x1cd5f586f2abc85b022e8cd19c67814f47af9da2";
+
 
 var type = "BTC/USD";
-//var factory_address= "0xb4dab81e95719ea69f08616c221e42489e84da3a"; //old
-var factory_address = "0x8822b11262fb2f6c201e6fed8a3098b32851cc42";
+var factory_address = "0x1ca651f77085e79bc4b34477825d6dcf664ed8fa";
 
 console.log(hdate, type, factory_address);
 module.exports =async function(callback) {

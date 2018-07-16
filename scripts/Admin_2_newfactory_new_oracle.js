@@ -1,5 +1,6 @@
 /**
-Deploy new factory
+Deploy new factory and new oracle
+---if an oracle exists use the newfactory_with_existing_oracle.js script
 */
  
 var Oracle = artifacts.require("Oracle");
@@ -34,9 +35,9 @@ var swapFee = 0;
 *4_Admin_setup.js
 */
 
-var _master = "0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8";
-var _member = "0xb28b547e8c1c8b551e6c057465bfd802b1567939";
-var _wrapped = "0xfe0756975401152e9f14dba904062e6658cccb33";
+var _master = "0xfce97feb873355d43e9102bbef83a1ed758edddf";
+var _member = "0x19550d3ca9775490640e474855d1e1f5cb144dc4";
+var _wrapped = "0x09e6a0f3350208bb72e8f399fb467e84517e58c6";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")

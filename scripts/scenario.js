@@ -12,11 +12,11 @@ var Migrations = artifacts.require("../contracts/Migrations.sol");
 
 var o_startdate = 1532044800;
 var hdate = "07/20/2018";
-var factory_address= "0x8822b11262fb2f6c201e6fed8a3098b32851cc42";
-//var factory_address= "0xf45902281e917bcbeb70ebb574b6949e5ac8c8b2";
-var _ex = "0x8536b232de448f8e3896de4ac3c85a38b50e7953";
+var factory_address= " ";//ETH
+//var factory_address= " ";//BTC
+var _ex = "0x2005e14e30ece4d7c32428b24c1f375227a6d190";
 
-//old-----var factory_address= "0x15bd4d9dd2dfc5e01801be8ed17392d8404f9642";
+
 console.log(hdate, factory_address);
 module.exports =async function(callback) {
       let swap;
