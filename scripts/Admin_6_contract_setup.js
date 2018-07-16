@@ -22,7 +22,7 @@ var hdate = "07/27/2018";
 //var factory_address="0xf45902281e917bcbeb70ebb574b6949e5ac8c8b2"; //two api oracle
 
 var type = "BTC/USD";
-//var factory_address= "0xb4dab81e95719ea69f08616c221e42489e84da3a";
+//var factory_address= "0xb4dab81e95719ea69f08616c221e42489e84da3a"; //old
 var factory_address = "0x8822b11262fb2f6c201e6fed8a3098b32851cc42";
 
 console.log(hdate, type, factory_address);

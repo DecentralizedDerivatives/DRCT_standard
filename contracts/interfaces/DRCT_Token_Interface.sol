@@ -6,6 +6,7 @@ interface DRCT_Token_Interface {
   function getBalanceAndHolderByIndex(uint _ind, address _swap) external constant returns (uint, address);
   function getIndexByAddress(address _owner, address _swap) external constant returns (uint);
   function createToken(uint _supply, address _owner, address _swap) external;
+  function getFactoryAddress() external view returns(address);
   function pay(address _party, address _swap) external;
   function partyCount(address _swap) external constant returns(uint);
 }

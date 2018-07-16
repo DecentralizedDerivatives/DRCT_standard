@@ -44,6 +44,7 @@ contract Factory {
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
     mapping(uint => address) public short_tokens;
+    mapping(address => uint) public token_type; //1=short 2=long
 
     /*Events*/
     //Emitted when a Swap is created
@@ -209,7 +210,9 @@ contract Factory {
     function createToken(uint _supply, address _party, uint _start_date) public returns (address, address, uint) {
         require(created_contracts[msg.sender] == _start_date);
         address ltoken = long_tokens[_start_date];
+        token_type[ltoken]=2;
         address stoken = short_tokens[_start_date];
+        token_type[stoken]=1;
         require(ltoken != address(0) && stoken != address(0));
             DRCT_Token drct_interface = DRCT_Token(ltoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
