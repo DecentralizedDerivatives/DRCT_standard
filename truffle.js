@@ -1,7 +1,7 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
-
+//var mnemonic = "governments of the industrial world you weary giants of flesh and steel";
 /**
 Brenda's Infura API
 Test Ethereum Network (Rinkeby)
