@@ -14,7 +14,7 @@ var Oracle = artifacts.require("Oracle");
 *you will need to run this code each time you need to update the Master Deployer.
 */
 
-var _master ="0xfce97feb873355d43e9102bbef83a1ed758edddf"; //two api oracle
+var _master ="0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579"; //two api oracle
 var _factory= " ";//enter factory address to remove
 
 

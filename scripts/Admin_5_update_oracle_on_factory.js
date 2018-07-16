@@ -16,14 +16,14 @@ var Factory = artifacts.require("Factory");
 *Update oracle APIs(two are needed, the second one is used as backup)
 */
 //ETH oracle
-var _oracle = "0x08d41820d5ec978b5e24932ef597ccb6052c7283";
-var _factory = "0x1cd5f586f2abc85b022e8cd19c67814f47af9da2";
+var _oracle = "0xf0d3fdb12f118ed3f64c6f0c373365ae21849206";
+var _factory = "0xdfb380afc0948e9551fd17b486681122b5936c2a";
 
 
 
 //BTC oracle
-//var _oracle = "0xb0c662507e64951d820c718a3cebc4a4eedaa1af";
-//var _factory = "0x1ca651f77085e79bc4b34477825d6dcf664ed8fa";
+//var _oracle = "0xf6d293faa7321d671b24a3a6abb224b1b1aaefde";
+//var _factory = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
 
 module.exports =async function(callback) {
     let factory;

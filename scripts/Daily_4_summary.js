@@ -11,7 +11,7 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 *@dev Update the Master Deployer contract. This will loop through each
 *factory associated with the master deployer and provide a summary.
 */
-var _master = "0xfce97feb873355d43e9102bbef83a1ed758edddf"; 
+var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579"; 
 
 module.exports =async function(callback) {
     var swaps;

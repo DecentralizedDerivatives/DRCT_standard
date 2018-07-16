@@ -6,15 +6,18 @@ const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var Migrations = artifacts.require("../contracts/Migrations.sol");
 
+var o_startdate =1531440000;
+var hdate = "07/13/2018"; //human readable date
+
+//var o_startdate = 1532044800;
+//var hdate = "07/20/2018";
 
 //var o_startdate = 1532649600;
 //var hdate = "07/27/2018";
 
-var o_startdate = 1532044800;
-var hdate = "07/20/2018";
-var factory_address= " ";//ETH
-//var factory_address= " ";//BTC
-var _ex = "0x2005e14e30ece4d7c32428b24c1f375227a6d190";
+//var factory_address= "0xdfb380afc0948e9551fd17b486681122b5936c2a";//ETH
+var factory_address= "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";//BTC
+var _ex = "0x2242ef4a4a1b4510c09c1a4de12cd96b0108d0cb";
 
 
 console.log(hdate, factory_address);
