@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {

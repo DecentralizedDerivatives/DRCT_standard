@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 import "../interfaces/Oracle_Interface.sol";
 import "../interfaces/DRCT_Token_Interface.sol";

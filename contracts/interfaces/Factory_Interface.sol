@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {

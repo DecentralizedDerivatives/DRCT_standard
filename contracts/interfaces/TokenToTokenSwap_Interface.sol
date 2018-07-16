@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //Swap interface- descriptions can be found in TokenToTokenSwap.sol
 interface TokenToTokenSwap_Interface {

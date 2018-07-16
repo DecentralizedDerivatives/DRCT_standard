@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /**
 *The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 
