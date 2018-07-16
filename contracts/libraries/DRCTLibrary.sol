@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "./SafeMath.sol";
 import "../interfaces/Factory_Interface.sol";
@@ -22,7 +22,7 @@ library DRCTLibrary{
 
     struct TokenStorage{
         //This is the factory contract that the token is standardized at
-        address master_contract;
+        address factory_contract;
         //Total supply of outstanding tokens in the contract
         uint total_supply;
         //Mapping from: swap address -> user balance struct (index for a particular user's balance can be found in swap_balances_index)
@@ -50,11 +50,11 @@ library DRCTLibrary{
     /*Functions*/
     /**
     *@dev Constructor - sets values for token name and token supply, as well as the 
-    *master_contract, the swap.
+    *factory_contract, the swap.
     *@param _factory 
     */
     function startToken(TokenStorage storage self,address _factory) public {
-        self.master_contract = _factory;
+        self.factory_contract = _factory;
     }
 
     /**
@@ -62,8 +62,15 @@ library DRCTLibrary{
     *@param _member is the member address that is chekced agaist the whitelist
     */
     function isWhitelisted(TokenStorage storage self,address _member) internal view returns(bool){
-        Factory_Interface _factory = Factory_Interface(self.master_contract);
+        Factory_Interface _factory = Factory_Interface(self.factory_contract);
         return _factory.isWhitelisted(_member);
+    }
+
+    /**
+    *@dev gets the factory address
+    */
+    function getFactoryAddress(TokenStorage storage self) external view returns(address){
+        return self.factory_contract;
     }
 
     /**
@@ -74,7 +81,7 @@ library DRCTLibrary{
     *@param _swap address
     */
     function createToken(TokenStorage storage self,uint _supply, address _owner, address _swap) public{
-        require(msg.sender == self.master_contract);
+        require(msg.sender == self.factory_contract);
         //Update total supply of DRCT Tokens
         self.total_supply = self.total_supply.add(_supply);
         //Update the total balance of the owner
@@ -107,7 +114,7 @@ library DRCTLibrary{
     *@param _swap address
     */
     function pay(TokenStorage storage self,address _party, address _swap) public{
-        require(msg.sender == self.master_contract);
+        require(msg.sender == self.factory_contract);
         uint party_balance_index = self.swap_balances_index[_swap][_party];
         require(party_balance_index > 0);
         uint party_swap_balance = self.swap_balances[_swap][party_balance_index].amount;

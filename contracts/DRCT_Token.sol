@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "./libraries/DRCTLibrary.sol";
 
@@ -19,7 +19,7 @@ contract DRCT_Token {
     /*Functions*/
     /**
     *@dev Constructor - sets values for token name and token supply, as well as the 
-    *master_contract, the swap.
+    *factory_contract, the swap.
     *@param _factory 
     */
     constructor(address _factory) public {
@@ -35,6 +35,13 @@ contract DRCT_Token {
     */
     function createToken(uint _supply, address _owner, address _swap) public{
         drct.createToken(_supply,_owner,_swap);
+    }
+
+    /**
+    *@dev gets the factory address
+    */
+    function getFactoryAddress() external view returns(address){
+        drct.getFactoryAddress();
     }
 
     /**
