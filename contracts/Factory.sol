@@ -199,13 +199,16 @@ contract Factory {
         address _token;
         require(_start_date % 86400 == 0);
         require(long_tokens[_start_date] == address(0) && short_tokens[_start_date] == address(0));
-        _token = new DRCT_Token(address(this));
+        _token = new DRCT_Token();
         token_dates[_token] = _start_date;
         long_tokens[_start_date] = _token;
-        _token = new DRCT_Token(address(this));
+        token_type[_token]=2;
+        _token = new DRCT_Token();
+        token_type[_token]=1;
         short_tokens[_start_date] = _token;
         token_dates[_token] = _start_date;
         startDates.push(_start_date);
+
     }
 
     /**
@@ -220,9 +223,7 @@ contract Factory {
     function createToken(uint _supply, address _party, uint _start_date) public returns (address, address, uint) {
         require(created_contracts[msg.sender] == _start_date);
         address ltoken = long_tokens[_start_date];
-        token_type[ltoken]=2;
         address stoken = short_tokens[_start_date];
-        token_type[stoken]=1;
         require(ltoken != address(0) && stoken != address(0));
             DRCT_Token drct_interface = DRCT_Token(ltoken);
             drct_interface.createToken(_supply.div(token_ratio), _party,msg.sender);
