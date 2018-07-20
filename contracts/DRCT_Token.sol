@@ -22,8 +22,8 @@ contract DRCT_Token {
     *factory_contract, the swap.
     *@param _factory 
     */
-    constructor(address _factory) public {
-        drct.startToken(_factory);
+    constructor() public {
+        drct.startToken(msg.sender);
     }
 
     /**
@@ -41,7 +41,7 @@ contract DRCT_Token {
     *@dev gets the factory address
     */
     function getFactoryAddress() external view returns(address){
-        drct.getFactoryAddress();
+        return drct.getFactoryAddress();
     }
 
     /**
