@@ -98,7 +98,7 @@ contract Test_Oracle2 {
             currentQuery.date = _key;
             currentQuery.calledTime = _calledTime;
             currentQuery.called = !currentQuery.called;
-        }
+            }
     }
     
 
