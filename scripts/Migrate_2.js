@@ -24,8 +24,8 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 *@dev Update o_startdate as epoch date to create tokens for 
 *Update hdate to reflect the epoch date as a human readable date
 */
-var o_startdate =1531440000;
-var hdate = "07/13/2018"; //human readable date
+var o_startdate =1532044800;
+var hdate = "07/20/2018"; //human readable date
 
 
 module.exports =async function(callback) {
