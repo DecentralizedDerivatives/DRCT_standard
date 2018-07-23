@@ -1,9 +1,7 @@
 pragma solidity ^0.4.24;
 
 /**
-*The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 
-*updated by an off chain calculation by DDA.  Methodology can be found at 
-*www.github.com/DecentralizedDerivatives/Oracles
+*The Test Oracle contract for testing the push and callback functions
 */
 contract Test_Oracle2 {
 
