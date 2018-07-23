@@ -1,6 +1,6 @@
 /**
 *
-*update the factory using deprecated oracle with an existing oracle
+*update the factory with deprecated oracle with an existing oracle
 */
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Oracle = artifacts.require("Oracle");
@@ -16,14 +16,14 @@ var Factory = artifacts.require("Factory");
 *Update oracle APIs(two are needed, the second one is used as backup)
 */
 //ETH oracle
-var _oracle = "0xf0d3fdb12f118ed3f64c6f0c373365ae21849206";
-var _factory = "0xdfb380afc0948e9551fd17b486681122b5936c2a";
+var _oracle = "0x6be49e4e660aa759f468669b0a5696e73b537cb7";
+var _factory = "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";
 
 
 
 //BTC oracle
-//var _oracle = "0xf6d293faa7321d671b24a3a6abb224b1b1aaefde";
-//var _factory = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
+//var _oracle = "0x488adf792b598db87ff8af711d0f19601f31c3e7";
+//var _factory = "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";
 
 module.exports =async function(callback) {
     let factory;

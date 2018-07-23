@@ -21,12 +21,12 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var o_startdate = 1532044800;
 var hdate = "07/20/2018";
 
-var type = "BTC/USD";
-var factory_address= "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
+var type = "ETH/USD";
+var factory_address= "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";
 
 
 //var type = "BTC/USD";
-//var factory_address = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
+//var factory_address = "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";
 
 console.log(hdate, type, factory_address);
 module.exports =async function(callback) {

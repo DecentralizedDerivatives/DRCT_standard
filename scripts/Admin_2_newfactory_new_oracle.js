@@ -35,9 +35,9 @@ var swapFee = 0;
 *1_Admin_setup.js
 */
 
-var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579";
-var _member = "0xdcff3a825f6ab9a861bdf481017d91b25ac980a4";
-var _wrapped = "0xc733a8ba37590e71096f10b23a049f3a30386c6f";
+var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f";
+var _member = "0xfcb2342eca570fb10da23ce7dd430f41e4f5a989";
+var _wrapped = "0x5a123d2f53a0410def29f1e2902abea66f59e246";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")

@@ -16,13 +16,13 @@ var Factory = artifacts.require("Factory");
 *Update oracle APIs(two are needed, the second one is used as backup)
 */
 
-var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
-var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
-var _factory = "0xdfb380afc0948e9551fd17b486681122b5936c2a";
+//var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
+//var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
+//var _factory = "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";
 
-//var _oracle_api = "json(https://api.gdax.com/products/BTC-USD/ticker).price";
-//var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price";
-//var _factory = "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";
+var _oracle_api = "json(https://api.gdax.com/products/BTC-USD/ticker).price";
+var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price";
+var _factory = "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";
 
 module.exports =async function(callback) {
     let factory;
