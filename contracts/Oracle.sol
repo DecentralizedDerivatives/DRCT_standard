@@ -14,6 +14,7 @@ contract Oracle is usingOraclize{
     bytes32 private queryID;
     string public API;
     string public API2;
+    string public usedAPI;
 
     /*Structs*/
     struct QueryInfo {
@@ -21,7 +22,7 @@ contract Oracle is usingOraclize{
         bool queried;
         uint date;
         uint calledTime;
-        uint countCalls;
+        bool called;
     }  
     //Mapping of documents stored in the oracle
     mapping(uint => bytes32) public queryIds;
@@ -67,19 +68,30 @@ contract Oracle is usingOraclize{
             emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");
-           if (currentQuery.countCalls % 2 == 0 ){
+            if (currentQuery.called == false){
                 queryID = oraclize_query("URL", API);
-            } else {
+                usedAPI=API;
+            } else if (currentQuery.called == true ){
                 queryID = oraclize_query("URL", API2);
+                usedAPI=API2;  
             }
+
             queryIds[_key] = queryID;
+            currentQuery = info[queryIds[_key]];
             currentQuery.queried = true;
             currentQuery.date = _key;
             currentQuery.calledTime = _calledTime;
-            currentQuery.countCalls++;
+            currentQuery.called = !currentQuery.called;
         }
     }
 
+    /*
+    * gets API used for tests
+    */
+    function getusedAPI() public view returns(string){
+        return usedAPI;
+    }
+    
     /**
     *@dev Used by Oraclize to return value of PushData API call
     *@param _oraclizeID unique oraclize identifier of call
@@ -89,6 +101,7 @@ contract Oracle is usingOraclize{
         QueryInfo storage currentQuery = info[_oraclizeID];
         require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
         currentQuery.value = parseInt(_result,3);
+        currentQuery.called = false; 
         if(currentQuery.value == 0){
             currentQuery.value = 1;
         }

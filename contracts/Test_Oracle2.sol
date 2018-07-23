@@ -73,7 +73,6 @@ contract Test_Oracle2 {
     *@dev PushData - Sends an Oraclize query for entered API
     */
     function pushData(uint _key, uint _bal, uint _cost, bytes32 _queryID) public payable {
-        
         uint _calledTime = now;
         QueryInfo storage currentQuery = info[queryIds[_key]];
         require(currentQuery.queried == false  && currentQuery.calledTime == 0 || 
@@ -94,11 +93,12 @@ contract Test_Oracle2 {
             }
             queryID = _queryID;
             queryIds[_key] = queryID;
+            currentQuery = info[queryIds[_key]];
             currentQuery.queried = true;
             currentQuery.date = _key;
             currentQuery.calledTime = _calledTime;
             currentQuery.called = !currentQuery.called;
-            }
+        }
     }
     
 

@@ -34,10 +34,10 @@ var swapFee = 0;
 *4_Admin_setup.js
 */
 //BTC oracle
-var _oracle = "0xb7e4411299161051bdae859392537d367758a62a";
+var _oracle = "0x488adf792b598db87ff8af711d0f19601f31c3e7";
 
 //ETH oracle
-//var _oracle = "0xf5b3b07568b0e90df92df0a22f955a7219077289";
+//var _oracle = "0x6be49e4e660aa759f468669b0a5696e73b537cb7";
 
 
 var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f";

@@ -94,11 +94,12 @@ contract('Oracle Test', function(accounts) {
 	    console.log("api6",_api6); //print it
 	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-	    assert.equal(_api2,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-        assert.equal(_api3,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
-     	assert.equal(_api4,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-  	    assert.equal(_api5,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
-		assert.equal(_api6,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");	    
+	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api4,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+     	assert.equal(_api5,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+  	    assert.equal(_api6,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+
 	})
 
 	it("Test Oracle api alternating date switch", async function(){
@@ -134,12 +135,13 @@ contract('Oracle Test', function(accounts) {
 	    console.log("api7",_api7); //print it
 	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-	    assert.equal(_api2,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-        assert.equal(_api3,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
-     	assert.equal(_api4,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-		assert.equal(_api5,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-		assert.equal(_api6,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-        assert.equal(_api7,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+        assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api4,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+     	assert.equal(_api5,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api6,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+		assert.equal(_api7,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+
     })
 
     	it("Test Oracle api alternating date switch2", async function(){
@@ -175,12 +177,12 @@ contract('Oracle Test', function(accounts) {
 	    console.log("api7",_api7); //print it
 	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-	    assert.equal(_api2,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-        assert.equal(_api3,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
-     	assert.equal(_api4,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-		assert.equal(_api5,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-		assert.equal(_api6,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
-        assert.equal(_api7,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+        assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api4,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+     	assert.equal(_api5,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
+        assert.equal(_api6,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
+		assert.equal(_api7,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
     })
 
 

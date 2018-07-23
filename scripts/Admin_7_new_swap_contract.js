@@ -13,8 +13,8 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
 var o_startdate =1532044800; //epoch time
 var hdate ="7/20/2018"; //human readable date
-var factory_address= "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";//BTC
-//var factory_address = "0xdfb380afc0948e9551fd17b486681122b5936c2a";//ETH
+var factory_address= "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";//BTC
+//var factory_address = "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";//ETH
 console.log(hdate);
 
 module.exports =async function(callback) {
