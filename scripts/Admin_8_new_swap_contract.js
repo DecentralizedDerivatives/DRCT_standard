@@ -38,6 +38,7 @@ module.exports =async function(callback) {
     console.log('My Account: ',res);
     accounts = res; 
     });
+    
     long_token_add =await factory.long_tokens(o_startdate);
     console.log("long token add", long_token_add);
     short_token_add =await factory.short_tokens(o_startdate);
@@ -48,10 +49,10 @@ module.exports =async function(callback) {
     console.log("short token ", short_token.address);
 
     var receipt = await factory.deployContract(o_startdate);
-	  swap_add = receipt.logs[0].args._created;
-	  swap = await TokenToTokenSwap.at(swap_add);
-	  console.log('My Swap',swap_add);
-	  await userContract.Initiate(swap_add,500000000000000000,{value: web3.toWei(1,'ether')});
-      await short_token.transfer('0x323cef35598e3d2d1819c5168a1c68f609ac1e0f',500);
-      console.log("afterTranfer");
+	swap_add = receipt.logs[0].args._created;
+	swap = await TokenToTokenSwap.at(swap_add);
+	console.log('My Swap',swap_add);
+	await userContract.Initiate(swap_add,500000000000000000,{value: web3.toWei(1,'ether')});
+    await short_token.transfer('0x323cef35598e3d2d1819c5168a1c68f609ac1e0f',500);
+    console.log("afterTranfer");
 }
