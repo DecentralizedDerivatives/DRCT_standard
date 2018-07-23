@@ -11,7 +11,7 @@ var Factory = artifacts.require("Factory");
 *factory associated with the master deployer(_master) specified.
 *_nowUTC is only used to display a human readable date on the console.
 */
-var _master = "0xf4ba99fdf2fabd797d2f5a1d22a30556abe74579"; 
+var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 
@@ -43,16 +43,16 @@ module.exports =async function(callback) {
         //console.log(balance, "balance");//this doesn't work
         //console.log(wei, "wei");//this doesn't work
             //if (numbal != 0) {
-                let oracle = await Oracle.at(oracle_address);
-                await oracle.pushData();
-                console.log("Oracle is funded, query sent successfully");
-            /*  } else {
+             //   let oracle = await Oracle.at(oracle_address);
+             //   await oracle.pushData();
+             //   console.log("Oracle is funded, query sent successfully");
+            //  } else {
                 console.log("Funding Oracle");
                 let oracle = await Oracle.at(oracle_address);
                 await oracle.fund({value: web3.toWei(.25,'ether')});
                 await oracle.pushData();
                 console.log("Query sent successfully, after funding");
-            } */
+            //} 
 
             //wait some time
             //get transaction hash with something like this

@@ -15,9 +15,9 @@ var hdate = "07/13/2018"; //human readable date
 //var o_startdate = 1532649600;
 //var hdate = "07/27/2018";
 
-//var factory_address= "0xdfb380afc0948e9551fd17b486681122b5936c2a";//ETH
-var factory_address= "0x95c9c47558115b12f25dce5103e73e0803a5b9c7";//BTC
-var _ex = "0x2242ef4a4a1b4510c09c1a4de12cd96b0108d0cb";
+//var factory_address= "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";//ETH
+var factory_address= "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";//BTC
+var _ex = "0x5c9b3e0774dadf6977d6b13d4cf149736318fc32";
 
 
 console.log(hdate, factory_address);
