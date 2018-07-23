@@ -1,4 +1,44 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
+
+
+//Swap Oracle functions - descriptions can be found in Oracle.sol
+interface Oracle_Interface{
+  function getQuery(uint _date) external view returns(bool);
+  function retrieveData(uint _date) external view returns (uint);
+  function pushData() external payable;
+}
+
+//DRCT_Token functions - descriptions can be found in DRCT_Token.sol
+interface DRCT_Token_Interface {
+  function addressCount(address _swap) external constant returns (uint);
+  function getBalanceAndHolderByIndex(uint _ind, address _swap) external constant returns (uint, address);
+  function getIndexByAddress(address _owner, address _swap) external constant returns (uint);
+  function createToken(uint _supply, address _owner, address _swap) external;
+  function getFactoryAddress() external view returns(address);
+  function pay(address _party, address _swap) external;
+  function partyCount(address _swap) external constant returns(uint);
+}
+
+
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
+  function payToken(address _party, address _token_add) external;
+  function deployContract(uint _start_date) external payable returns (address);
+   function getBase() external view returns(address);
+  function getVariables() external view returns (address, uint, uint, address,uint);
+  function isWhitelisted(address _member) external view returns (bool);
+}
+
+//ERC20 function interface
+interface ERC20_Interface {
+  function totalSupply() external constant returns (uint);
+  function balanceOf(address _owner) external constant returns (uint);
+  function transfer(address _to, uint _amount) external returns (bool);
+  function transferFrom(address _from, address _to, uint _amount) external returns (bool);
+  function approve(address _spender, uint _amount) external returns (bool);
+  function allowance(address _owner, address _spender) external constant returns (uint);
+}
 
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
@@ -31,279 +71,325 @@ library SafeMath {
   }
 }
 
-//Swap Oracle functions - descriptions can be found in Oracle.sol
-interface Oracle_Interface{
-  function getQuery(uint _date) public view returns(bool);
-  function RetrieveData(uint _date) public view returns (uint);
-  function pushData() public payable;
+
+/**
+*The TokenLibrary contains the reference code used to create the specific DRCT base contract 
+*that holds the funds of the contract and redistributes them based upon the change in the
+*underlying values
+*/
+
+library TokenLibrary{
+
+    using SafeMath for uint256;
+
+    /*Variables*/
+    enum SwapState {
+        created,
+        started,
+        ended
+    }
+    
+    /*Structs*/
+    struct SwapStorage{
+        //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
+        address oracle_address;
+        //Address of the Factory that created this contract
+        address factory_address;
+        Factory_Interface factory;
+        address creator;
+        //Addresses of ERC20 token
+        address token_address;
+        ERC20_Interface token;
+        //Enum state of the swap
+        SwapState current_state;
+        //Start date, end_date, multiplier duration,start_value,end_value,fee
+        uint[8] contract_details;
+        // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
+        uint pay_to_long;
+        uint pay_to_short;
+        //Address of created long and short DRCT tokens
+        address long_token_address;
+        address short_token_address;
+        //Number of DRCT Tokens distributed to both parties
+        uint num_DRCT_tokens;
+        //The notional that the payment is calculated on from the change in the reference rate
+        uint token_amount;
+        address userContract;
+    }
+
+    /*Events*/
+    event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
+    //Emitted when the swap has been paid out
+    event PaidOut(uint pay_to_long, uint pay_to_short);
+
+    /*Functions*/
+    /**
+    *@dev Acts the constructor function in the cloned swap
+    *@param _factory_address
+    *@param _creator address of swap creator
+    *@param _userContract address
+    *@param _start_date swap start date
+    */
+    function startSwap (SwapStorage storage self, address _factory_address, address _creator, address _userContract, uint _start_date) internal {
+        require(self.creator == address(0));
+        self.creator = _creator;
+        self.factory_address = _factory_address;
+        self.userContract = _userContract;
+        self.contract_details[0] = _start_date;
+        self.current_state = SwapState.created;
+        self.contract_details[7] = 0;
+    }
+
+    /**
+    *@dev A getter function for retriving standardized variables from the factory contract
+    *@return 
+    *[userContract, Long Token addresss, short token address, oracle address, base token address], number DRCT tokens, , multiplier, duration, Start date, end_date
+    */
+    function showPrivateVars(SwapStorage storage self) internal view returns (address[5],uint, uint, uint, uint, uint){
+        return ([self.userContract, self.long_token_address,self.short_token_address, self.oracle_address, self.token_address], self.num_DRCT_tokens, self.contract_details[2], self.contract_details[3], self.contract_details[0], self.contract_details[1]);
+    }
+
+    /**
+    *@dev Allows the sender to create the terms for the swap
+    *@param _amount Amount of Token that should be deposited for the notional
+    *@param _senderAdd States the owner of this side of the contract (does not have to be msg.sender)
+    */
+    function createSwap(SwapStorage storage self,uint _amount, address _senderAdd) internal{
+       require(self.current_state == SwapState.created && msg.sender == self.creator  && _amount > 0 || (msg.sender == self.userContract && _senderAdd == self.creator) && _amount > 0);
+        self.factory = Factory_Interface(self.factory_address);
+        getVariables(self);
+        self.contract_details[1] = self.contract_details[0].add(self.contract_details[3].mul(86400));
+        assert(self.contract_details[1]-self.contract_details[0] < 28*86400);
+        self.token_amount = _amount;
+        self.token = ERC20_Interface(self.token_address);
+        assert(self.token.balanceOf(address(this)) == SafeMath.mul(_amount,2));
+        uint tokenratio = 1;
+        (self.long_token_address,self.short_token_address,tokenratio) = self.factory.createToken(self.token_amount,self.creator,self.contract_details[0]);
+        self.num_DRCT_tokens = self.token_amount.div(tokenratio);
+        emit SwapCreation(self.token_address,self.contract_details[0],self.contract_details[1],self.token_amount);
+        self.current_state = SwapState.started;
+    }
+
+    /**
+    *@dev Getter function for contract details saved in the SwapStorage struct
+    *Gets the oracle address, duration, multiplier, base token address, and fee
+    *and from the Factory.getVariables function.
+    */
+    function getVariables(SwapStorage storage self) internal{
+        (self.oracle_address,self.contract_details[3],self.contract_details[2],self.token_address,self.contract_details[6]) = self.factory.getVariables();
+    }
+
+    /**
+    *@dev check if the oracle has been queried within the last day 
+    *@return true if it was queried and the start and end values are not zero
+    *and false if they are.
+    */
+    function oracleQuery(SwapStorage storage self) internal returns(bool){
+        Oracle_Interface oracle = Oracle_Interface(self.oracle_address);
+        uint _today = now - (now % 86400);
+        uint i = 0;
+        if(_today >= self.contract_details[0]){
+            while(i < (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
+                if(oracle.getQuery(self.contract_details[0]+i*86400)){
+                    self.contract_details[4] = oracle.retrieveData(self.contract_details[0]+i*86400);
+                }
+                i++;
+            }
+        }
+        i = 0;
+        if(_today >= self.contract_details[1]){
+            while(i < (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
+                if(oracle.getQuery(self.contract_details[1]+i*86400)){
+                    self.contract_details[5] = oracle.retrieveData(self.contract_details[1]+i*86400);
+                }
+                i++;
+            }
+        }
+        if(self.contract_details[4] != 0 && self.contract_details[5] != 0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    /**
+    *@dev This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
+    *The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
+    *of the Oracle.
+    */
+    function Calculate(SwapStorage storage self) internal{
+        uint ratio;
+        self.token_amount = self.token_amount.mul(10000-self.contract_details[6]).div(10000);
+        if (self.contract_details[4] > 0 && self.contract_details[5] > 0)
+            ratio = (self.contract_details[5]).mul(100000).div(self.contract_details[4]);
+            if (ratio > 100000){
+                ratio = (self.contract_details[2].mul(ratio - 100000)).add(100000);
+            }
+            else if (ratio < 100000){
+                    ratio = SafeMath.min(100000,(self.contract_details[2].mul(100000-ratio)));
+                    ratio = 100000 - ratio;
+            }
+        else if (self.contract_details[5] > 0)
+            ratio = 10e10;
+        else if (self.contract_details[4] > 0)
+            ratio = 0;
+        else
+            ratio = 100000;
+        ratio = SafeMath.min(200000,ratio);
+        self.pay_to_long = (ratio.mul(self.token_amount)).div(self.num_DRCT_tokens).div(100000);
+        self.pay_to_short = (SafeMath.sub(200000,ratio).mul(self.token_amount)).div(self.num_DRCT_tokens).div(100000);
+    }
+
+    /**
+    *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
+    *If the Calculate function has not yet been called, this function will call it.
+    *The function then pays every token holder of both the long and short DRCT tokens
+    *@param _numtopay number of contracts to try and pay (run it again if its not enough)
+    *@return true if the oracle was called and all contracts are paid or false ?
+    */
+    function forcePay(SwapStorage storage self,uint _numtopay) internal returns (bool) {
+       //Calls the Calculate function first to calculate short and long shares
+        require(self.current_state == SwapState.started && now >= self.contract_details[1]);
+        bool ready = oracleQuery(self);
+        if(ready){
+            Calculate(self);
+            //Loop through the owners of long and short DRCT tokens and pay them
+            DRCT_Token_Interface drct = DRCT_Token_Interface(self.long_token_address);
+            uint[6] memory counts;
+            address token_owner;
+            counts[0] = drct.addressCount(address(this));
+            counts[1] = counts[0] <= self.contract_details[7].add(_numtopay) ? counts[0] : self.contract_details[7].add(_numtopay).add(1);
+            //Indexing begins at 1 for DRCT_Token balances
+            if(self.contract_details[7] < counts[1]){
+                for(uint i = counts[1]-1; i > self.contract_details[7] ; i--) {
+                    (counts[4], token_owner) = drct.getBalanceAndHolderByIndex(i, address(this));
+                    paySwap(self,token_owner,counts[4], true);
+                }
+            }
+
+            drct = DRCT_Token_Interface(self.short_token_address);
+            counts[2] = drct.addressCount(address(this));
+            counts[3] = counts[2] <= self.contract_details[7].add(_numtopay) ? counts[2] : self.contract_details[7].add(_numtopay).add(1);
+            if(self.contract_details[7] < counts[3]){
+                for(uint j = counts[3]-1; j > self.contract_details[7] ; j--) {
+                    (counts[5], token_owner) = drct.getBalanceAndHolderByIndex(j, address(this));
+                    paySwap(self,token_owner,counts[5], false);
+                }
+            }
+            if (counts[0] == counts[1] && counts[2] == counts[3]){
+                self.token.transfer(self.factory_address, self.token.balanceOf(address(this)));
+                emit PaidOut(self.pay_to_long,self.pay_to_short);
+                self.current_state = SwapState.ended;
+            }
+            self.contract_details[7] = self.contract_details[7].add(_numtopay);
+        }
+        return ready;
+    }
+
+    /**
+    *This function pays the receiver an amount determined by the Calculate function
+    *@param _receiver is the recipient of the payout
+    *@param _amount is the amount of token the recipient holds
+    *@param _is_long is true if the reciever holds a long token
+    */
+    function paySwap(SwapStorage storage self,address _receiver, uint _amount, bool _is_long) internal {
+        if (_is_long) {
+            if (self.pay_to_long > 0){
+                self.token.transfer(_receiver, _amount.mul(self.pay_to_long));
+                self.factory.payToken(_receiver,self.long_token_address);
+            }
+        } else {
+            if (self.pay_to_short > 0){
+                self.token.transfer(_receiver, _amount.mul(self.pay_to_short));
+                self.factory.payToken(_receiver,self.short_token_address);
+            }
+        }
+    }
+
+    /**
+    *@dev Getter function for swap state
+    *@return current state of swap
+    */
+    function showCurrentState(SwapStorage storage self)  internal view returns(uint) {
+        return uint(self.current_state);
+    }
+    
 }
 
 
-//ERC20 function interface
-interface ERC20_Interface {
-  function totalSupply() public constant returns (uint);
-  function balanceOf(address _owner) public constant returns (uint);
-  function transfer(address _to, uint _amount) public returns (bool);
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool);
-  function approve(address _spender, uint _amount) public returns (bool);
-  function allowance(address _owner, address _spender) public constant returns (uint);
-}
+/**
+*This contract is the specific DRCT base contract that holds the funds of the contract and
+*redistributes them based upon the change in the underlying values
+*/
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, uint _start_date) public returns (address,address, uint);
-  function payToken(address _party, address _token_add) public;
-  function deployContract(uint _start_date) public payable returns (address);
-   function getBase() public view returns(address);
-  function getVariables() public view returns (address, uint, uint, address);
-}
-
-//DRCT_Token functions - descriptions can be found in DRCT_Token.sol
-interface DRCT_Token_Interface {
-  function addressCount(address _swap) public constant returns (uint);
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address);
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint);
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint);
-  function createToken(uint _supply, address _owner, address _swap) public;
-  function pay(address _party, address _swap) public;
-  function partyCount(address _swap) public constant returns(uint);
-}
-
-
-//This contract is the specific DRCT base contract that holds the funds of the contract and redistributes them based upon the change in the underlying values
 contract TokenToTokenSwap {
 
-  using SafeMath for uint256;
+    using TokenLibrary for TokenLibrary.SwapStorage;
+
+    /*Variables*/
+    TokenLibrary.SwapStorage public swap;
 
 
-
-  /*Enums*/
-  //Describes various states of the Swap
-  enum SwapState {
-    created,
-    started,
-    ended
-  }
-  /*Variables*/
-  //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
-  address oracle_address;
-  Oracle_Interface oracle;
-  //Address of the Factory that created this contract
-  address public factory_address;
-  Factory_Interface factory;
-  address creator;
-  //Addresses of ERC20 token
-  address token_address;
-  ERC20_Interface token;
-  //Enum state of the swap
-  SwapState public current_state;
-  //Start and end dates of the swaps - format is the same as block.timestamp
-  uint start_date;
-  uint end_date;
-  uint multiplier;
-  uint duration;
-  // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
-  uint pay_to_long;
-  uint pay_to_short;
-
-  uint start_value;
-  uint end_value;
-  //Address of created long and short DRCT tokens
-  address long_token_address;
-  address short_token_address;
-  //Number of DRCT Tokens distributed to both parties
-  uint num_DRCT_tokens;
-  //The notional that the payment is calculated on from the change in the reference rate
-  uint public token_amount;
-  DRCT_Token_Interface drct;
-  address userContract;
-
-  /*Events*/
-  //Emitted when a Swap is created
-  event SwapCreation(address _token_address, uint _start_date, uint _end_date, uint _token_amount);
-  //Emitted when the swap has been paid out
-  event PaidOut(uint pay_to_long, uint pay_to_short);
-  /*Functions*/
-  modifier onlyState(SwapState expected_state) {
-    require(expected_state == current_state);
-    _;
-  }
-
-  /*
-  * Constructor - Run by the factory at contract creation
-  * @param "_factory_address": Address of the factory that created this contract
-  * @param "_creator": Address of the person who created the contract
-  * @param "_userContract": Address of the _userContract that is authorized to interact with this contract
-  */
-  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract, uint _start_date) public {
-    creator = _creator;
-    factory_address = _factory_address;
-    userContract = _userContract;
-    start_date = _start_date;
-    current_state = SwapState.created;
-  }
-
-
-  //A getter function for retriving standardized variables from the factory contract
-  function showPrivateVars() public view returns (address, uint, address, address, address, address,  uint, uint, uint, uint){
-    return (userContract, num_DRCT_tokens,long_token_address,short_token_address, oracle_address, token_address, multiplier, duration, start_date, end_date);
-  }
-
-  /*
-  * Allows the sender to create the terms for the swap
-  * @param "_amount_a": Amount of Token A that should be deposited for the notional
-  * @param "_amount_b": Amount of Token B that should be deposited for the notional
-  * @param "_sender_is_long": Denotes whether the sender is set as the short or long party
-  * @param "_senderAdd": States the owner of this side of the contract (does not have to be msg.sender)
-  */
-  function CreateSwap(
-    uint _amount,
-    address _senderAdd
-    ) public onlyState(SwapState.created) {
-    require(
-      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
-    );
-    factory = Factory_Interface(factory_address);
-    setVars();
-    end_date = start_date.add(duration.mul(86400));
-    assert(end_date-start_date < 28*86400);
-    token_amount = _amount;
-    token = ERC20_Interface(token_address);
-    assert(token.balanceOf(address(this)) == _amount*2);
-    createTokens(creator);
-    SwapCreation(token_address,start_date,end_date,token_amount);
-    current_state = SwapState.started;
-  }
-
-  function setVars() internal{
-      (oracle_address,duration,multiplier,token_address) = factory.getVariables();
-  }
-
-  /*
-  * This function is for those entering the swap. The details of the swap are re-entered and checked
-  * to ensure the entering party is entering the correct swap. Note that the tokens you are entering with
-  * do not need to be entered as a variable, but you should ensure that the contract is funded.
-  * This function creates the DRCT tokens for the short and long parties, and ensures the short and long parties
-  * have funded the contract with the correct amount of the ERC20 tokens A and B
-  *
-  */
-  function createTokens(address _party) internal {
-    uint tokenratio = 1;
-    (long_token_address,short_token_address,tokenratio) = factory.createToken(token_amount,_party,start_date);
-    num_DRCT_tokens = token_amount.div(tokenratio);
-    oracleQuery();
-  }
-
-  function oracleQuery() internal returns(bool){
-    oracle = Oracle_Interface(oracle_address);
-    uint _today = now - (now % 86400);
-    uint i;
-    if(_today >= start_date && start_value == 0){
-        for(i=0;i < (_today- start_date)/86400;i++){
-           if(oracle.getQuery(start_date+i*86400)){
-              start_value = oracle.RetrieveData(start_date+i*86400);
-              return true;
-           }
-        }
-        if(start_value ==0){
-          oracle.pushData();
-          return false;
-        }
+    /*Functions*/
+    /**
+    *@dev Constructor - Run by the factory at contract creation
+    *@param _factory_address address of the factory that created this contract
+    *@param _creator address of the person who created the contract
+    *@param _userContract address of the _userContract that is authorized to interact with this contract
+    *@param _start_date start date of the contract
+    */
+    constructor (address _factory_address, address _creator, address _userContract, uint _start_date) public {
+        swap.startSwap(_factory_address,_creator,_userContract,_start_date);
     }
-    if(_today >= end_date && end_value == 0){
-        for(i=0;i < (_today- end_date)/86400;i++){
-           if(oracle.getQuery(end_date+i*86400)){
-              end_value = oracle.RetrieveData(end_date+i*86400);
-              return true;
-           }
-        }
-        if(end_value ==0){
-          oracle.pushData();
-          return false;
-        }
+    
+    /**
+    *@dev Acts as a constructor when cloning the swap
+    *@param _factory_address address of the factory that created this contract
+    *@param _creator address of the person who created the contract
+    *@param _userContract address of the _userContract that is authorized to interact with this contract
+    *@param _start_date start date of the contract
+    */
+    function init (address _factory_address, address _creator, address _userContract, uint _start_date) public {
+        swap.startSwap(_factory_address,_creator,_userContract,_start_date);
     }
-    return true;
-  }
 
-  /*
-  * This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
-  * The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
-  * of the Oracle.
-  */
-  function Calculate() internal {
-    uint ratio;
-    token_amount = token_amount.mul(995).div(1000);
-    if (start_value > 0 && end_value > 0)
-      ratio = (end_value).mul(100000).div(start_value);
-    else if (end_value > 0)
-      ratio = 10e10;
-    else if (start_value > 0)
-      ratio = 0;
-    else
-      ratio = 100000;
-    ratio = SafeMath.min(200000,ratio);
-    pay_to_long = (ratio.mul(token_amount)).div(num_DRCT_tokens).div(100000);
-    pay_to_short = (SafeMath.sub(200000,ratio).mul(token_amount)).div(num_DRCT_tokens).div(100000);
-  }
-
-
-  /*
-  * This function can be called after the swap is tokenized or after the Calculate function is called.
-  * If the Calculate function has not yet been called, this function will call it.
-  * The function then pays every token holder of both the long and short DRCT tokens
-  //What should we do about zeroed out values? 
-  */
-  function forcePay(uint _begin, uint _end) public onlyState(SwapState.started) returns (bool) {
-    //Calls the Calculate function first to calculate short and long shares
-    require(now >= end_date);
-    bool ready = oracleQuery();
-    if(ready){
-      Calculate();
-      //Loop through the owners of long and short DRCT tokens and pay them
-      drct = DRCT_Token_Interface(long_token_address);
-      uint count = drct.addressCount(address(this));
-      uint loop_count = count < _end ? count : _end;
-      //Indexing begins at 1 for DRCT_Token balances
-      for(uint i = loop_count-1; i >= _begin ; i--) {
-        address long_owner = drct.getHolderByIndex(i, address(this));
-        uint to_pay_long = drct.getBalanceByIndex(i, address(this));
-        paySwap(long_owner, to_pay_long, true);
-      }
-
-      drct = DRCT_Token_Interface(short_token_address);
-      count = drct.addressCount(address(this));
-      loop_count = count < _end ? count : _end;
-      for(uint j = loop_count-1; j >= _begin ; j--) {
-        address short_owner = drct.getHolderByIndex(j, address(this));
-        uint to_pay_short = drct.getBalanceByIndex(j, address(this));
-        paySwap(short_owner, to_pay_short, false);
-      }
-      if (loop_count == count){
-          token.transfer(factory_address, token.balanceOf(address(this)));
-          PaidOut(pay_to_long,pay_to_short);
-          current_state = SwapState.ended;
-        }
+    /**
+    *@dev A getter function for retriving standardized variables from the factory contract
+    *@return 
+    *[userContract, Long Token addresss, short token address, oracle address, base token address], number DRCT tokens, , multiplier, duration, Start date, end_date
+    */
+    function showPrivateVars() public view returns (address[5],uint, uint, uint, uint, uint){
+        return swap.showPrivateVars();
     }
-    return ready;
-  }
 
-  /*
-  * This function pays the receiver an amount determined by the Calculate function
-  * @param "_receiver": The recipient of the payout
-  * @param "_amount": The amount of token the recipient holds
-  * @param "_is_long": Whether or not the reciever holds a long or short token
-  */
-  function paySwap(address _receiver, uint _amount, bool _is_long) internal {
-    if (_is_long) {
-      if (pay_to_long > 0){
-        token.transfer(_receiver, _amount.mul(pay_to_long));
-        factory.payToken(_receiver,long_token_address);
-      }
-    } else {
-      if (pay_to_short > 0){
-       token.transfer(_receiver, _amount.mul(pay_to_short));
-       factory.payToken(_receiver,short_token_address);
-     }
+    /**
+    *@dev A getter function for retriving current swap state from the factory contract
+    *@return current state (References swapState Enum: 1=created, 2=started, 3=ended)
+    */
+    function currentState() public view returns(uint){
+        return swap.showCurrentState();
     }
-  }
+
+    /**
+    *@dev Allows the sender to create the terms for the swap
+    *@param _amount Amount of Token that should be deposited for the notional
+    *@param _senderAdd States the owner of this side of the contract (does not have to be msg.sender)
+    */
+    function createSwap(uint _amount, address _senderAdd) public {
+        swap.createSwap(_amount,_senderAdd);
+    }
+
+    /**
+    *@dev This function can be called after the swap is tokenized or after the Calculate function is called.
+    *If the Calculate function has not yet been called, this function will call it.
+    *The function then pays every token holder of both the long and short DRCT tokens
+    *@param _topay number of contracts to try and pay (run it again if its not enough)
+    *@return true if the oracle was called and all contracts were paid out or false once ?
+    */
+    function forcePay(uint _topay) public returns (bool) {
+       swap.forcePay(_topay);
+    }
+
+
 }

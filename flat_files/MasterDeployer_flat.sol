@@ -853,3 +853,133 @@ contract Factory {
         return startDates.length;
     }
 }
+
+/**
+*This contracts helps clone factories and swaps through the Deployer.sol and MasterDeployer.sol.
+*The address of the targeted contract to clone has to be provided.
+*/
+contract CloneFactory {
+
+    /*Variables*/
+    address internal owner;
+    
+    /*Events*/
+    event CloneCreated(address indexed target, address clone);
+
+    /*Modifiers*/
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    /*Functions*/
+    constructor() public{
+        owner = msg.sender;
+    }    
+    
+    /**
+    *@dev Allows the owner to set a new owner address
+    *@param _owner the new owner address
+    */
+    function setOwner(address _owner) public onlyOwner(){
+        owner = _owner;
+    }
+
+    /**
+    *@dev Creates factory clone
+    *@param _target is the address being cloned
+    *@return address for clone
+    */
+    function createClone(address target) internal returns (address result) {
+        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
+        bytes20 targetBytes = bytes20(target);
+        for (uint i = 0; i < 20; i++) {
+            clone[26 + i] = targetBytes[i];
+        }
+        assembly {
+            let len := mload(clone)
+            let data := add(clone, 0x20)
+            result := create(0, data, len)
+        }
+    }
+}
+
+
+/**
+*This contract deploys a factory contract and uses CloneFactory to clone the factory
+*specified.
+*/
+
+contract MasterDeployer is CloneFactory{
+    
+    using SafeMath for uint256;
+
+    /*Variables*/
+    address[] factory_contracts;
+    address private factory;
+    mapping(address => uint) public factory_index;
+
+    /*Events*/
+    event NewFactory(address _factory);
+
+    /*Functions*/
+    /**
+    *@dev Initiates the factory_contract array with address(0)
+    */
+    constructor() public {
+        factory_contracts.push(address(0));
+    }
+
+    /**
+    *@dev Set factory address to clone
+    *@param _factory address to clone
+    */  
+    function setFactory(address _factory) public onlyOwner(){
+        factory = _factory;
+    }
+
+    /**
+    *@dev creates a new factory by cloning the factory specified in setFactory.
+    *@return _new_fac which is the new factory address
+    */
+    function deployFactory() public onlyOwner() returns(address){
+        address _new_fac = createClone(factory);
+        factory_index[_new_fac] = factory_contracts.length;
+        factory_contracts.push(_new_fac);
+        Factory(_new_fac).init(msg.sender);
+        emit NewFactory(_new_fac);
+        return _new_fac;
+    }
+
+    /**
+    *@dev Removes the factory specified
+    *@param _factory address to remove
+    */
+    function removeFactory(address _factory) public onlyOwner(){
+        require(_factory != address(0) && factory_index[_factory] != 0);
+        uint256 fIndex = factory_index[_factory];
+        uint256 lastFactoryIndex = factory_contracts.length.sub(1);
+        address lastFactory = factory_contracts[lastFactoryIndex];
+        factory_contracts[fIndex] = lastFactory;
+        factory_index[lastFactory] = fIndex;
+        factory_contracts.length--;
+        factory_index[_factory] = 0;
+    }
+
+    /**
+    *@dev Counts the number of factories
+    *@returns the number of active factories
+    */
+    function getFactoryCount() public constant returns(uint){
+        return factory_contracts.length - 1;
+    }
+
+    /**
+    *@dev Returns the factory address for the specified index
+    *@param _index for factory to look up in the factory_contracts array
+    *@return factory address for the index specified
+    */
+    function getFactorybyIndex(uint _index) public constant returns(address){
+        return factory_contracts[_index];
+    }
+}
