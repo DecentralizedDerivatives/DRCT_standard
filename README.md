@@ -179,3 +179,35 @@ If the contract is not tokenized, parties may exit the contract (assuming both a
 **Step 11: Operator - Redeem your wrapped Ether**
 
      WrappedEther.withdraw(amount);  //enter amount in wei
+
+
+### Scripts Description
+
+The Truffle Migrations.js and 2_further_deployments.js under the migrations folder and Migrate_2.js scripts can be used to migrate all DDA contracts to a test net or the mainnet via ‘truffle migrate’. Currently, Migrate_1.js is being developed to create the linkage between the factory and DRCTLibrary without truffle.
+ * Migrate_1.js - This script is under construction. We are currently working on linking the DRCTLibrary.sol and Factory.sol manually via the Migrate_1.js script so that users don't have to use Truffle migrations for the linkage.  
+ * Migrate_2.js - Can be ran immediately after 'truffle migrate' and it will deploy several contracts and sets up two factories along with their short and long token addresses for the date specified. It deploys:
+   * Wrapped_Ether.sol 
+   * Exchange.sol
+   * Membership.sol
+   * MasterDeployer.sol
+   * Two factories: 1) BTC/USD with duration of 7 days and multiplier of 1 and 2) TTH/USD with duration of 7 days and multiplier of 5. 
+   * Two oracle contracts (BTC/USD and ETH/USD).  
+   * Long and short token addresses for the two factories for the date specified.
+
+The admin, daily and monthly scripts help deploy portions of the initial migration, provide daily summaries, and help with maintenance. 
+
+ * Admin_1_setup.js – Deploys several contracts: Wrapped_Ether, Exchange, Membership, MasterDeployer and Factory (after the factory and DRCTLibrary are linked by Truffle via the migrations folder with the script 2_further_deployments.js).
+ * Admin_2_newfactory_new_oracle.js – Deploys a new factory based on the specified duration, multiplier, and swap fee and a new oracle based on the specified APIs. The deployed MasterDeployer.sol, Membership.sol, and Wrapped_Ether.sol contract addresses need to be provided.
+ * Admin_3_removefactory.js – Allows the owner to remove a factory from the specified MasterDeployer (_master).  Removing deprecated factories helps save gas on scripts that run processes by looping through all the factories linked to the MasterDeployer.
+ * Admin_4_newfactory_with_existing_oracle.js – Deploys a factory based on the specified parameters (duration, multiplier and swap fee) and sets the oracle to an already deployed oracle.
+ * Admin_5_update_oracle_on_factory.js – Allows the owner to update an existing factory with an existing oracle in the event the factory’s oracle becomes deprecated (the API becomes unusable) and another oracle is already deployed. 
+ * Admin_6_deploy_and_update_oracle.js – Allows the owner to deploy a new oracle and update an existing factory with that new oracle in the event the factory’s oracle becomes deprecated (the API becomes unusable) and another oracle is already deployed. 
+ * Admin_7_contract_setup.js – Allows the owner to deploy DRCT tokens for given start date
+ * Admin_8_new_swap_contract.js – Deploys a new swap contract.
+ * Admin_9_funding_oracles.js – Funds the oracle contracts. DDA contracts currently use the Oraclize service to get Bitcoin and Ethereum prices. The oracle contracts have to be funded so these can pay the Oraclize fees.
+ * Daily_1_OracleQuery_db.js – Submits the Oraclize queries to get USD prices for Bitcoin and Ethereum.
+ * Daily_2_oracle_check_db.js – Displays the prices reported by the Oraclize queries.
+ * Daily_3_forcepay.js – Pays out the swap to the current short and long token holders.
+ * Daily_4_summary.js – Provides a summary for the day (number of current factories, expiring contracts, paid contracts, started contracts, created contracts, number of short token holders, long token holders, total holders). 
+ * Monthly_1_withdrawFees.js – Allows the factory owner to withdraw fees collected by the factory contract. 
+
