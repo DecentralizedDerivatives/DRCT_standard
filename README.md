@@ -181,6 +181,7 @@ If the contract is not tokenized, parties may exit the contract (assuming both a
      WrappedEther.withdraw(amount);  //enter amount in wei
 
 
+
 ### Scripts Description
 
 The Truffle Migrations.js and 2_further_deployments.js under the migrations folder and Migrate_2.js scripts can be used to migrate all DDA contracts to a test net or the mainnet via ‘truffle migrate’. Currently, Migrate_1.js is being developed to create the linkage between the factory and DRCTLibrary without truffle.
