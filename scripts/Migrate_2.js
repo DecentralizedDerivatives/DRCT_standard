@@ -1,6 +1,6 @@
 /**
 *@dev Use this for setting up contracts for testing
-* This will deploy all contracts needed to deploy two factories (one ETH and one BTC) and 
+*This will deploy all contracts needed to deploy two factories (one ETH and one BTC) and 
 *create tokens for the factories.
 
 *These commands that need to be ran:

@@ -1,6 +1,6 @@
 /**
 *This deploys wrapped_Ether, Exchange, Membership, MasterDeployer and Factory(after 
-*the factory and DRCTLibrary are linked by Truffle with 4_further_deployments2.js).
+*the factory and DRCTLibrary are linked by Truffle with 2_further_deployments.js).
 */
 
 
