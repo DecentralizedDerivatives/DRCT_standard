@@ -1,6 +1,7 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
-var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+var mnemonic = "governments of the industrial world you weary giants of flesh and steel"
+//var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
 
 /**
 Brenda's Infura API
@@ -21,7 +22,7 @@ module.exports = {
       port: 8545,
       network_id: "*", // Match any network id
       gasPrice: 1, // Specified in Wei
-      gas:15000000
+      gas:4700000
     },
     ropsten: {
       provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/zkGX3Vf8njIXiHEGRueB"),

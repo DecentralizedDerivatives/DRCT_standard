@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //ERC20 function interface
 interface ERC20_Interface {

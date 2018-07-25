@@ -1,20 +1,17 @@
 pragma solidity ^0.4.24;
 
-import "oraclize-api/usingOraclize.sol";
-
 /**
-*The Oracle contract provides the reference prices for the contracts.  Currently the Oracle is 
-*updated by an off chain calculation by DDA.  Methodology can be found at 
-*www.github.com/DecentralizedDerivatives/Oracles
+*The Test Oracle contract for testing the push and callback functions
 */
+contract Test_Oracle2 {
 
-contract Oracle is usingOraclize{
     /*Variables*/
-    //Private queryId for Oraclize callback
+    
+    address private owner;
     bytes32 private queryID;
+    string public usedAPI;
     string public API;
     string public API2;
-    string public usedAPI;
 
     /*Structs*/
     struct QueryInfo {
@@ -28,11 +25,22 @@ contract Oracle is usingOraclize{
     mapping(uint => bytes32) public queryIds;
     mapping(bytes32 => QueryInfo ) public info;
 
+    //Mapping of documents stored in the oracle
+    mapping(uint => uint) internal oracle_values;
+    mapping(uint => bool) public queried;
+
     /*Events*/
     event DocumentStored(uint _key, uint _value);
     event newOraclizeQuery(string description);
+    event called(bool _wascalled);
 
-    /*Functions*/
+    /*Modifiers*/
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+
     /**
     *@dev Constructor, sets two public api strings
     *e.g. "json(https://api.gdax.com/products/BTC-USD/ticker).price"
@@ -41,41 +49,47 @@ contract Oracle is usingOraclize{
     * "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price"
     */
      constructor(string _api, string _api2) public{
+        owner = msg.sender;
         API = _api;
         API2 = _api2;
     }
 
     /**
-    *@dev RetrieveData - Returns stored value by given key
-    *@param _date Daily unix timestamp of key storing value (GMT 00:00:00)
+    *@dev Allows the owner of the Oracle to store a document in the oracle_values mapping. Documents
+    *represent underlying values at a specified date (key).
     */
-    function retrieveData(uint _date) public constant returns (uint) {
-        QueryInfo storage currentQuery = info[queryIds[_date]];
-        return currentQuery.value;
+    function StoreDocument(uint _key, uint _value) public onlyOwner() {
+        if(_value == 0){
+            _value = 1;
+        }
+        oracle_values[_key] = _value;
+        emit DocumentStored(_key, _value);
+        queried[_key] = true;
     }
 
     /**
     *@dev PushData - Sends an Oraclize query for entered API
     */
-    function pushData() public payable{
-        uint _key = now - (now % 86400);
+    function pushData(uint _key, uint _bal, uint _cost, bytes32 _queryID) public payable {
         uint _calledTime = now;
         QueryInfo storage currentQuery = info[queryIds[_key]];
         require(currentQuery.queried == false  && currentQuery.calledTime == 0 || 
-            currentQuery.calledTime != 0 && _calledTime >= (currentQuery.calledTime + 3600) &&
+            currentQuery.calledTime != 0  &&
             currentQuery.value == 0);
-        if (oraclize_getPrice("URL") > address(this).balance) {
-            emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+
+        if ( _cost > _bal) {
+            emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH");
         } else {
             emit newOraclizeQuery("Oraclize queries sent");
+            emit called(currentQuery.called); 
             if (currentQuery.called == false){
-                queryID = oraclize_query("URL", API);
                 usedAPI=API;
+            //    currentQuery.called = true;
             } else if (currentQuery.called == true ){
-                queryID = oraclize_query("URL", API2);
-                usedAPI=API2;  
+                usedAPI=API2;   
+            //    currentQuery.called = false;          
             }
-
+            queryID = _queryID;
             queryIds[_key] = queryID;
             currentQuery = info[queryIds[_key]];
             currentQuery.queried = true;
@@ -84,35 +98,29 @@ contract Oracle is usingOraclize{
             currentQuery.called = !currentQuery.called;
         }
     }
+    
+
+    /**
+    *@dev Used to test callback
+    *@param _oraclizeID unique oraclize identifier of call
+    *@param _result Result of API call in string format
+    */
+     function callback(uint _result, bytes32 _oraclizeID) public {
+        QueryInfo storage currentQuery = info[_oraclizeID];
+        require(_oraclizeID == queryID);
+        currentQuery.value = _result;
+        currentQuery.called = false; 
+        if(currentQuery.value == 0){
+            currentQuery.value = 1;
+        }
+        emit DocumentStored(currentQuery.date, currentQuery.value);
+    } 
 
     /*
     * gets API used for tests
     */
     function getusedAPI() public view returns(string){
         return usedAPI;
-    }
-    
-    /**
-    *@dev Used by Oraclize to return value of PushData API call
-    *@param _oraclizeID unique oraclize identifier of call
-    *@param _result Result of API call in string format
-    */
-    function __callback(bytes32 _oraclizeID, string _result) public {
-        QueryInfo storage currentQuery = info[_oraclizeID];
-        require(msg.sender == oraclize_cbAddress() && _oraclizeID == queryID);
-        currentQuery.value = parseInt(_result,3);
-        currentQuery.called = false; 
-        if(currentQuery.value == 0){
-            currentQuery.value = 1;
-        }
-        emit DocumentStored(currentQuery.date, currentQuery.value);
-    }
-
-    /**
-    *@dev Allows the contract to be funded in order to pay for oraclize calls
-    */
-    function fund() public payable {
-      
     }
 
     /**
@@ -124,5 +132,24 @@ contract Oracle is usingOraclize{
     function getQuery(uint _date) public view returns(bool){
         QueryInfo storage currentQuery = info[queryIds[_date]];
         return currentQuery.queried;
+    }
+
+    /**
+    *@dev RetrieveData - Returns stored value by given key
+    *@param _date Daily unix timestamp of key storing value (GMT 00:00:00)
+    *@return oracle_values for the date
+    */
+    function retrieveData(uint _date) public constant returns (uint) {
+        QueryInfo storage currentQuery = info[queryIds[_date]];
+        return currentQuery.value;
+    }
+
+
+    /**
+    *@dev Set the new owner of the contract or test oracle?
+    *@param _new_owner for the oracle? 
+    */
+    function setOwner(address _new_owner) public onlyOwner() {
+        owner = _new_owner; 
     }
 }

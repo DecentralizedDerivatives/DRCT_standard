@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "./interfaces/Deployer_Interface.sol";
 import "./DRCT_Token.sol";
@@ -44,6 +44,7 @@ contract Factory {
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
     mapping(uint => address) public short_tokens;
+    mapping(address => uint) public token_type; //1=short 2=long
 
     /*Events*/
     //Emitted when a Swap is created
@@ -106,6 +107,16 @@ contract Factory {
     */
     function getTokens(uint _date) public view returns(address, address){
         return(long_tokens[_date],short_tokens[_date]);
+    }
+
+    /**
+    *@dev Gets the type of Token (long and short token) for the specifed 
+    *token address
+    *@param _token address 
+    *@return token type short = 1 and long = 2
+    */
+    function getTokenType(address _token) public view returns(uint){
+        return(token_type[_token]);
     }
 
     /**
@@ -188,13 +199,16 @@ contract Factory {
         address _token;
         require(_start_date % 86400 == 0);
         require(long_tokens[_start_date] == address(0) && short_tokens[_start_date] == address(0));
-        _token = new DRCT_Token(address(this));
+        _token = new DRCT_Token();
         token_dates[_token] = _start_date;
         long_tokens[_start_date] = _token;
-        _token = new DRCT_Token(address(this));
+        token_type[_token]=2;
+        _token = new DRCT_Token();
+        token_type[_token]=1;
         short_tokens[_start_date] = _token;
         token_dates[_token] = _start_date;
         startDates.push(_start_date);
+
     }
 
     /**

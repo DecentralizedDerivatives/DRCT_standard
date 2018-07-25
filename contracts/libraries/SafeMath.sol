@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {

@@ -22,21 +22,27 @@ var Deployer = artifacts.require("Deployer");
 *and factory details(duration, multiplier, swapFee)
 *the type is only used to print to the console.
 */
-var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
-var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
-var type = "ETH/USD";
-var  duration = 7;
-var multiplier = 5;
+//var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
+//var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
+var type = "BTC/USD";
+var  duration = 1;
+var multiplier = 1;
 var swapFee = 0;
 
 /**
 *@dev Update the addresses below. get these addresses from the log after running 
 *4_Admin_setup.js
 */
+//BTC oracle
+var _oracle = "0x488adf792b598db87ff8af711d0f19601f31c3e7";
 
-var _master = "0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8";
-var _member = "0xb28b547e8c1c8b551e6c057465bfd802b1567939";
-var _wrapped = "0xfe0756975401152e9f14dba904062e6658cccb33";
+//ETH oracle
+//var _oracle = "0x6be49e4e660aa759f468669b0a5696e73b537cb7";
+
+
+var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f";
+var _member = "0xfcb2342eca570fb10da23ce7dd430f41e4f5a989";
+var _wrapped = "0x5a123d2f53a0410def29f1e2902abea66f59e246";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")
@@ -57,19 +63,18 @@ module.exports =async function(callback) {
       base = await Wrapped_Ether.at(_wrapped);
       userContract = await UserContract.new();
       deployer = await Deployer.new(factory.address);
-      oracle = await Oracle.new(_oracle_api,_oracle_api2);
       await factory.setBaseToken(base.address);
       await factory.setUserContract(userContract.address);
       await factory.setDeployer(deployer.address);
-      await factory.setOracleAddress(oracle.address);
+      await factory.setOracleAddress(_oracle);
       await userContract.setFactory(factory.address);
       console.log('Factory : ',factory.address);
-      console.log('Oracle: ',oracle.address);
+      console.log('Oracle: ',_oracle);
       console.log('Deployer: ',deployer.address);
       console.log('UserContract: ',userContract.address);
       console.log('BaseToken: ',base.address);
     console.log("MasterDeployer, Type,duration, multiplier, swapFee, Factory, Oracle, Deployer, UserContract, BaseToken")
-    var  ar = [masterDeployer.address,type,duration,multiplier, swapFee, factory.address, oracle.address, deployer.address, userContract.address, base.address];
+    var  ar = [masterDeployer.address,type,duration,multiplier, swapFee, factory.address, _oracle, deployer.address, userContract.address, base.address];
     console.log(ar.join(', '));
 
 }

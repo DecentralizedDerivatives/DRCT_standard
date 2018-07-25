@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 //Swap Oracle functions - descriptions can be found in Oracle.sol
 interface Oracle_Interface{

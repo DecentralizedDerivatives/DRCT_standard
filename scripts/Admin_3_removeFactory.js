@@ -13,9 +13,9 @@ var Oracle = artifacts.require("Oracle");
 *If you have to delete factories from different Master Deployers 
 *you will need to run this code each time you need to update the Master Deployer.
 */
-//var _master = "0x300ac58f86804ea589102b93d27d9d7a2bb78255";
-var _master ="0x5aa1c552b1c5f70495066c7d9ceeaecab7bebfa8"; //two api oracle
-var _factory= "0x003660cd583665ccc93b86e38d405e1b60425b65";
+
+var _master ="0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; //two api oracle
+var _factory= " ";//enter factory address to remove
 
 
 module.exports =async function(callback) {

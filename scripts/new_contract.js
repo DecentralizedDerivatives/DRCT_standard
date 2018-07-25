@@ -7,10 +7,15 @@ const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
 /**
-*@dev Update the swap start date and factory address
+*@dev Update the swap start date, hdate(human readable date is used only in 
+* the console) and factory address
 */
-var o_startdate ="1528416000";//swap start date in epoch time
-var factory_address= "0x15bd4d9dd2dfc5e01801be8ed17392d8404f9642";
+
+var o_startdate =1532044800; //epoch time
+var hdate ="7/20/2018"; //human readable date
+var factory_address= "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";//BTC
+//var factory_address = "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";//ETH
+console.log(hdate);
 
 module.exports =async function(callback) {
     let swap;
@@ -32,5 +37,5 @@ module.exports =async function(callback) {
 	  swap_add = receipt.logs[0].args._created;
 	  swap = await TokenToTokenSwap.at(swap_add);
 	  console.log('My Swap',swap_add);
-	  await userContract.Initiate(swap_add,500000000000000000,{value: web3.toWei(1,'ether')});
+	  //await userContract.Initiate(swap_add,10000000000000000,{value: web3.toWei(.02,'ether')});
 }

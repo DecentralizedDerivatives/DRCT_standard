@@ -1,7 +1,46 @@
 pragma solidity ^0.4.24;
 
- import "./libraries/SafeMath.sol";
- import "./interfaces/ERC20_Interface.sol";
+//Slightly modified SafeMath library - includes a min function
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function min(uint a, uint b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+//ERC20 function interface
+interface ERC20_Interface {
+  function totalSupply() external constant returns (uint);
+  function balanceOf(address _owner) external constant returns (uint);
+  function transfer(address _to, uint _amount) external returns (bool);
+  function transferFrom(address _from, address _to, uint _amount) external returns (bool);
+  function approve(address _spender, uint _amount) external returns (bool);
+  function allowance(address _owner, address _spender) external constant returns (uint);
+}
+
 
 /**
 *Exchange creates an exchange for the swaps.
