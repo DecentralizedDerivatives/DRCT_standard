@@ -179,5 +179,6 @@ try{
 }
 
 
-
+//calc percent change of oracle price from start date to end date
+//how much was paid? does it match
  
