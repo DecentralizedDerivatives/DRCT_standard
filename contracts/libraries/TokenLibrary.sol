@@ -124,7 +124,7 @@ library TokenLibrary{
         uint _today = now - (now % 86400);
         uint i = 0;
         if(_today >= self.contract_details[0]){
-            while(i < (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
+            while(i <= (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
                 if(oracle.getQuery(self.contract_details[0]+i*86400)){
                     self.contract_details[4] = oracle.retrieveData(self.contract_details[0]+i*86400);
                 }
@@ -133,7 +133,7 @@ library TokenLibrary{
         }
         i = 0;
         if(_today >= self.contract_details[1]){
-            while(i < (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
+            while(i <= (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
                 if(oracle.getQuery(self.contract_details[1]+i*86400)){
                     self.contract_details[5] = oracle.retrieveData(self.contract_details[1]+i*86400);
                 }

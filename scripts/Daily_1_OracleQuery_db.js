@@ -11,15 +11,17 @@ var Factory = artifacts.require("Factory");
 *factory associated with the master deployer(_master) specified.
 *_nowUTC is only used to display a human readable date on the console.
 */
-var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+//var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //new
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 
 //BTC oracle
-var _oracleBtc = "0x488adf792b598db87ff8af711d0f19601f31c3e7";
-
+//var _oracleBtc = "0x488adf792b598db87ff8af711d0f19601f31c3e7";
+var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //new
 //ETH oracle
-var _oracleEth = "0x6be49e4e660aa759f468669b0a5696e73b537cb7";
+//var _oracleEth = "0x6be49e4e660aa759f468669b0a5696e73b537cb7";
+var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//new
 
 module.exports =async function(callback) {
  

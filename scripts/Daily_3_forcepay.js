@@ -12,7 +12,8 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 *factory associated with the master deployer(_master) specified and each
 *swap and force pay them.
 */
-var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+//var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //new
 
 module.exports =async function(callback) {
 
@@ -33,20 +34,19 @@ module.exports =async function(callback) {
             let variables = await swap.showPrivateVars();
             // [userContract, Long Token addresss, short token address, oracle address, base token address], number DRCT tokens,  duration,start_value, Start date, end_date, multiplier
             var endDate = variables[5];
-            var x = 1;
-            var y = 50;
+            var x = 20;
             console.log('End Date: ', endDate);
             console.log('Date', _date);
             let state = await swap.currentState();
                 if(endDate <= _date){     
                     let state = await swap.currentState();
                     while(state == 1){
-                        console.log('Paying Swap: ',swap_address)
-                        console.log(await swap.contract_details.call())
-                        await swap.forcePay(x,y);
-                        x += 50;
-                        y += 50;
+                        console.log('Paying Swap: ',swap_address);
+                        console.log(await swap.showPrivateVars.call());
+                        await swap.forcePay(x);
+                        //x += 20;
                         state = await swap.currentState();
+                        console.log("state", state);
                     }
                 }
             }

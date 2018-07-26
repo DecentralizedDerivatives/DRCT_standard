@@ -8,42 +8,18 @@ var Deployer = artifacts.require("Deployer");
 const TokenToTokenSwap = artifacts.require('./TokenToTokenSwap.sol');
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 
-/**
-*@dev Update the factory address and the start date (o_startdate) 
-*as epoch date to create tokens
-*Update hdate to reflect the epoch date as a human readable date and type
-*both hdate and type are only used to output to the console
-*/
+var factory_address= "0xa89e5d248b37e895d12f4c6853b65b6ee1966870";
 
-//var o_startdate =1532044800;
-//var hdate = "7/20/2018"; //human readable date
+var add1 = "0x323cef35598e3d2d1819c5168a1c68f609ac1e0f"
+var add2 = "0xc69c64c226fEA62234aFE4F5832A051EBc860540"
 
-var o_startdate = 1532044800;
-var hdate = "07/20/2018";
-
-var type = "ETH/USD";
-var factory_address= "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";
-
-
-//var type = "BTC/USD";
-//var factory_address = "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6";
-
-console.log(hdate, type, factory_address);
 module.exports =async function(callback) {
-     let factory = await Factory.new()
+     let factory = await Factory.at(factory_address)
+      var _tokenadd = await factory.token.call();
+      console.log('Token address',_tokenadd);
+      let _token = await Wrapped_Ether.at(_tokenadd);
+      console.log('Brenda Balance', await _token.balanceOf(add1));
+      console.log('Nick Balance', await _token.balanceOf(add2));
 
-      let base;
-      let deployer;
-      //await factory.deployTokenContract(o_startdate);
-      await factory.deployTokenContract(o_startdate);
-      var long_token_add =await factory.long_tokens(o_startdate);
-      var short_token_add =await factory.short_tokens(o_startdate);
-            let short_token = await DRCT_Token.at(short_token_add)
-      console.log(short_token_add);
-      console.log('actual Factory',factory.address);
-      console.log('factory',await short_token.getFactoryAddress())
-      console.log('my balance', await short_token.balanceOf("0xc69c64c226fEA62234aFE4F5832A051EBc860540") );
-      console.log('token date: ',hdate)
-      console.log('Long Token at: ',long_token_add);
-      console.log('Short Token at: ',short_token_add);
 }
+

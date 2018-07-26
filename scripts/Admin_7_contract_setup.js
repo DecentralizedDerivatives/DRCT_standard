@@ -15,8 +15,8 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 *both hdate and type are only used to output to the console
 */
 
-//BTC/USD, 7, 1, 0, 0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6
-//ETH/USD, 7, 5, 0, 0xa18e394d8de8f0203fa89b9f35212a2ecbede48a
+//BTC/USD, 7, 1, 0, 0x804870d9b8184e12444405e1ee114757b97897b8
+//ETH/USD, 7, 5, 0, 0xa6fc8ed0d94a33de24eda0c226546ffa3737358a
 
 //var o_startdate = 1533254400;
 //var hdate = "8/3/2018"; //human readable date
@@ -30,16 +30,18 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 //var o_startdate =1532304000; //epoch time
 //var hdate ="7/23/2018"; //human readable date
 
-var o_startdate =1532390400; //epoch time
-var hdate ="7/24/2018"; //human readable date
-
-//var type = "ETH/USD";
-//var factory_address= "0xa18e394d8de8f0203fa89b9f35212a2ecbede48a";
+var o_startdate =1532649600; //epoch time
+var hdate ="7/27/2018"; //human readable date
 
 
-var type = "BTC/USD";
-//var factory_address = "0x5dbc9e739bcc518c4ce3084e597117eb0dc929e6"; //7day
-var factory_address = "0xa89e5d248b37e895d12f4c6853b65b6ee1966870"; //1day
+var type = "ETH/USD";
+//var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day
+var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day
+
+
+//var type = "BTC/USD";
+//var factory_address = "0x804870d9b8184e12444405e1ee114757b97897b8"; //7day
+//var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day
 
 
 console.log(hdate, type, factory_address);
