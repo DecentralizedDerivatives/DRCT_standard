@@ -12,7 +12,8 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 *factory associated with the master deployer(_master) specified.
 *_nowUTC is only used to display a human readable date on the console.
 */
-var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+//var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
+var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //new
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
 module.exports =async function(callback) {
@@ -31,6 +32,7 @@ module.exports =async function(callback) {
         var link = "".concat('<https://rinkeby.etherscan.io/address/',oracle_address,'>' );
         var ar = [count, _nowUTC, factory_address, oracle_address,  value1, link];
         console.log(ar.join(', '));
+        console.log(await oracle.getusedAPI());
         
   	}
 }
