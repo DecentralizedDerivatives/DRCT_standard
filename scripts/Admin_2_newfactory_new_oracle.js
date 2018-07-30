@@ -2,7 +2,10 @@
 Deploy new factory and new oracle
 ---if an oracle exists use the newfactory_with_existing_oracle.js script
 */
- 
+ function sleep_s(secs) {
+  secs = (+new Date) + secs * 1000;
+  while ((+new Date) < secs);
+}
 var Oracle = artifacts.require("Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
@@ -26,7 +29,7 @@ var Deployer = artifacts.require("Deployer");
 var _oracle_api = "json(https://api.gdax.com/products/ETH-USD/ticker).price";
 var _oracle_api2 = "json(https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT).price";
 var type = "ETH/USD";
-var  duration = 1;
+var  duration = 7;
 var multiplier = 5;
 var swapFee = 0;
 
@@ -35,9 +38,9 @@ var swapFee = 0;
 *1_Admin_setup.js
 */
 
-var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b";
-var _member = "0x50d9bf95bf09d6ea9812da2763eac32d21ca31d5";
-var _wrapped = "0x6248cb8a316fc8f1488ce56f6ea517151923531a";
+var _master = "0x58f745e66fc8bb2307e8d73d7dafeda47030113c";
+var _member = "0x4286b9997df2af09e186c332e655e9cef71a40fa";
+var _wrapped = "0xf2740c75f221788cf78c716b953a7f1c769d49b9";
 
 module.exports =async function(callback) {
     console.log("Type,duration, multiplier, swapFee")
@@ -50,20 +53,34 @@ module.exports =async function(callback) {
     let userContract;
     let oracle;
       let res = await masterDeployer.deployFactory();
+      sleep_s(5);
       res = res.logs[0].args._factory;
       factory = await Factory.at(res);
+                sleep_s(5);
       await factory.setVariables(1000000000000000, duration, multiplier, swapFee);
+              sleep_s(5);
       await factory.setMemberContract(_member);
+              sleep_s(5);
       await factory.setWhitelistedMemberTypes([0]);
+              sleep_s(5);
       base = await Wrapped_Ether.at(_wrapped);
+              sleep_s(5);
       userContract = await UserContract.new();
+              sleep_s(5);
       deployer = await Deployer.new(factory.address);
+              sleep_s(5);
       oracle = await Oracle.new(_oracle_api,_oracle_api2);
+              sleep_s(5);
       await factory.setBaseToken(base.address);
+              sleep_s(5);
       await factory.setUserContract(userContract.address);
+              sleep_s(5);
       await factory.setDeployer(deployer.address);
+              sleep_s(5);
       await factory.setOracleAddress(oracle.address);
+              sleep_s(5);
       await userContract.setFactory(factory.address);
+              sleep_s(5);
       console.log('Factory : ',factory.address);
       console.log('Oracle: ',oracle.address);
       console.log('Deployer: ',deployer.address);
