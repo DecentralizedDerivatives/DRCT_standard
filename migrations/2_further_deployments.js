@@ -19,16 +19,17 @@ function sleep_s(secs) {
   while ((+new Date) < secs);
 }
 /****Uncomment the body below to run this with Truffle migrate for truffle testing*/
+//module.exports = function(deployer) {
+	//deployer.deploy(DRCTLibrary);
+	//sleep_s(5);
+//}
+
+
 module.exports = function(deployer) {
-	deployer.deploy(DRCTLibrary);
-	sleep_s(5);
-}
-
-
-/*module.exports = function(deployer) {
-	deployer.deploy(DRCTLibrary);
+	DRCTLibrary.deployed('0xd53f0d16b6e03b057331d210a0a7f200c2bca75e');
 	deployer.link(DRCTLibrary,Factory);
+	sleep_s(5);
 	deployer.deploy(Factory);
 }
-*/
+
 /****Uncomment the body to run this with Truffle migrate for truffle testing*/

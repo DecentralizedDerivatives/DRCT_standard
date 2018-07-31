@@ -20,12 +20,12 @@ function sleep_s(secs) {
 }
 /****Uncomment the body below to run this with Truffle migrate for truffle testing*/
 module.exports = function(deployer) {
-    DRCTLibrary.deployed().then(function(drct){
-        return Factory.link(DRCTLibrary,drct.address);
+/*    DRCTLibrary.deployed().then(function(drct){
+        return Factory.link(DRCTLibrary,'0x4c102b6bad1d3e879ce07204d1089e3eed8b4450');
         sleep_s(5);
     }).then(function() {
         return deployer.deploy(Factory);
-    })
+    })*/
 }
 
 

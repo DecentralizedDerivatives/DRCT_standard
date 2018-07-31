@@ -9,22 +9,22 @@
 *truffle exec scripts/Migrate_2.js --network rinkeby
 */
 var Factory = artifacts.require("./Factory.sol");
-var json = artifacts.require("./build/contracts/compiled.json");
+//var json = artifacts.require("./build/contracts/compiled.json");
 var DRCTLibrary = artifacts.require("./libraries/DRCTLibrary.sol");
 var solc = require('solc');
 
-const Web3 = require("web3");
+const web3 = require("web3");
 const fs = require('fs');
-const Tx = require('ethereumjs-tx')
-const web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/zkGX3Vf8njIXiHEGRueB"));
-var address = process.argv[4];
-var abi = json.abi;
+//const Tx = require('ethereumjs-tx')
+//const web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/zkGX3Vf8njIXiHEGRueB"));
+//var address = process.argv[4];
+//var abi = json.abi;
 
 //tried changing deployer to callback-did not work
 module.exports =async function(deployer) {
 	//console.log(Factory);
 	//console.log(DRCTLibrary);
-	var factoryByte = await fs.readFileSync('./build/contracts/Factory.json').toString().bytecode;
+	var factoryByte = await fs.readFileSync('./build/contracts/Factory.json').toString();
 	//console.log(factoryByte);
 	let drctlib;
 	let factory;
@@ -32,14 +32,17 @@ module.exports =async function(deployer) {
 	console.log("DRCTLibrary", drctlib.address);
     var linkedFactory = await String(factoryByte).replace(/_+DRCTLibrary_+/g, drctlib.address.replace("0x", ""));
     //console.log(linkedFactory);    
-    fs.writeFile('./build/contracts/compiled.json', JSON.stringify(linkedFactory), function(err) {
+    fs.writeFile('./build/contracts/Factory.json', JSON.stringify(linkedFactory), function(err) {
         if (err) throw err;
         console.log('Compiled & saved');
     });
+factory = await Factory.new();
+console.log(factory.address);
 
+}
 //factory = await Compiled.new();
 //console.log(factory.address);
-var address = process.argv[4];
+/*var address = process.argv[4];
 var abi = json.abi;
   web3.eth.getTransactionCount(account, function (err, nonce) {
     
@@ -59,7 +62,7 @@ var abi = json.abi;
        console.log(transactionHash);
     });
   });
-}
+}*/
 
 
 /*
