@@ -23,6 +23,8 @@ var hdate ="7/27/2018"; //human readable date
 //var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day BTC
 //var factory_address = "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//ETH
 var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day
+//var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day mainnet
+//var factory_address = "0x8207cea5aa1a9047b6607611c2b5b3f04df7b0d3"; //7day mainnet
 
 console.log(hdate, o_startdate);
 
