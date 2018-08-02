@@ -20,16 +20,8 @@ const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 *both hdate and type are only used to output to the console
 */
 
-//BTC/USD, 7, 1, 0, 0x804870d9b8184e12444405e1ee114757b97897b8
-//ETH/USD, 7, 5, 0, 0xa6fc8ed0d94a33de24eda0c226546ffa3737358a
-
-//var o_startdate = 1533254400;
-//var hdate = "8/3/2018"; //human readable date
-
 var o_startdate = 1533859200;
 var hdate = "08/10/2018";
-
-
 
 //var type = "ETH/USD";
 //var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day rinkeby

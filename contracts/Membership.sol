@@ -99,6 +99,15 @@ contract Membership {
     }
 
     /**
+    *@dev Use this function to set memberId for the member
+    *@param _memberAddress address of member that we need to update membershipType
+    *@param _memberId is the manually assigned memberId
+    */
+    function setMemberId(address _memberAddress,  uint _memberId) public onlyOwner{
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.memberId = _memberId;
+    }
+    /**
     *@dev getter function to get all membersAccts
     */
     function getMembers() view public returns (address[]){
