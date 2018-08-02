@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-var Test_Oracle2 = artifacts.require("Test_Oracle2");
+/*var Test_Oracle2 = artifacts.require("Test_Oracle2");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -193,3 +193,4 @@ contract('Oracle Test', function(accounts) {
 
 });
 
+*/
