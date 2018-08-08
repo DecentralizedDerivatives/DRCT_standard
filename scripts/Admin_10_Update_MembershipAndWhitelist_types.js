@@ -20,10 +20,10 @@ var Factory = artifacts.require("Factory");
 */
 
 //var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //mainnet
-var _membership = "0xd33615c5ea5d703f06d237f6c56ff2400b564c77";// mainnet
+//var _membership = "0xd33615c5ea5d703f06d237f6c56ff2400b564c77";// mainnet
 
 //var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //rinkeby
-//var _membership = "0x620b6b6ac75ad9234eb6c533688ddd8a5948650e"; //rinkeby
+var _membership = "0x620b6b6ac75ad9234eb6c533688ddd8a5948650e"; //rinkeby
 
 
 //var type = "ETH/USD";
@@ -33,40 +33,29 @@ var _membership = "0xd33615c5ea5d703f06d237f6c56ff2400b564c77";// mainnet
 
 var type = "BTC/USD";
 //var factory_address = "0x804870d9b8184e12444405e1ee114757b97897b8"; //7day rinkeby
-//var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day rinkeby
-var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day mainnet
+var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day rinkeby
+//var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day mainnet
 
-
-//var _memberAddress = "0x5639637f5530b91ad88b5b7264ce928144f8afde";
-//var _membershipType =1;
-//var _whitelistTypes = [1];
-//var _memberId = 3;
+//var _whitelistTypes = [1,2,3];
+var _memberFee = 2500000000000000;
+var _swapFee = 500; //.05%
 
 
 console.log( type, factory_address);
 module.exports =async function(callback) {
-     //let membership = await Membership.new();
-      let membership = await Membership.at(_membership);
+/*      let membership = await Membership.at(_membership);
       console.log("membership address: ", membership.address);
-      sleep_s(10);
+      sleep_s(10);*/
       let factory = await Factory.at(factory_address);
       console.log("set factory");
       sleep_s(10);
-      await factory.setMemberContract(membership.address);
-      console.log('factory.setMemberContract');
+/*      await membership.setFee(_memberFee);
+      console.log('set Memberhip fee', _memberFee);*/
+      await factory.setSwapFee(_swapFee);
+      console.log('swapFee ', _swapFee);
       sleep_s(10);
 /*    await factory.setWhitelistedMemberTypes(_whitelistTypes);
       console.log('whitelist types ', _whitelistTypes);
-      sleep_s(10);
-     await factory.isWhitelisted(_memberAddress);
-      console.log('whitelist member ', _memberAddress);
-      sleep_s(10);
-      await membership.setMembershipType(_memberAddress,  _membershipType);
-      console.log('membership type added for ', _memberAddress, _membershipType);
-      sleep_s(10);
-      await membership.setMemberId(_memberAddress,  _memberId);
-      console.log('memberId added for ', _memberAddress, _memberId);
-      sleep_s(10);
-      var getinfo = await membership.getMember(_memberAddress);
-      console.log("member infor:", getinfo );*/
+      sleep_s(10);*/
+
 }
