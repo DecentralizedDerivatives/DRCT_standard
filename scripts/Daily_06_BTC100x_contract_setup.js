@@ -29,6 +29,10 @@ console.log("d", d);
 var o_startdate = d;
 var hdate = _date;
 
+/*var o_startdate =1534723200;
+var hdate = "8/20/2018";*/
+
+
 //var type = "ETH/USD";
 //var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day 5x rinkeby
 //var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day 5x rinkeby
@@ -44,8 +48,10 @@ console.log(hdate, type, factory_address, o_startdate);
 module.exports =async function(callback) {
       let factory = await Factory.at(factory_address);
       console.log("set factory");
-      sleep_s(30);
-      await factory.deployTokenContract(o_startdate);
+      sleep_s(10);
+      console.log(await factory.getDateCount());
+      //console.log(await factory.startDates);
+    await factory.deployTokenContract(o_startdate);
       console.log("deployTokenContract");
       sleep_s(10);
       var long_token_add =await factory.long_tokens(o_startdate);

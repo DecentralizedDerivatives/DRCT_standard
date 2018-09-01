@@ -51,16 +51,16 @@ contract('Throw Tests', function(accounts) {
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new();
+	    factory = await Factory.new([0]);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory();
+	    let res = await masterDeployer.deployFactory([0]);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
-	    await factory.setWhitelistedMemberTypes([0]);
+	    //await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
@@ -129,13 +129,68 @@ contract('Throw Tests', function(accounts) {
 		var newbal2 = eval(await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(0));
 		});
 		it("Throw on unwhitelisted - Create", async function() {
-			await factory.setWhitelistedMemberTypes([1,2,3]);
+
+	    factory = await Factory.new([1,2,3]);
+
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory([1,2,3]);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    //await factory.setWhitelistedMemberTypes([0]);
+	    await factory.setVariables(1000000000000000,7,1,0);
+
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+    	o_enddate = 1515369600;
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+   		await factory.deployTokenContract(o_startdate);
+    	long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+
+			//await factory.setWhitelistedMemberTypes([1,2,3]);
 			await memberCoin.setMembershipType(accounts[1],1000)
 	  		await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
 
 		it("Throw on unwhitelisted - Transfer", async function() {
-			await factory.setWhitelistedMemberTypes([1,100,200]);
+			//await factory.setWhitelistedMemberTypes([1,100,200]);
+
+	    factory = await Factory.new([1,100,200]);
+
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory([1,100,200]);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    //await factory.setWhitelistedMemberTypes([0]);
+	    await factory.setVariables(1000000000000000,7,1,0);
+
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+    	o_enddate = 1515369600;
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+   		await factory.deployTokenContract(o_startdate);
+    	long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+
+
 			await memberCoin.setMembershipType(accounts[1],1);
 			await oracle.StoreDocument(o_startdate,1000);
 		    await oracle.StoreDocument(o_enddate,1500);
@@ -146,7 +201,33 @@ contract('Throw Tests', function(accounts) {
 		  	await expectThrow(short_token.transfer(accounts[2],10000,{from:accounts[1]}));
 		});
 		it("Throw on unwhitelisted - Sell", async function() {
-			await factory.setWhitelistedMemberTypes([1000]);
+	    factory = await Factory.new([1000]);
+
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory([1000]);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    //await factory.setWhitelistedMemberTypes([0]);
+	    await factory.setVariables(1000000000000000,7,1,0);
+
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+    	o_enddate = 1515369600;
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+   		await factory.deployTokenContract(o_startdate);
+    	long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+
+			//await factory.setWhitelistedMemberTypes([1000]);
 			await memberCoin.setMembershipType(accounts[1],1000);
 			var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 		  	swap_add = receipt.logs[0].args._created;
@@ -156,5 +237,38 @@ contract('Throw Tests', function(accounts) {
 			balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 			await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
 			await expectThrow(exchange.buy(1,{from: accounts[2], value:web3.toWei(5,'ether')}));
+		});
+		it("no throw on WhiteListedMemberTypes[0] - Create", async function() {
+
+	    factory = await Factory.new([0]);
+
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory([0]);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    
+	    await factory.setVariables(1000000000000000,7,1,0);
+
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+    	o_enddate = 1515369600;
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+   		await factory.deployTokenContract(o_startdate);
+    	long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+
+			
+			await memberCoin.setMembershipType(accounts[1],0)
+			await factory.deployContract(o_startdate,{from: accounts[1]});
+	  		//await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
 });

@@ -58,18 +58,27 @@ contract Factory {
 
     /*Functions*/
     /**
-    *@dev Constructor - Sets owner
+    *@dev Sets the member type/permissions for those whitelisted and owner
+    *@param _memberTypes is the list of member types
     */
-     constructor() public {
+     constructor(uint[] _memberTypes) public {
         owner = msg.sender;
+        whitelistedTypes[0] = false;
+        for(uint i = 0; i<_memberTypes.length;i++){
+            whitelistedTypes[_memberTypes[i]] = true;
+        }
     }
 
     /**
     *@dev constructor function for cloned factory
     */
-    function init(address _owner) public{
+    function init(address _owner, uint[] _memberTypes) public{
         require(owner == address(0));
         owner = _owner;
+        whitelistedTypes[0] = false;
+        for(uint i = 0; i<_memberTypes.length;i++){
+            whitelistedTypes[_memberTypes[i]] = true;
+        }
     }
 
     /**
@@ -80,16 +89,6 @@ contract Factory {
         memberContract = _memberContract;
     }
 
-    /**
-    *@dev Sets the member types/permissions for those whitelisted
-    *@param _memberTypes is the list of member types
-    */
-    function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
-    }
 
     /**
     *@dev Checks the membership type/permissions for whitelisted members

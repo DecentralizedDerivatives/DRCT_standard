@@ -2,7 +2,8 @@ require('dotenv').config()
 var HDWalletProvider = require("truffle-hdwallet-provider");
 var NonceTrackerSubprovider = require("web3-provider-engine/subproviders/nonce-tracker")
 
-
+//Nick zkGX3Vf8njIXiHEGRueB
+//Brenda PM3RtHbQjHxWydyhDi37
 //var mnemonic = "governments of the industrial world you weary giants of flesh and steel"
 //var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
 
@@ -49,7 +50,7 @@ module.exports = {
       },
       network_id: 1,
       gas: 4700000,
-      gasPrice: 2000000000
+      gasPrice: 4000000000
     },
     rinkeby: {
       network_id: "4",

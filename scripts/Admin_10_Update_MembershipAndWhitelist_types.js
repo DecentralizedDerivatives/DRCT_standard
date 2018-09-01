@@ -27,14 +27,15 @@ var _membership = "0x620b6b6ac75ad9234eb6c533688ddd8a5948650e"; //rinkeby
 
 
 //var type = "ETH/USD";
-//var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day rinkeby
-//var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day rinkeby
-//var factory_address = "0x8207cea5aa1a9047b6607611c2b5b3f04df7b0d3"; //7day mainnet
+//var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day 5x rinkeby
+//var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day 5x rinkeby
+//var factory_address = "0x8207cea5aa1a9047b6607611c2b5b3f04df7b0d3"; //7day 5x mainnet
 
 var type = "BTC/USD";
-//var factory_address = "0x804870d9b8184e12444405e1ee114757b97897b8"; //7day rinkeby
-var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day rinkeby
-//var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day mainnet
+//var factory_address = "0x804870d9b8184e12444405e1ee114757b97897b8"; //7day 1x rinkeby
+//var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day 1x rinkeby
+//var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day 1x mainnet
+var factory_address = ""; //1day 100x rinkeby
 
 //var _whitelistTypes = [1,2,3];
 var _memberFee = 2500000000000000;

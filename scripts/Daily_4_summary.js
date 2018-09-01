@@ -21,7 +21,6 @@ var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b";//new
 //var _master= "0x58f745e66fc8bb2307e8d73d7dafeda47030113c"; //mainnet
 
 
-
 module.exports =async function(callback) {
     var swaps;
     let ltoken;
@@ -72,7 +71,7 @@ try{
         var created_contracts = [];
         try{
             //loop for swaps
-            for(j = 1; j <= swaps; j++){
+            for(j = 0; j <= swaps; j++){
                 var swap_address = await factory.contracts(j);
                 console.log("swap address", swap_address);
                 sleep_s(10);
@@ -108,15 +107,30 @@ try{
                     stoken = await DRCT_Token.at(short_token_add);
                     sleep_s(10);
 
-                    let address_countl = await ltoken.addressCount(swap_address);
-                    let l = address_countl.toNumber();
-                    t_long_holders.push(l);
-                    console.log('Long_token_holders:', l);        
-                    let address_counts = await stoken.addressCount(swap_address);
-                    let s= address_counts.toNumber();
-                    t_short_holders.push(s);
-                    console.log('Short_token_holders:', s);
-                
+                    for(k=0;k<=1;k++){
+                    var address_countl;
+                    var address_counts;
+                    if(k == 0){
+                        address_countl = await ltoken.addressCount(swap_address);
+                        //if (isNaN(address_countl.toNumber())){
+                          //  address_countl = 0;
+                        //}
+                        let l = address_countl.toNumber();
+                        t_long_holders.push(l);
+                        console.log('Long_token_holders:', address_countl.toNumber());
+            
+                    } else{
+                        address_counts = await stoken.addressCount(swap_address);
+                        //if (isNaN(address_counts.toNumber())){
+                        //    address_counts = 0;
+                        //}
+                        let s= address_counts.toNumber();
+                        t_short_holders.push(s);
+                        console.log('Short_token_holders:', address_counts.toNumber());
+                    }
+                }
+
+           
                     var total_holders = l + s;
                     console.log("Total_holders for the swap:", total_holders);
 
