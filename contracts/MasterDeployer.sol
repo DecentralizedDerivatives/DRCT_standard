@@ -41,11 +41,11 @@ contract MasterDeployer is CloneFactory{
     *@dev creates a new factory by cloning the factory specified in setFactory.
     *@return _new_fac which is the new factory address
     */
-	function deployFactory() public onlyOwner() returns(address){
+	function deployFactory(uint[] _memberTypes) public onlyOwner() returns(address){
 		address _new_fac = createClone(factory);
 		factory_index[_new_fac] = factory_contracts.length;
 		factory_contracts.push(_new_fac);
-		Factory(_new_fac).init(msg.sender);
+		Factory(_new_fac).init(msg.sender,_memberTypes);
 		emit NewFactory(_new_fac);
 		return _new_fac;
 	}

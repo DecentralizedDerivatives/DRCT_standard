@@ -27,6 +27,7 @@ contract Membership {
     //Members information
     mapping(address => Member) public members;
     address[] public membersAccts;
+    mapping (address => uint) public membersAcctsIndex;
 
     /*Events*/
     event UpdateMemberAddress(address _from, address _to);
@@ -99,6 +100,52 @@ contract Membership {
     }
 
     /**
+    *@dev Use this function to set memberId for the member
+    *@param _memberAddress address of member that we need to update membershipType
+    *@param _memberId is the manually assigned memberId
+    */
+    function setMemberId(address _memberAddress,  uint _memberId) public onlyOwner{
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.memberId = _memberId;
+    }
+
+    /**
+    *@dev Use this function to remove member acct from array memberAcct
+    *@param _memberAddress address of member to remove
+    */
+    function removeMemberAcct(address _memberAddress) public onlyOwner{
+        require(_memberAddress != address(0));
+        uint256 indexToDelete;
+        uint256 lastAcctIndex;
+        address lastAdd;
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.memberId = 0;
+        memberAddress.membershipType = 0;
+        indexToDelete = membersAcctsIndex[_memberAddress];
+        lastAcctIndex = membersAccts.length.sub(1);
+        lastAdd = membersAccts[lastAcctIndex];
+        membersAccts[indexToDelete]=lastAdd;
+        membersAcctsIndex[lastAdd] = indexToDelete;   
+        membersAccts.length--;
+        membersAcctsIndex[_memberAddress]=0; 
+    }
+
+
+    /**
+    *@dev Use this function to member acct from array memberAcct
+    *@param _memberAddress address of member to add
+    */
+    function addMemberAcct(address _memberAddress) public onlyOwner{
+        require(_memberAddress != address(0));
+        Member storage memberAddress = members[_memberAddress];
+        membersAcctsIndex[_memberAddress] = membersAccts.length; 
+        membersAccts.push(_memberAddress);
+        memberAddress.memberId = membersAccts.length;
+        memberAddress.membershipType = 1;
+        emit NewMember(_memberAddress, memberAddress.memberId, memberAddress.membershipType);
+    }
+
+    /**
     *@dev getter function to get all membersAccts
     */
     function getMembers() view public returns (address[]){
@@ -144,10 +191,7 @@ contract Membership {
     function refund(address _to, uint _amount) public onlyOwner {
         require (_to != address(0));
         if (_amount == 0) {_amount = memberFee;}
-        Member storage currentAddress = members[_to];
-        membersAccts[currentAddress.memberId-1] = 0;
-        currentAddress.memberId = 0;
-        currentAddress.membershipType = 0;
+        removeMemberAcct(_to);
         _to.transfer(_amount);
         emit Refund(_to, _amount);
     }

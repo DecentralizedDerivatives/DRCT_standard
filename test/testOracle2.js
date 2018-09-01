@@ -25,15 +25,15 @@ contract('Oracle Test', function(accounts) {
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle2.new("json(https://api.gdax.com/products/BTC-USD/ticker).price", "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price");
-	    factory = await Factory.new();
+	    factory = await Factory.new([0]);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory();
+	    let res = await masterDeployer.deployFactory([0]);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
-	    await factory.setWhitelistedMemberTypes([0]);
+	    //await factory.setWhitelistedMemberTypes([0]);
 	    await factory.setVariables(1000000000000000,7,1,0);
 	    base = await Wrapped_Ether.new();
 	    userContract = await UserContract.new();
