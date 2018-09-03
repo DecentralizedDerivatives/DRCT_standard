@@ -27,12 +27,12 @@ contract('Exchange Test', function(accounts) {
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new([0]);
+	    factory = await Factory.new(0);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	     exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([0]);
+	    let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -144,12 +144,12 @@ contract('Exchange Test', function(accounts) {
 
 	it("Test Whitelist", async function(){
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new([1,100,200]);
+	    factory = await Factory.new(1);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	     exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([1,100,200]);
+	    let res = await masterDeployer.deployFactory(1);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -204,12 +204,12 @@ contract('Exchange Test', function(accounts) {
 	});
 		it("Test Whitelist 2", async function(){
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new([1,100,200]);
+	    factory = await Factory.new(0);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	     exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([0,1]);
+	    let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
