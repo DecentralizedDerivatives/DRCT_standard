@@ -202,5 +202,45 @@ contract('Exchange Test', function(accounts) {
 	  	assert.equal(balance1, balance1_2 - 5,"account 2 should get 5 ether");
 	  	await short_token.transfer(accounts[3],500,{from:accounts[1]});
 	});
+		it("Test Whitelist 2", async function(){
+		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
+	    factory = await Factory.new([1,100,200]);
+	    memberCoin = await Membership.new();
+	    masterDeployer = await MasterDeployer.new();
+	     exchange = await Exchange.new();
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory([0,1]);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    await factory.setVariables(1000000000000000,7,1,0);
+	    base = await Wrapped_Ether.new();
+	    userContract = await UserContract.new();
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+    	o_enddate = 1515369600;
+    	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(1));
+  		balance2 = await (web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether').toFixed(1));
+   		await factory.deployTokenContract(o_startdate);
+    	long_token_add =await factory.long_tokens(o_startdate);
+	    short_token_add =await factory.short_tokens(o_startdate);
+	    long_token =await DRCT_Token.at(long_token_add);
+	    short_token = await DRCT_Token.at(short_token_add);
+		await memberCoin.setMembershipType(accounts[1],1);
+		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
+	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
+	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
+	  	await exchange.buy(1,{from: accounts[2], value:web3.toWei(5,'ether')})
+	  	assert.equal(await short_token.balanceOf(accounts[2]),500,"account 2 should own tokens");
+	});
 });
 
