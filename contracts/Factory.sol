@@ -39,7 +39,6 @@ contract Factory {
     address[] public contracts;
     uint[] public startDates;
     address public memberContract;
-    //mapping(uint => bool) whitelistedTypes;
     uint whitelistedTypes;
     mapping(address => uint) public created_contracts;
     mapping(address => uint) public token_dates;
