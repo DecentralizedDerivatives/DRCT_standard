@@ -51,12 +51,12 @@ contract('Throw Tests', function(accounts) {
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new([0]);
+	    factory = await Factory.new(0);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    exchange = await Exchange.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([0]);
+	    let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -130,10 +130,10 @@ contract('Throw Tests', function(accounts) {
 		});
 		it("Throw on unwhitelisted - Create", async function() {
 
-	    factory = await Factory.new([1,2,3]);
+	    factory = await Factory.new(1001);
 
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([1,2,3]);
+	    let res = await masterDeployer.deployFactory(1001);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -164,10 +164,10 @@ contract('Throw Tests', function(accounts) {
 		it("Throw on unwhitelisted - Transfer", async function() {
 			//await factory.setWhitelistedMemberTypes([1,100,200]);
 
-	    factory = await Factory.new([1,100,200]);
+	    factory = await Factory.new(1);
 
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([1,100,200]);
+	    let res = await masterDeployer.deployFactory(1);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -201,10 +201,10 @@ contract('Throw Tests', function(accounts) {
 		  	await expectThrow(short_token.transfer(accounts[2],10000,{from:accounts[1]}));
 		});
 		it("Throw on unwhitelisted - Sell", async function() {
-	    factory = await Factory.new([1000]);
+	    factory = await Factory.new(999);
 
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([1000]);
+	    let res = await masterDeployer.deployFactory(999);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -240,10 +240,10 @@ contract('Throw Tests', function(accounts) {
 		});
 		it("no throw on WhiteListedMemberTypes[0] - Create", async function() {
 
-	    factory = await Factory.new([0]);
+	    factory = await Factory.new(0);
 
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([0]);
+	    let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);

@@ -25,11 +25,11 @@ contract('Deployer Tests', function(accounts) {
 
 	beforeEach('Setup contract for each test', async function () {
 		oracle = await Test_Oracle.new("https://api.gdax.com/products/BTC-USD/ticker).price");
-	    factory = await Factory.new([0]);
+	    factory = await Factory.new(0);
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    await masterDeployer.setFactory(factory.address);
-	    let res = await masterDeployer.deployFactory([0]);
+	    let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    factory = await Factory.at(res);
 	    await factory.setMemberContract(memberCoin.address);
@@ -55,22 +55,22 @@ contract('Deployer Tests', function(accounts) {
    })
   	it("Deploy Multiple Factories", async function(){
 		for(var i = 0;i<10;i++){
-			await masterDeployer.deployFactory([0]);
+			await masterDeployer.deployFactory(0);
 		}
 		assert.equal(await masterDeployer.getFactoryCount() - 0 ,11,"Ten New Factories should be created");
-		let res = await masterDeployer.deployFactory([0]);
+		let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    assert.equal(await masterDeployer.getFactorybyIndex(12),res,"Getting the factory should work");
 	});
 
 
    	 it("Remove Factory", async function(){
-  	   	let res = await masterDeployer.deployFactory([0]);
+  	   	let res = await masterDeployer.deployFactory(0);
 	    res = res.logs[0].args._factory;
 	    var _res = await masterDeployer.factory_index.call(res);
 	    assert.equal(_res.c[0],2,"Factory Should be there");
 		for(var i = 0;i<10;i++){
-			await masterDeployer.deployFactory([0]);
+			await masterDeployer.deployFactory(0);
 		}
 		await masterDeployer.removeFactory(res);
 		var _res = await masterDeployer.factory_index.call(res);

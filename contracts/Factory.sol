@@ -39,7 +39,7 @@ contract Factory {
     address[] public contracts;
     uint[] public startDates;
     address public memberContract;
-    mapping(uint => bool) whitelistedTypes;
+    uint whitelistedTypes;
     mapping(address => uint) public created_contracts;
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
@@ -61,24 +61,18 @@ contract Factory {
     *@dev Sets the member type/permissions for those whitelisted and owner
     *@param _memberTypes is the list of member types
     */
-     constructor(uint[] _memberTypes) public {
+     constructor(uint _memberTypes) public {
         owner = msg.sender;
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
+        whitelistedTypes=_memberTypes;
     }
 
     /**
     *@dev constructor function for cloned factory
     */
-    function init(address _owner, uint[] _memberTypes) public{
+    function init(address _owner, uint _memberTypes) public{
         require(owner == address(0));
         owner = _owner;
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
+        whitelistedTypes=_memberTypes;
     }
 
     /**
@@ -96,7 +90,7 @@ contract Factory {
     */
     function isWhitelisted(address _member) public view returns (bool){
         Membership_Interface Member = Membership_Interface(memberContract);
-        return whitelistedTypes[Member.getMembershipType(_member)];
+        return Member.getMembershipType(_member)>= whitelistedTypes;
     }
  
     /**

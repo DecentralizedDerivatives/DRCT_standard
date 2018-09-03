@@ -23,7 +23,7 @@ module.exports = function(deployer) {
     DRCTLibrary.deployed().then(function(drct){
         return Factory.link(DRCTLibrary,drct.address);
     }).then(function() {
-        return deployer.deploy(Factory, [0]);
+        return deployer.deploy(Factory, 0);
     })
 }
 
