@@ -50,7 +50,7 @@ module.exports = {
       },
       network_id: 1,
       gas: 4700000,
-      gasPrice: 4000000000
+      gasPrice: 3000000000
     },
     rinkeby: {
       network_id: "4",

@@ -65,6 +65,7 @@ contract Membership {
     function requestMembership() public payable {
         Member storage sender = members[msg.sender];
         require(msg.value >= memberFee && sender.membershipType == 0 );
+        membersAcctsIndex[msg.sender] = membersAccts.length;
         membersAccts.push(msg.sender);
         sender.memberId = membersAccts.length;
         sender.membershipType = 1;
