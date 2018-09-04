@@ -96,6 +96,49 @@ contract('Exchange Test', function(accounts) {
 	  	assert.equal(await short_token.balanceOf(accounts[1]),1000,"account 1 should have all tokens");
 	  	assert.equal(await exchange.getOrderCount(short_token.address) - 0,0, "Short Token should have no orders");
 	});
+
+	it("Test ddaList", async function(){
+		await exchange.listDda(long_token_add, 100, 1, true,{from: accounts[0]});
+		await exchange.listDda(short_token_add, 100, 1, false, {from: accounts[0]});
+		resl = await exchange.getDdaListAssetInfo(long_token_add);
+		res = await exchange.getDdaListAssetInfo(short_token_add);
+		assert( resl = [1,100,true], "Long info");
+		assert( res = [1,100,false], "short info");
+	});
+
+	it("Test dda Unlist", async function(){
+		await exchange.listDda(long_token_add, 100, 1, true,{from: accounts[0]});
+		await exchange.listDda(short_token_add, 100, 1, false, {from: accounts[0]});
+		resl = await exchange.getDdaListAssetInfo(long_token_add);
+		res = await exchange.getDdaListAssetInfo(short_token_add);
+		assert( resl = [1,100,true], "Long info");
+		assert( res = [1,100,false], "short info");
+		await exchange.unlistDda(long_token_add,{from: accounts[0]});
+		await exchange.unlistDda(short_token_add, {from: accounts[0]});
+		res3 = await exchange.getDdaListAssetInfo(long_token_add);
+		res4 = await exchange.getDdaListAssetInfo(short_token_add);
+	    assert( res3 = [0,0,false], "Long info");
+		assert( res4 = [0,0,false], "short info");
+	});
+	it("Test dda buy", async function(){
+		var receipt = await factory.deployContract(o_startdate,{from: accounts[0]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[0]});
+		await exchange.listDda(long_token_add, 100, web3.toWei(1,'ether'), true,{from: accounts[0]});
+		await exchange.listDda(short_token_add, 100, web3.toWei(1,'ether'), false, {from: accounts[0]});
+		await short_token.approve(exchange.address,200,{from: accounts[0]});
+		await long_token.approve(exchange.address,200,{from: accounts[0]});
+		await exchange.buyPerUnit(long_token_add, 1, {from: accounts[8], value:web3.toWei(1,'ether')});
+		await exchange.buyPerUnit(short_token_add, 2,{from: accounts[8], value:web3.toWei(2,'ether')});
+		resl = await exchange.getDdaListAssetInfo(long_token_add);
+		res = await exchange.getDdaListAssetInfo(short_token_add);
+		console.log(resl, res);
+		assert( resl = [1,99,true], "Long info");
+		assert( res = [1,98,false], "short info");
+	})
+
+	
 	it("Test 100 Lists and Sales", async function(){
 		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
@@ -116,7 +159,7 @@ contract('Exchange Test', function(accounts) {
 	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 5 ether");
 	});
 	it("Test Buy then Sell then Buy then List then Unlist", async function(){
-				var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
