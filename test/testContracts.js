@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-/*var Test_Oracle = artifacts.require("Test_Oracle");
+var Test_Oracle = artifacts.require("Test_Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -453,4 +453,3 @@ contract('Base Tests', function(accounts) {
 		assert(balance2 >= newbal2 + 2 && balance2 <= newbal2 + 3 ,"Balance2 should change correctly");
 		});
 });
-*/
