@@ -158,8 +158,14 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         ListAsset storage listing = listOfAssets[_asset];
         require(_amount <= listing.amount);
-        require(msg.value == _amount.mul(listing.price));
-        listing.amount= listing.amount.sub(_amount);
+        uint totalPrice = _amount.mul(listing.price);
+        require(msg.value == totalPrice);
+        ERC20_Interface token = ERC20_Interface(_asset);
+        if(token.allowance(owner,address(this)) >= _amount){
+            assert(token.transferFrom(owner,msg.sender, _amount));
+            owner.transfer(totalPrice);
+            listing.amount= listing.amount.sub(_amount);
+        }
     }
 
     /**
