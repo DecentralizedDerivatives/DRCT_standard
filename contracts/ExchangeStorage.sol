@@ -140,6 +140,11 @@ contract ExchangeStorage{
         listing.amount= _amount;
         listing.isLong= _isLong;
     }
+
+    function setDdaListAssetInfoAmount(address _assetAddress, uint _amount) public {
+        ListAsset storage listing = listOfAssets[_assetAddress];
+        listing.amount= _amount;
+    }
     /**
     *@dev Gets the DDA List Asset information for the specifed 
     *asset address
@@ -165,23 +170,14 @@ contract ExchangeStorage{
         return openBooks.length;
     }
 
-
-
-/*     //Maps an OrderID to the list of orders
-    mapping(uint256 => Order) public orders;
-    //An mapping of a token address to the orderID's
-    mapping(address =>  uint256[]) public forSale;
-    //Index telling where a specific tokenId is in the forSale array
-    mapping(uint256 => uint256) internal forSaleIndex;
-    
-    //mapping of address to position in openBooks
-    mapping (address => uint) internal openBookIndex;
-    //mapping of user to their orders
-    mapping(address => uint[]) public userOrders;
-    //mapping from orderId to userOrder position
-    mapping(uint => uint) internal userOrderIndex;
-    //A list of the blacklisted addresses
-    mapping(address => bool) internal blacklist; */
+    //use the nonce for orderId
+    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) public {
+        Order storage _order = orders[_orderId];
+        _order.maker = _maker;
+        _order.price = _price;
+        _order.amount = _amount;
+        _order.asset = _tokenadd;
+    }
     /**
     *@dev getOrder lists the price,amount, and maker of a specific token for a sale
     *@param _orderId uint256 ID of order
@@ -194,6 +190,53 @@ contract ExchangeStorage{
         Order storage _order = orders[_orderId];
         return (_order.maker,_order.price,_order.amount,_order.asset);
     }
+
+    function setForSale(address _tokenadd, uint _order_nonce) public {
+        forSale[_tokenadd].push(_order_nonce);
+    }
+
+    /**
+    *@dev getOrderCount allows parties to query how many orders are on the book
+    *@param _token address used to count the number of orders
+    *@return _uint of the number of orders in the orderbook
+    */
+    function getOrderCount(address _token) public constant returns(uint) {
+        return forSale[_token].length;
+    }
+
+    function getForSaleOrderId(address _tokenadd) public returns(uint256){
+        return forSale[_tokenadd];
+    }
+
+    function setForSaleIndex(address _order_nonce, uint _order_count) public {
+        setForSaleIndex[_order_nonce]= _order_count;
+    }
+
+    function getForSaleIndex(address _order_nonce) public returns(uint){
+        return setForSaleIndex[_order_nonce];
+    }
+
+    /**
+    *@dev getOrders allows parties to get an array of all orderId's open for a given token
+    *@param _token address of the drct token
+    *@return _uint[] an array of the orders in the orderbook
+    */
+    function getOrders(address _token) public constant returns(uint[]) {
+        return forSale[_token];
+    }
+
+
+
+/*     
+    //mapping of address to position in openBooks
+    mapping (address => uint) internal openBookIndex;
+    //mapping of user to their orders
+    mapping(address => uint[]) public userOrders;
+    //mapping from orderId to userOrder position
+    mapping(uint => uint) internal userOrderIndex;
+    //A list of the blacklisted addresses
+    mapping(address => bool) internal blacklist; */
+
 
 
 
@@ -216,25 +259,11 @@ contract ExchangeStorage{
         return blacklist[_address];
     }
 
-    /**
-    *@dev getOrderCount allows parties to query how many orders are on the book
-    *@param _token address used to count the number of orders
-    *@return _uint of the number of orders in the orderbook
-    */
-    function getOrderCount(address _token) public constant returns(uint) {
-        return forSale[_token].length;
-    }
 
 
 
-    /**
-    *@dev getOrders allows parties to get an array of all orderId's open for a given token
-    *@param _token address of the drct token
-    *@return _uint[] an array of the orders in the orderbook
-    */
-    function getOrders(address _token) public constant returns(uint[]) {
-        return forSale[_token];
-    }
+
+
 
     /**
     *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
