@@ -17,8 +17,10 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 *swap and force pay them.
 */
 
-var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //rinkeby
+//var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //rinkeby
+var _master = "0xe8327b94aba6fbc3a95f7ffaf8dd568e6cd36616"; //rinkeby new dud
 //var _master= "0x58f745e66fc8bb2307e8d73d7dafeda47030113c"; //mainnet
+//var _master= "0xcd8e11dad961dad43cc3de40df918fe808cbda74"; //maninnet new dud
 
 module.exports =async function(callback) {
 
