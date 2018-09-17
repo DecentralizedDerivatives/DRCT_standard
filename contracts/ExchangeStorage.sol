@@ -204,16 +204,16 @@ contract ExchangeStorage{
         return forSale[_token].length;
     }
 
-    function getForSaleOrderId(address _tokenadd) public returns(uint256){
+    function getForSaleOrderId(address _tokenadd) public view returns(uint256[]){
         return forSale[_tokenadd];
     }
 
-    function setForSaleIndex(address _order_nonce, uint _order_count) public {
-        setForSaleIndex[_order_nonce]= _order_count;
+    function setForSaleIndex(uint _order_nonce, uint _order_count) public {
+        forSaleIndex[_order_nonce]= _order_count;
     }
 
-    function getForSaleIndex(address _order_nonce) public returns(uint){
-        return setForSaleIndex[_order_nonce];
+    function getForSaleIndex(uint _order_nonce) public view returns(uint){
+        return forSaleIndex[_order_nonce];
     }
 
     /**
@@ -226,18 +226,33 @@ contract ExchangeStorage{
     }
 
 
+    function setOpenBookIndex(address _order, uint _order_index) public {
+        openBookIndex[_order]= _order_index;
+    }
 
-/*     
-    //mapping of address to position in openBooks
-    mapping (address => uint) internal openBookIndex;
-    //mapping of user to their orders
-    mapping(address => uint[]) public userOrders;
-    //mapping from orderId to userOrder position
-    mapping(uint => uint) internal userOrderIndex;
-    //A list of the blacklisted addresses
-    mapping(address => bool) internal blacklist; */
+    function getOpenBookIndex(address _order) public view returns(uint){
+        return openBookIndex[_order];
+    }
 
+    function setUserOrders(address _user, uint _order_nonce) public {
+        userOrders[_user].push(_order_nonce);
+    }
+    /**
+    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
+    *@param _user address 
+    *@return _uint[] an array of the orders in the orderbook for the user
+    */
+    function getUserOrders(address _user) public constant returns(uint[]) {
+        return userOrders[_user];
+    }
 
+    function setUserOrderIndex(address _user, uint _order_nonce) public {
+        userOrderIndex[_order_nonce] = userOrders[_user].length;
+    }
+
+    function getUserOrderIndex(uint _order_nonce) public view returns(uint){
+        return userOrderIndex[_order_nonce];
+    }
 
 
     /**
@@ -265,14 +280,7 @@ contract ExchangeStorage{
 
 
 
-    /**
-    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
-    *@param _user address 
-    *@return _uint[] an array of the orders in the orderbook for the user
-    */
-    function getUserOrders(address _user) public constant returns(uint[]) {
-        return userOrders[_user];
-    }
+
 
 
 

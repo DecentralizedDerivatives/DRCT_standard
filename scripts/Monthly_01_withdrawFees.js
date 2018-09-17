@@ -41,11 +41,13 @@ module.exports =async function(callback) {
         if (oracle_address != '0x') {
             if (factory_bal > 0) {
                 await factory.withdrawFees();
+                        sleep_s(60);
                 var fundsWithdrawn= 'Yes';
+                        sleep_s(60);
             } else {
                 var fundsWithdrawn= 'No';
             } 
-        var link = "".concat('<https://rinkeby.etherscan.io/address/',factory_address,'>' );
+        var link = "".concat('<https://rinkeby.etherscan.io/address/0x074993dee953f2706ae318e11622b3ee0b7850c3','>' );
         var ar = [count, _nowUTC, factory_address,  factory_bal, fundsWithdrawn, link];
         console.log(ar.join(', '));
         }   
