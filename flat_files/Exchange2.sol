@@ -1,8 +1,83 @@
 pragma solidity ^0.4.24;
 
- import "./libraries/SafeMath.sol";
- import "./interfaces/ERC20_Interface.sol";
- import "./interfaces/Exchange_Interface.sol";
+// File: contracts\interfaces\ERC20_Interface.sol
+
+//ERC20 function interface
+interface ERC20_Interface {
+  function totalSupply() external constant returns (uint);
+  function balanceOf(address _owner) external constant returns (uint);
+  function transfer(address _to, uint _amount) external returns (bool);
+  function transferFrom(address _from, address _to, uint _amount) external returns (bool);
+  function approve(address _spender, uint _amount) external returns (bool);
+  function allowance(address _owner, address _spender) external constant returns (uint);
+}
+
+// File: contracts\interfaces\Exchange_Interface.sol
+
+interface Exchange_Interface { 
+    function setOrderNonce(uint _order_nonce) external ;
+    function getOrderNonce() external view returns(uint);
+    function setOpenDdaListAssets(address _ddaListAsset) external ;
+    function getopenDdaListAssets() external view  returns (address[]);
+    function setopenDdaListIndex(address _ddaListAsset, uint _value) external ;
+    function getopenDdaListIndex(address _ddaListAsset) external view  returns (uint);
+    function setDdaListAssetInfoAll(address _assetAddress, uint _price, uint _amount, bool _isLong) external ;
+    function setDdaListAssetInfoAmount(address _assetAddress, uint _amount) external  ;
+    function getDdaListAssetInfo(address _assetAddress) external  view returns(uint, uint, bool);
+    function setOpenBooks(address _openBookAdd) external  ;
+    function getBookCount()  external  constant returns(uint) ;
+    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) external ;
+    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address);
+    function setForSale(address _tokenadd, uint _order_nonce)  external  ;
+    function getOrderCount(address _token)  external  constant returns(uint) ;
+    function getForSaleOrderId(address _tokenadd)  external  view returns(uint256[]);
+    function setForSaleIndex(uint _order_nonce, uint _order_count)  external  ;
+    function getForSaleIndex(uint _order_nonce)  external  view returns(uint);
+    function getOrders(address _token)  external  constant returns(uint[]) ;
+    function setOpenBookIndex(address _order, uint _order_index)  external  ;
+    function getOpenBookIndex(address _order)  external  view returns(uint);
+    function setUserOrders(address _user, uint _order_nonce)  external  ;
+    function getUserOrders(address _user)  external  constant returns(uint[]) ;
+    function setUserOrderIndex(address _user, uint _order_nonce)  external ;
+    function getUserOrderIndex(uint _order_nonce)  external  view returns(uint);
+    function blacklistParty(address _address, bool _motion)  external  ;
+    function isBlacklist(address _address)  external  view returns(bool) ;
+}
+
+// File: contracts\libraries\SafeMath.sol
+
+//Slightly modified SafeMath library - includes a min function
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function min(uint a, uint b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+// File: contracts\Exchange2.sol
 
 /**
 *Exchange creates an exchange for the swaps.
@@ -39,13 +114,9 @@ contract Exchange2{
         //order_nonce = 1;
     }
 
-    function setDexStorageAddress(address _exchangeStorage) public onlyOwner {
+    function setdexStorageAddress(address _exchangeStorage) public onlyOwner {
         storage_address = _exchangeStorage;
         xStorage = Exchange_Interface(_exchangeStorage);
-    }
-
-    function getDexStorageAddress() public constant returns(address) {
-        return storage_address;
     }
 
     /**
@@ -55,27 +126,28 @@ contract Exchange2{
     *@param _price uint256 price of all tokens in wei
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
-        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
+        bool test = xStorage.isBlacklist(msg.sender);
+        require(test == false);
+        require(_price > 0);
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        //require(token.allowance(msg.sender,address(this)) >= _amount);
-        require(token.allowance(msg.sender,storage_address) >= _amount);
-        uint fsIndex = xStorage.getOrderCount(_tokenadd);
+        require(token.allowance(msg.sender,address(this)) >= _amount);
+         uint fsIndex = xStorage.getOrderCount(_tokenadd);
         if(fsIndex == 0 ){
             xStorage.setForSale(_tokenadd,0);
             }
         uint _order_nonce = xStorage.getOrderNonce();  
-        xStorage.setForSaleIndex(_order_nonce,fsIndex);
+        xStorage.setForSaleIndex(_order_nonce,fsIndex);/*
         xStorage.setForSale(_tokenadd,_order_nonce);
         xStorage.setOrder(_order_nonce, msg.sender, _price, _amount,_tokenadd);
         emit OrderPlaced(msg.sender,_tokenadd,_amount,_price);
+        uint _openBooksCount = xStorage.getBookCount();
         if(xStorage.getOpenBookIndex(_tokenadd) == 0){   
-            xStorage.setOpenBookIndex(_tokenadd, xStorage.getBookCount());
+            xStorage.setOpenBookIndex(_tokenadd, _openBooksCount);
             xStorage.setOpenBooks(_tokenadd);
         }
         xStorage.setUserOrderIndex(msg.sender, _order_nonce);
         xStorage.setUserOrders(msg.sender, _order_nonce);
-        _order_nonce += 1;
-        xStorage.setOrderNonce(_order_nonce); 
+        xStorage.setOrderNonce(_order_nonce+1); */
     }
 
     /**
@@ -86,19 +158,23 @@ contract Exchange2{
     *@param _isLong true if it is long
     */
     //Then you would have a mapping from an asset to its price/ quantity when you list it.
-    function listDda(address _asset, uint256 _amount, uint256 _price, bool _isLong) public onlyOwner() {
-        require (xStorage.isBlacklist(msg.sender)==false);
-        xStorage.setDdaListAssetInfoAll( _asset, _price,  _amount, _isLong);
-        xStorage.setOpenDdaListIndex(_asset, xStorage.getCountopenDdaListAssets());
-        xStorage.setOpenDdaListAssets(_asset);      
-    }  
+/*     function listDda(address _asset, uint256 _amount, uint256 _price, bool _isLong) public onlyOwner() {
+        require(blacklist[msg.sender] == false);
+        ListAsset storage listing = listOfAssets[_asset];
+        listing.price = _price;
+        listing.amount= _amount;
+        listing.isLong= _isLong;
+        openDdaListIndex[_asset] = openDdaListAssets.length;
+        openDdaListAssets.push(_asset);
+        
+    } */
 
     /**
     *@dev list allows a DDA to remove asset 
     *@param _asset address 
     */
 /*     function unlistDda(address _asset) public onlyOwner() {
-        require (xStorage.isBlacklist(msg.sender)==false);
+        require(blacklist[msg.sender] == false);
         uint256 indexToDelete;
         uint256 lastAcctIndex;
         address lastAdd;
@@ -121,7 +197,7 @@ contract Exchange2{
     *@param _amount is the amount of tokens to buy
     */
 /*     function buyPerUnit(address _asset, uint256 _amount) external payable {
-        require (xStorage.isBlacklist(msg.sender)==false);
+        require(blacklist[msg.sender] == false);
         ListAsset storage listing = listOfAssets[_asset];
         require(_amount <= listing.amount);
         uint totalPrice = _amount.mul(listing.price);
@@ -150,8 +226,7 @@ contract Exchange2{
     *@dev buy allows a party to fill an order
     *@param _orderId is the uint256 ID of order
     */
-     function buy(uint256 _orderId) external payable {
-        getOrder(_orderId);
+/*     function buy(uint256 _orderId) external payable {
         Order memory _order = orders[_orderId];
         require(_order.price != 0 && _order.maker != address(0) && _order.asset != address(0) && _order.amount != 0);
         require(msg.value == _order.price);
@@ -164,7 +239,7 @@ contract Exchange2{
         }
         unLister(_orderId,_order);
         emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
-    } 
+    } */
 
     /**
     *@dev getOrder lists the price,amount, and maker of a specific token for a sale
@@ -261,7 +336,7 @@ contract Exchange2{
     *@param _orderId is the uint256 ID of order
     *@param _order is the struct containing the details of the order
     */
-     function unLister(uint256 _orderId, Order _order) internal{
+/*     function unLister(uint256 _orderId, Order _order) internal{
             uint256 tokenIndex;
             uint256 lastTokenIndex;
             address lastAdd;
@@ -300,5 +375,5 @@ contract Exchange2{
         }
         userOrders[_order.maker].length--;
         userOrderIndex[_orderId] = 0;
-    } 
+    } */
 }

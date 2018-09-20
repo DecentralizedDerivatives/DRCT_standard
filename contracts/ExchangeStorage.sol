@@ -26,8 +26,9 @@ contract ExchangeStorage{
     }
 
     //order_nonce;
-    uint internal order_nonce;
+    uint public order_nonce;
     address public owner; //The owner of the market contract
+    address public dexAddress;
     address[] public openDdaListAssets;
     //Index telling where a specific tokenId is in the forSale array
     address[] public openBooks;
@@ -39,7 +40,6 @@ contract ExchangeStorage{
     mapping(address =>  uint256[]) public forSale;
     //Index telling where a specific tokenId is in the forSale array
     mapping(uint256 => uint256) internal forSaleIndex;
-    
     //mapping of address to position in openBooks
     mapping (address => uint) internal openBookIndex;
     //mapping of user to their orders
@@ -56,6 +56,11 @@ contract ExchangeStorage{
     */
     modifier onlyOwner() {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyDex() {
+        require(msg.sender == dexAddress);
         _;
     }
 
@@ -85,42 +90,54 @@ contract ExchangeStorage{
         return owner;
     }
 
+    function setDexAddress(address _dexAddress) public onlyOwner {
+        dexAddress = _dexAddress;
+    }
+    function getDexAddress() external view returns(address) {
+        return dexAddress ;
+    }
+
     /**
     *@dev allows exchange cotract to write the order nonce
     */
-    function setOrderNonce(uint _order_nonce) public {
+    function setOrderNonce(uint _order_nonce) public onlyDex {
         order_nonce=_order_nonce;
     }
     /**
     *@dev allows dev to get the order nonce
     */
-    function getOrderNonce() external view returns(uint){
+    function getOrderNonce() external view returns(uint) {
         return order_nonce;
     }
 
     /**
     *@dev allows exchange cotract to write the order nonce
     */
-    function setOpenDdaListAssets(address _ddaListAsset) public {
+    function setOpenDdaListAssets(address _ddaListAsset) public onlyDex {
         openDdaListAssets.push(_ddaListAsset);
     }
     /**
     *@dev getter function to get all openDdaListAssets
     */
-    function getopenDdaListAssets() view public returns (address[]){
+    function getopenDdaListAssets() view public returns (address[]) {
         return openDdaListAssets;
     }
-
+    /**
+    *@dev getter function to get all openDdaListAssets
+    */
+    function getCountopenDdaListAssets() view public returns (uint) {
+        return openDdaListAssets.length;
+    }
     /**
     *@dev allows exchange cotract to write the order nonce
     */
-    function setopenDdaListIndex(address _ddaListAsset, uint _value) public {
+    function setOpenDdaListIndex(address _ddaListAsset, uint _value) public onlyDex {
         openDdaListIndex[_ddaListAsset]= _value ;
     }
     /**
     *@dev getter function to get all openDdaListAssets
     */
-    function getopenDdaListIndex(address _ddaListAsset) view public returns (uint){
+    function getOpenDdaListIndex(address _ddaListAsset) view public returns (uint)  {
         return openDdaListIndex[_ddaListAsset];
     }
 
@@ -134,14 +151,14 @@ contract ExchangeStorage{
     *@param _isLong true if it is long
     *@return price, amount and true if isLong
     */
-    function setDdaListAssetInfoAll(address _assetAddress, uint _price, uint _amount, bool _isLong) public {
+    function setDdaListAssetInfoAll(address _assetAddress, uint _price, uint _amount, bool _isLong) public onlyDex {
         ListAsset storage listing = listOfAssets[_assetAddress];
         listing.price = _price;
         listing.amount= _amount;
         listing.isLong= _isLong;
     }
 
-    function setDdaListAssetInfoAmount(address _assetAddress, uint _amount) public {
+    function setDdaListAssetInfoAmount(address _assetAddress, uint _amount) public onlyDex {
         ListAsset storage listing = listOfAssets[_assetAddress];
         listing.amount= _amount;
     }
@@ -151,7 +168,7 @@ contract ExchangeStorage{
     *@param _assetAddress for DDA list
     *@return price, amount and true if isLong
     */
-    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool){
+    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool) {
         return(listOfAssets[_assetAddress].price,listOfAssets[_assetAddress].amount,listOfAssets[_assetAddress].isLong);
     }
 
@@ -159,7 +176,7 @@ contract ExchangeStorage{
     *@dev Adds to open orderbooks
     *@return _uint of the number of tokens with open orders
     */
-    function setOpenBooks(address _openBookAdd) public {
+    function setOpenBooks(address _openBookAdd) public onlyDex {
         openBooks.push(_openBookAdd);
     }
     /**
@@ -171,7 +188,7 @@ contract ExchangeStorage{
     }
 
     //use the nonce for orderId
-    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) public {
+    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) public  {
         Order storage _order = orders[_orderId];
         _order.maker = _maker;
         _order.price = _price;
@@ -186,10 +203,21 @@ contract ExchangeStorage{
     *@return uint of the order amount of the sale
     *@return address of the token
     */
-    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address){
+    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address)  {
         Order storage _order = orders[_orderId];
         return (_order.maker,_order.price,_order.amount,_order.asset);
     }
+
+    function getOrderMaker(uint256 _orderId) external view returns(address)  {
+        Order storage _order = orders[_orderId];
+        return (_order.maker);
+    }
+
+    function getOrderPrice(uint256 _orderId) external view returns(uint)  {
+        Order storage _order = orders[_orderId];
+        return (_order.price);
+    }
+
 
     function setForSale(address _tokenadd, uint _order_nonce) public {
         forSale[_tokenadd].push(_order_nonce);
@@ -200,19 +228,19 @@ contract ExchangeStorage{
     *@param _token address used to count the number of orders
     *@return _uint of the number of orders in the orderbook
     */
-    function getOrderCount(address _token) public constant returns(uint) {
+    function getOrderCount(address _token) public constant returns(uint)  {
         return forSale[_token].length;
     }
 
-    function getForSaleOrderId(address _tokenadd) public view returns(uint256[]){
+    function getForSaleOrderId(address _tokenadd) public view returns(uint256[])  {
         return forSale[_tokenadd];
     }
 
-    function setForSaleIndex(uint _order_nonce, uint _order_count) public {
+    function setForSaleIndex(uint _order_nonce, uint _order_count) public onlyDex {
         forSaleIndex[_order_nonce]= _order_count;
     }
 
-    function getForSaleIndex(uint _order_nonce) public view returns(uint){
+    function getForSaleIndex(uint _order_nonce) public view returns(uint)  {
         return forSaleIndex[_order_nonce];
     }
 
@@ -226,15 +254,15 @@ contract ExchangeStorage{
     }
 
 
-    function setOpenBookIndex(address _order, uint _order_index) public {
+    function setOpenBookIndex(address _order, uint _order_index) public onlyDex {
         openBookIndex[_order]= _order_index;
     }
 
-    function getOpenBookIndex(address _order) public view returns(uint){
+    function getOpenBookIndex(address _order) public view returns(uint) {
         return openBookIndex[_order];
     }
 
-    function setUserOrders(address _user, uint _order_nonce) public {
+    function setUserOrders(address _user, uint _order_nonce) public onlyDex {
         userOrders[_user].push(_order_nonce);
     }
     /**
@@ -246,11 +274,11 @@ contract ExchangeStorage{
         return userOrders[_user];
     }
 
-    function setUserOrderIndex(address _user, uint _order_nonce) public {
+    function setUserOrderIndex(address _user, uint _order_nonce) public onlyDex {
         userOrderIndex[_order_nonce] = userOrders[_user].length;
     }
 
-    function getUserOrderIndex(uint _order_nonce) public view returns(uint){
+    function getUserOrderIndex(uint _order_nonce) public view returns(uint) {
         return userOrderIndex[_order_nonce];
     }
 
@@ -270,19 +298,8 @@ contract ExchangeStorage{
     *@param _address the address of the party to blacklist
     *@return bool true for is blacklisted
     */
-    function isBlacklist(address _address) public view returns(bool) {
+    function isBlacklist(address _address) external view returns(bool) {
         return blacklist[_address];
     }
-
-
-
-
-
-
-
-
-
-
-
 
 }
