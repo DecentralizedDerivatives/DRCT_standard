@@ -21,6 +21,13 @@ module.exports = {
       gasPrice: 1, // Specified in Wei
       gas:4700000
     },
+      test: {
+      host: "https://gladly-fond-horse.quiknode.io",
+      port: 8545,
+      network_id: "*", // Match any network id
+      gasPrice: 1, // Specified in Wei
+      gas:4700000
+    },
     ropsten: {
       provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/"+ accessToken),
       network_id: 3,
@@ -42,7 +49,7 @@ module.exports = {
     mainnet: {
       network_id: "1",
       provider: function () {
-        var wallet = new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/' + accessToken)
+        var wallet = new HDWalletProvider(mnemonic, 'https://gladly-fond-horse.quiknode.io/8faab5bf-73f6-4f72-a8df-bceb75f0f671/8K5s-t4qrXAHuiIZMLRjNQ==/')
         var nonceTracker = new NonceTrackerSubprovider()
         wallet.engine._providers.unshift(nonceTracker)
         nonceTracker.setEngine(wallet.engine)
