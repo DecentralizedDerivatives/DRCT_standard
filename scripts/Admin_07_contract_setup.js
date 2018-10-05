@@ -30,8 +30,8 @@ var o_startdate = d;
 var hdate = _date;*/
 
 
-var o_startdate = 1538697600;
-var hdate = "10/05/2018";
+var o_startdate = 1539907200;
+var hdate = "10/19/2018";
 
 var type = "ETH/USD";
 //var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day 5x rinkeby

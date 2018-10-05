@@ -39,7 +39,7 @@ module.exports = {
       gas: 4700000,
       gasPrice: 2000000000
     }*/
-    mainnet: {
+/*    mainnet: {
       network_id: "1",
       provider: function () {
         var wallet = new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/' + accessToken)
@@ -51,7 +51,7 @@ module.exports = {
       network_id: 1,
       gas: 4700000,
       gasPrice: 3000000000
-    },
+    },*/
     rinkeby: {
       network_id: "4",
       provider: function () {

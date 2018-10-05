@@ -1,5 +1,5 @@
 
-
+//json.abi-parse
 const Web3 = require('web3')
 const validateTransaction = require('./web3Validate')
 const confirmEtherTransaction = require('./web3Confirm')
