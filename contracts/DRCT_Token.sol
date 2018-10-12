@@ -15,6 +15,8 @@ contract DRCT_Token {
 
     /*Variables*/
     DRCTLibrary.TokenStorage public drct;
+    string public constant name = "DRCT Tokens";
+    string public constant symbol = "DRCT";
 
     /*Functions*/
     /**

@@ -6,7 +6,7 @@ var NonceTrackerSubprovider = require("web3-provider-engine/subproviders/nonce-t
 //Brenda PM3RtHbQjHxWydyhDi37
 //var mnemonic = "governments of the industrial world you weary giants of flesh and steel"
 //var mnemonic = "dda candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
-
+//ganache-cli -l 0x989680 -g 1
 var mnemonic = process.env.ETH_MNEMONIC;
 var accessToken = process.env.INFURA_ACCESS_TOKEN;
 
@@ -19,7 +19,8 @@ module.exports = {
       port: 8545,
       network_id: "*", // Match any network id
       gasPrice: 1, // Specified in Wei
-      gas:4700000
+      gas:10000000,
+      gasLimit:0x989680
     },
       test: {
       host: "https://gladly-fond-horse.quiknode.io",
