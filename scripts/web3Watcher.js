@@ -10,7 +10,7 @@ var accessToken = process.env.INFURA_ACCESS_TOKEN;
 
 function watchEtherTransfers() {
   // Instantiate web3 with WebSocket provider
-  const web3 = new Web3(new Web3.providers.WebsocketProvider("https://rinkeby.infura.io/"+ accessToken))
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://rinkeby.infura.io/ws'))
 
   // Instantiate subscription object
   const subscription = web3.eth.subscribe('pendingTransactions')
@@ -46,12 +46,11 @@ function watchEtherTransfers() {
 
 function watchTokenTransfers() {
   // Instantiate web3 with WebSocketProvider
-  const web3 = new Web3(new Web3.providers.WebsocketProvider("https://rinkeby.infura.io/"+ accessToken))
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://rinkeby.infura.io/ws'))
 
   // Instantiate token contract object with JSON ABI and address
-  const tokenContract = new web3.eth.Contract(
-    TOKEN_ABI, _wrappe,
-    (error, result) => { if (error) console.log(error) }
+  const tokenContract = new web3.eth.Contract(TOKEN_ABI, _wrappe, (error, result) => { 
+    if (error) console.log(error) }
   )
 
   // Generate filter options
@@ -76,7 +75,4 @@ function watchTokenTransfers() {
   })
 }
 
-module.exports = {
-  watchEtherTransfers,
-  watchTokenTransfers
-}
+module.exports = {watchEtherTransfers, watchTokenTransfers}

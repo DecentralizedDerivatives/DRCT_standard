@@ -61,7 +61,7 @@ module.exports = {
         nonceTracker.setEngine(wallet.engine)
         return wallet
       },
-      network_id: 1,
+      network_id: 4,
       gas: 4700000,
       gasPrice: 4000000000
     }

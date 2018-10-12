@@ -1,9 +1,7 @@
 const Web3 = require('web3')
 require('dotenv').config()
 
-
 var accessToken = process.env.INFURA_ACCESS_TOKEN;
-var _wrapped= "0x6248cb8a316fc8f1488ce56f6ea517151923531a";//rinkeby new dud
 
 async function getConfirmations(txHash) {
   try {

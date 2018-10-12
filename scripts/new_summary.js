@@ -6,6 +6,10 @@ function sleep_s(secs) {
   while ((+new Date) < secs);
 }
 
+//ETH_MNEMONIC='governments of the industrial world you weary giants of flesh and steel'
+INFURA_ACCESS_TOKEN='PM3RtHbQjHxWydyhDi37'
+
+
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Wr = Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
@@ -13,6 +17,9 @@ var TokenToTokenSwap = artifacts.require("TokenToTokenSwap");
 const DRCT_Token = artifacts.require('./DRCT_Token.sol');
 var _date = Date.now()/1000- (Date.now()/1000)%86400;
 var web3 = require('web3').web3;
+
+const byte_factory = JSON.parse(factory.bytecode);
+const abi_factory = JSON.parse(factory.interface); 
 
 /**
 *@dev Update the Master Deployer contract. This will loop through each
