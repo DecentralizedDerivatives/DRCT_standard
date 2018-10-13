@@ -1,4 +1,4 @@
-/*var Membership = artifacts.require("Membership");
+var Membership = artifacts.require("Membership");
 
 contract('Membership', function(accounts) {
     let membership;
@@ -122,4 +122,3 @@ contract('Membership', function(accounts) {
 
 
 })
-*/

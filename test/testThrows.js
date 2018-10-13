@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-/*var Test_Oracle = artifacts.require("Test_Oracle");
+var Test_Oracle = artifacts.require("Test_Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -83,11 +83,10 @@ contract('Throw Tests', function(accounts) {
     it("Throw testing upmove", async function() {
 	  	await oracle.StoreDocument(o_startdate,1000);
 	    await oracle.StoreDocument(o_enddate,1500);
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	await expectThrow(userContract.Initiate(o_startdate,10000000000000000000,{value: web3.toWei(10,'ether'), from: accounts[2]}));
+	  	var receipt = await userContract.Initiate(o_startdate,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await expectThrow(userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[2]}));
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
 	  	await long_token.transfer(accounts[3],5000,{from:accounts[1]});
@@ -107,10 +106,9 @@ contract('Throw Tests', function(accounts) {
 
 	 it("Return false on uncalled oraclize", async function() {
 	  	await oracle.StoreDocument(o_startdate,1000);
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+		var receipt = await userContract.Initiate(o_startdate,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
 	  	await long_token.transfer(accounts[3],5000,{from:accounts[1]});
@@ -158,7 +156,7 @@ contract('Throw Tests', function(accounts) {
 
 			//await factory.setWhitelistedMemberTypes([1,2,3]);
 			await memberCoin.setMembershipType(accounts[1],1000)
-	  		await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
+	  		await expectThrow(factory.deployContract(o_startdate,accounts[1],{from: accounts[1]}));
 		});
 
 		it("Throw on unwhitelisted - Transfer", async function() {
@@ -194,10 +192,9 @@ contract('Throw Tests', function(accounts) {
 			await memberCoin.setMembershipType(accounts[1],1);
 			await oracle.StoreDocument(o_startdate,1000);
 		    await oracle.StoreDocument(o_enddate,1500);
-		  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-		  	swap_add = receipt.logs[0].args._created;
-		  	swap = await TokenToTokenSwap.at(swap_add);
-			await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+		var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
+	  	swap = await TokenToTokenSwap.at(swap_add);
 		  	await expectThrow(short_token.transfer(accounts[2],10000,{from:accounts[1]}));
 		});
 		it("Throw on unwhitelisted - Sell", async function() {
@@ -229,14 +226,42 @@ contract('Throw Tests', function(accounts) {
 
 			//await factory.setWhitelistedMemberTypes([1000]);
 			await memberCoin.setMembershipType(accounts[1],1000);
-			var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-		  	swap_add = receipt.logs[0].args._created;
-			swap = await TokenToTokenSwap.at(swap_add);
-			await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+		var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
+	  	swap = await TokenToTokenSwap.at(swap_add);
 			await short_token.approve(exchange.address,500,{from: accounts[1]});
 			balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 			await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
 			await expectThrow(exchange.buy(1,{from: accounts[2], value:web3.toWei(5,'ether')}));
+		});
+				it("Throw on unwhitelisted create for third party- Sell", async function() {
+	    factory = await Factory.new(999);
+
+	    await masterDeployer.setFactory(factory.address);
+	    let res = await masterDeployer.deployFactory(999);
+	    res = res.logs[0].args._factory;
+	    factory = await Factory.at(res);
+	    await factory.setMemberContract(memberCoin.address);
+	    //await factory.setWhitelistedMemberTypes([0]);
+	    await factory.setVariables(1000000000000000,7,1,0);
+
+	    deployer = await Deployer.new(factory.address);
+	    await factory.setBaseToken(base.address);
+	    await factory.setUserContract(userContract.address);
+	    await factory.setDeployer(deployer.address);
+	    await factory.setOracleAddress(oracle.address);
+	    await userContract.setFactory(factory.address);
+        o_startdate = 1514764800;
+   		await factory.deployTokenContract(o_startdate);
+			//await factory.setWhitelistedMemberTypes([1000]);
+			await memberCoin.setMembershipType(accounts[1],1000);
+			var receipt = await factory.deployContract(o_startdate,accounts[1],{from: accounts[2]});
+		  	swap_add = receipt.logs[0].args._created;
+		  	swap = await TokenToTokenSwap.at(swap_add);
+		  	await base.createToken({value: web3.toWei(2,'ether'), from: accounts[2]});
+		  	await base.createToken({value: web3.toWei(2,'ether'), from: accounts[2]});
+		  	await base.transfer(swap_add,2000000000000000000,{from: accounts[2]});
+		  	await expectThrow(swap.createSwap(1000000000000000000,accounts[2],{from: accounts[2]}));
 		});
 		it("no throw on WhiteListedMemberTypes[0] - Create", async function() {
 
@@ -268,8 +293,7 @@ contract('Throw Tests', function(accounts) {
 
 			
 			await memberCoin.setMembershipType(accounts[1],0)
-			await factory.deployContract(o_startdate,{from: accounts[1]});
+			await factory.deployContract(o_startdate,accounts[1],{from: accounts[1]});
 	  		//await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
 });
-*/
