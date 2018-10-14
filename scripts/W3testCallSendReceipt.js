@@ -1,10 +1,26 @@
 const Web3 = require('web3');
-require('dotenv').config()
+const fetch = require('node-fetch-polyfill');
+require('dotenv').config();
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 function sleep_s(secs) {
   secs = (+new Date) + secs * 1000;
   while ((+new Date) < secs);
+}
+
+//https://ethgasstation.info/json/ethgasAPI.json
+//https://www.etherchain.org/api/gasPriceOracle
+async function fetchGasPrice() {
+  const URL = `https://www.etherchain.org/api/gasPriceOracle`;
+  try {
+    const fetchResult = fetch(URL);
+    const response = await fetchResult;
+    const jsonData = await response.json();
+    console.log(jsonData);
+    return(jsonData);
+  } catch(e){
+    throw Error(e);
+  }
 }
 
 var mnemonic = process.env.ETH_MNEMONIC;
@@ -38,46 +54,62 @@ var _factoryBtc = "0x92217550aba5912ba7eb70978871daf7d6bcc16d";// rinkeby btc
 //var _factoryEth = "0x8ff7e9f04fed4a6d7184962c6c44d2e701c2fb8a";// Mainnet eth
 //gas: gas_Limit, gasPrice: gas_Price
 
-
-
 module.exports =async function(callback) {
-
+let fetch_gasP = await fetchGasPrice();
+let gasP= (fetch_gasP.standard + 2)*1000000000;
+console.log(gasP);
 /*let accountFrom = await web3.eth.getAccounts();
 console.log(accountFrom);*/
 var factory = await new web3.eth.Contract(factoryAbi,_factoryBtc);
-console.log(factory.methods);
+//console.log(factory.methods);
 console.log(factory.options.address);
 console.log(_factoryBtc);
 await factory.methods.getVariables().call().then(console.log);
-await factory.methods.setSwapFee(0).send({from: accountFrom,gas: gas_Limit,gasPrice: gas_Price })
-.on('transactionHash', function(hash){
-    console.log(hash);
-})
-.on('receipt', function(receipt){
-    // receipt example
-    console.log(receipt);
-})
-.on('confirmation', function(confirmationNumber, receipt){
-    console.log(confirmationNumber);
-})
+await factory.methods.setSwapFee(0).send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
+    .on('transactionHash', function(hash){
+        console.log("hash", hash);
 
-.on('error', console.error); // If there's an out of gas error the second parameter is the receipt.
-;
+        var txinfo =  web3.eth.getTransaction(hash, function(error, result){
+            if (!error)
+            console.log(result);
+        });
+        //txinfo =  txinfo.json();
+        console.log("txinfo", txinfo);
+        //console.log("txnonce", toString(txinfo.nonce));
+        console.log("blocknumber", toString(txinfo.blockNumber));
+        if (txinfo.blockNumber == null) { 
+            var subscription = web3.eth.subscribe('pendingTransactions', function(error, result){
+                if (!error)
+                console.log(result);
+            })
+            .on("data", function(transaction){
+                console.log("transaction", transaction);
+                console.log("txnonce",transaction.nonce);
+                console.log("txhash",transaction.hash);
+            })
+            console.log("subscription", subscription);
 
+            // unsubscribes the subscription
+            subscription.unsubscribe(function(error, success){
+                if(success)
+                    console.log('Successfully unsubscribed!');
+            });
+        } 
+    })
+    
+    .on('receipt', function(receipt){
+        // receipt example
+        //if (receipt.status != true)
+        console.log("recStatus", receipt.status);
+        console.log("receipt", receipt);
+        //if receipt is null--subscribe?--change web3 to websocket and back to http for re-sending tx
+    })
+    /*.on('confirmation', function(confirmationNumber, receipt){
+        console.log(confirmationNumber);
+    })*/
+
+    .on('error', console.error); // If there's an out of gas error the second parameter is the receipt.
 }
 
-/*function getWeb3() {
-	const myWeb3 = new Web3(web3.currentProvider);
-	return myWeb3;
-}*/
 
-/*let contract = Contract(artifacts);
-contract.setProvider(web3.currentProvider);
-//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
-if (typeof contract.currentProvider.sendAsync !== "function") {
-  contract.currentProvider.sendAsync = function() {
-    return contract.currentProvider.send.apply(
-      contract.currentProvider, arguments
-    );
-  };
-}*/
+

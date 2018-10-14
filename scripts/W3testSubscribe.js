@@ -68,3 +68,16 @@ await subscription.unsubscribe(function(error, success){
 
 }
 
+async function fetchTopFive(sub) {
+  const URL = `https://www.reddit.com/r/${sub}/top/.json?limit=5`;
+  try {
+    const fetchResult = fetch(URL)
+    const response = await fetchResult;
+    const jsonData = await response.json();
+    console.log(jsonData);
+  } catch(e){
+    throw Error(e);
+  }
+}
+
+fetchTopFive('javvascript'); // Notice the incorrect spelling

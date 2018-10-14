@@ -9,6 +9,7 @@
   "dependencies": {
     "bip39": "^2.5.0",
     "ethereumjs-wallet": "^0.6.0",
+    "node-fetch-polyfill": "^2.0.6",
     "truffle-hdwallet-provider": "0.0.3",
     "web3": "^1.0.0-beta.36",
     "web3-provider-engine": "^13.5.0"
