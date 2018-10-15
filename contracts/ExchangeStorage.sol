@@ -3,8 +3,6 @@ pragma solidity ^0.4.24;
 /**
 *Exchange storage
 
-******how do we make sure the exchagne address is we define 
-is the only one allowed to write to this?
 */
 contract ExchangeStorage{ 
     /*Variables*/
@@ -27,6 +25,7 @@ contract ExchangeStorage{
 
     //order_nonce;
     uint public order_nonce;
+    mapping(address => mapping (address => uint)) internal allowedLeft;
     address public owner; //The owner of the market contract
     address public dexAddress;
     address[] public openDdaListAssets;
@@ -98,52 +97,47 @@ contract ExchangeStorage{
     }
 
     /**
-    *@dev allows exchange cotract to write the order nonce
+    *@dev This function updates the _amount of tokens a _spender(exchange) can list
+    *@param _spender address
+    *@param _amount amount the spender is being approved for
+    *@return true if spender appproved successfully
+    */
+    function setAllowedLeftToList(address _spender, uint _amount) public {
+        allowedLeft[msg.sender][_spender] = _amount;
+
+    }
+    /**
+    *@dev allows exchange contract to write the order nonce
     */
     function setOrderNonce(uint _order_nonce) public onlyDex {
         order_nonce=_order_nonce;
     }
-    /**
-    *@dev allows dev to get the order nonce
-    */
-    function getOrderNonce() external view returns(uint) {
-        return order_nonce;
-    }
 
     /**
-    *@dev allows exchange cotract to write the order nonce
+    *@dev allows exchange contract to add address to OpenDdaListAssets
     */
     function setOpenDdaListAssets(address _ddaListAsset) public onlyDex {
         openDdaListAssets.push(_ddaListAsset);
     }
+
     /**
-    *@dev getter function to get all openDdaListAssets
+    *@dev allows exchange contract to assign address to index in when deleting from array
     */
-    function getopenDdaListAssets() view public returns (address[]) {
-        return openDdaListAssets;
+    function setOpenDdaListAssetByIndex(uint _indexToDelete, address _lastAdd) public onlyDex {
+        openDdaListAssets[_indexToDelete]=_lastAdd;
     }
     /**
-    *@dev getter function to get all openDdaListAssets
-    */
-    function getCountopenDdaListAssets() view public returns (uint) {
-        return openDdaListAssets.length;
-    }
-    /**
-    *@dev allows exchange cotract to write the order nonce
+    *@dev allows exchange contract to assign index to address when deleting from array
     */
     function setOpenDdaListIndex(address _ddaListAsset, uint _value) public onlyDex {
         openDdaListIndex[_ddaListAsset]= _value ;
     }
-    /**
-    *@dev getter function to get all openDdaListAssets
-    */
-    function getOpenDdaListIndex(address _ddaListAsset) view public returns (uint)  {
-        return openDdaListIndex[_ddaListAsset];
+
+    function setOpenDdaArrayLength() public onlyDex{
+        openDdaListAssets.length--;
     }
-
-
     /**
-    *@dev Gets the DDA List Asset information for the specifed 
+    *@dev Sets the DDA List Asset information for the specifed 
     *asset address
     *@param _asset address 
     *@param _amount of asset
@@ -151,7 +145,7 @@ contract ExchangeStorage{
     *@param _isLong true if it is long
     *@return price, amount and true if isLong
     */
-    function setDdaListAssetInfoAll(address _assetAddress, uint _price, uint _amount, bool _isLong) public onlyDex {
+    function setDdaListAssetInfoAll(ListAsset storage list, address _assetAddress, uint _price, uint _amount, bool _isLong) public onlyDex {
         ListAsset storage listing = listOfAssets[_assetAddress];
         listing.price = _price;
         listing.amount= _amount;
@@ -162,15 +156,7 @@ contract ExchangeStorage{
         ListAsset storage listing = listOfAssets[_assetAddress];
         listing.amount= _amount;
     }
-    /**
-    *@dev Gets the DDA List Asset information for the specifed 
-    *asset address
-    *@param _assetAddress for DDA list
-    *@return price, amount and true if isLong
-    */
-    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool) {
-        return(listOfAssets[_assetAddress].price,listOfAssets[_assetAddress].amount,listOfAssets[_assetAddress].isLong);
-    }
+
 
     /**
     *@dev Adds to open orderbooks
@@ -178,13 +164,6 @@ contract ExchangeStorage{
     */
     function setOpenBooks(address _openBookAdd) public onlyDex {
         openBooks.push(_openBookAdd);
-    }
-    /**
-    *@dev Gets number of open orderbooks
-    *@return _uint of the number of tokens with open orders
-    */
-    function getBookCount() public constant returns(uint) {
-        return openBooks.length;
     }
 
     //use the nonce for orderId
@@ -195,93 +174,26 @@ contract ExchangeStorage{
         _order.amount = _amount;
         _order.asset = _tokenadd;
     }
-    /**
-    *@dev getOrder lists the price,amount, and maker of a specific token for a sale
-    *@param _orderId uint256 ID of order
-    *@return address of the party selling
-    *@return uint of the price of the sale (in wei)
-    *@return uint of the order amount of the sale
-    *@return address of the token
-    */
-    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address)  {
-        Order storage _order = orders[_orderId];
-        return (_order.maker,_order.price,_order.amount,_order.asset);
-    }
-
-    function getOrderMaker(uint256 _orderId) external view returns(address)  {
-        Order storage _order = orders[_orderId];
-        return (_order.maker);
-    }
-
-    function getOrderPrice(uint256 _orderId) external view returns(uint)  {
-        Order storage _order = orders[_orderId];
-        return (_order.price);
-    }
-
 
     function setForSale(address _tokenadd, uint _order_nonce) public {
         forSale[_tokenadd].push(_order_nonce);
-    }
-
-    /**
-    *@dev getOrderCount allows parties to query how many orders are on the book
-    *@param _token address used to count the number of orders
-    *@return _uint of the number of orders in the orderbook
-    */
-    function getOrderCount(address _token) public constant returns(uint)  {
-        return forSale[_token].length;
-    }
-
-    function getForSaleOrderId(address _tokenadd) public view returns(uint256[])  {
-        return forSale[_tokenadd];
     }
 
     function setForSaleIndex(uint _order_nonce, uint _order_count) public onlyDex {
         forSaleIndex[_order_nonce]= _order_count;
     }
 
-    function getForSaleIndex(uint _order_nonce) public view returns(uint)  {
-        return forSaleIndex[_order_nonce];
-    }
-
-    /**
-    *@dev getOrders allows parties to get an array of all orderId's open for a given token
-    *@param _token address of the drct token
-    *@return _uint[] an array of the orders in the orderbook
-    */
-    function getOrders(address _token) public constant returns(uint[]) {
-        return forSale[_token];
-    }
-
-
     function setOpenBookIndex(address _order, uint _order_index) public onlyDex {
         openBookIndex[_order]= _order_index;
-    }
-
-    function getOpenBookIndex(address _order) public view returns(uint) {
-        return openBookIndex[_order];
     }
 
     function setUserOrders(address _user, uint _order_nonce) public onlyDex {
         userOrders[_user].push(_order_nonce);
     }
-    /**
-    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
-    *@param _user address 
-    *@return _uint[] an array of the orders in the orderbook for the user
-    */
-    function getUserOrders(address _user) public constant returns(uint[]) {
-        return userOrders[_user];
-    }
 
     function setUserOrderIndex(address _user, uint _order_nonce) public onlyDex {
         userOrderIndex[_order_nonce] = userOrders[_user].length;
     }
-
-    function getUserOrderIndex(uint _order_nonce) public view returns(uint) {
-        return userOrderIndex[_order_nonce];
-    }
-
 
     /**
     *@notice This allows the owner to stop a malicious party from spamming the orderbook
@@ -294,12 +206,49 @@ contract ExchangeStorage{
     }
 
     /**
-    *@dev Allows parties to see if one is blacklisted
-    *@param _address the address of the party to blacklist
-    *@return bool true for is blacklisted
+    *@dev An internal function to update mappings when an order is removed from the book
+    *@param _orderId is the uint256 ID of order
+    *@param _order is the struct containing the details of the order
     */
-    function isBlacklist(address _address) external view returns(bool) {
-        return blacklist[_address];
-    }
+     function unLister(uint256 _orderId, Order _order) public onlyDex {
+            uint256 tokenIndex;
+            uint256 lastTokenIndex;
+            address lastAdd;
+            uint256  lastToken;
+        if(forSale[_order.asset].length == 2){
+            tokenIndex = openBookIndex[_order.asset];
+            lastTokenIndex = openBooks.length.sub(1);
+            lastAdd = openBooks[lastTokenIndex];
+            openBooks[tokenIndex] = lastAdd;
+            openBookIndex[lastAdd] = tokenIndex;
+            openBooks.length--;
+            openBookIndex[_order.asset] = 0;
+            forSale[_order.asset].length -= 2;
+        }
+        else{
+            tokenIndex = forSaleIndex[_orderId];
+            lastTokenIndex = forSale[_order.asset].length.sub(1);
+            lastToken = forSale[_order.asset][lastTokenIndex];
+            forSale[_order.asset][tokenIndex] = lastToken;
+            forSaleIndex[lastToken] = tokenIndex;
+            forSale[_order.asset].length--;
+        }
+        forSaleIndex[_orderId] = 0;
+        orders[_orderId] = Order({
+            maker: address(0),
+            price: 0,
+            amount:0,
+            asset: address(0)
+        });
+        if(userOrders[_order.maker].length > 1){
+            tokenIndex = userOrderIndex[_orderId];
+            lastTokenIndex = userOrders[_order.maker].length.sub(1);
+            lastToken = userOrders[_order.maker][lastTokenIndex];
+            userOrders[_order.maker][tokenIndex] = lastToken;
+            userOrderIndex[lastToken] = tokenIndex;
+        }
+        userOrders[_order.maker].length--;
+        userOrderIndex[_orderId] = 0;
+    } 
 
 }

@@ -1,24 +1,36 @@
-import "ITokenLedger.sol";
-
-//tokenLedger=Exchange
-//itokenLeder=exchange interfac
-//organization= 
-//storage=
+pragma solidity ^0.4.24;
 
 //https://blog.colony.io/writing-upgradeable-contracts-in-solidity-6743f0eecc88
 //
-contract ExchangeAdmin {
-  ITokenLedger public tokenLedger;
+/* import "Exchange_Interface.sol";   
+   
+  contract Organisation
+  {
+    Exchange_Interface public exchange;
+    Address exchangeStorage;
+    address public owner; 
+   
+    /*Modifiers*/
+    /**
+    *@dev Access modifier for Owner functionality
+    */
+/*     modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    } */
 
-  function ExchangeAdmin(address _tokenLedger) {
-    tokenLedger = ITokenLedger(_tokenLedger);
-  }
-  
-  function setTokenLedgerAddress(address _tokenLedger)  {
-    tokenLedger = ITokenLedger(_tokenLedger);
-  }
-
-  function generateTokens(uint256 _amount)  {
-    tokenLedger.generateTokens(_amount);
-  }
-}
+    /**
+    *@dev the constructor argument to set the owner and initialize the array.
+    */
+/*     constructor() public{
+        owner = msg.sender;
+    }
+    function changeExchangeStorageAddress(address _exchangeStorage) onlyOwner public{
+      exchangeStorage = _exchangeStorage;
+    }
+    
+    function setExchangeAddress(address _exchange) onlyOwner public {
+      exchange = Exchange_Interface(_exchange);
+    }
+   
+  }  */

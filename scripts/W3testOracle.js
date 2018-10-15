@@ -39,7 +39,7 @@ console.log(accountFrom);*/
 var gas_Price= 4000000000;
 var gas_Limit= 4700000;
 
-var myContract = artifacts.require("Oracle");
+var myContract = artifacts.require("Test_Oracle2");
 var myContractAbi = myContract.abi;
 var myContractByte = myContract.bytecode;
 
@@ -56,50 +56,52 @@ var _factoryBtc = "0x92217550aba5912ba7eb70978871daf7d6bcc16d";// rinkeby btc
 
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
-
+var o_startdate = 1531958400;
 //ETH oracle
 var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
 //var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
 console.log("ETH Oracle: ", _oracleEth);
 
 module.exports =async function(callback) {
+  oracle = await myContract.new("json(https://api.gdax.com/products/BTC-USD/ticker).price", "json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price");
+  
 let fetch_gasP = await fetchGasPrice();
 let gasP= (fetch_gasP.standard + 2)*1000000000;
 console.log(gasP);
 /*let accountFrom = await web3.eth.getAccounts();
 console.log(accountFrom);*/
-    var oracle = await new web3.eth.Contract(myContractAbi,_oracleEth);
+    var oracle = await new web3.eth.Contract(myContractAbi,oracle.address);//change oracle.address to _oracleEth
     console.log("awaitOracle")
     sleep_s(30);
-
-await oracle.methods.pushData().send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
+//o_startdate, 4, 3,"0x12"
+await oracle.methods.pushData(o_startdate, 4, 3,"0x12").send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
 console.log("pushData")
     .on('transactionHash', function(hash){
         console.log("hash", hash);
 
-        var txinfo =  web3.eth.getTransaction(hash, function(error, result){
+        /*var txinfo =  web3.eth.getTransaction(hash, function(error, result){
             if (!error)
                 console.log(result);
-            });
+            });*/
         //txinfo =  txinfo.json();
-        console.log("txinfo", txinfo);
+        //console.log("txinfo", txinfo);
         //console.log("txnonce", toString(txinfo.nonce));
-        console.log("blocknumber", toString(txinfo.blockNumber));
-        if (txinfo.blockNumber == null) { 
+        //console.log("blocknumber", toString(txinfo.blockNumber));
+        //if (txinfo.blockNumber == null) { 
 
-            var subscription = oracle.events.newOraclizeQuery(function(error, event){
+/*            var subscription = oracle.events.newOraclizeQuery(function(error, event){
                 if (!error)
                     console.log(event);
                 })
-            .on('error', console.error);
-            console.log("subscription", subscription);
+                .on('error', console.error);
+                console.log("subscription", subscription);
 
             // unsubscribes the subscription
             subscription.unsubscribe(function(error, success){
                 if(success)
                     console.log('Successfully unsubscribed!');
-            });
-        } 
+            });*/
+        //} 
     })
     
     .on('receipt', function(receipt){
