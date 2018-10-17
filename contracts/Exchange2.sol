@@ -74,10 +74,12 @@ contract Exchange2{
     *@param _price uint256 price of all tokens in wei
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
-        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
+        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0);
+
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        //require(token.allowance(msg.sender,address(this)) >= _amount);
-        require(token.allowance(msg.sender,storage_address) >= _amount);
+        require(token.allowance(msg.sender,address(this)) >= _amount);
+        //require(token.allowance(msg.sender,storage_address) >= _amount);
+
         uint totalAllowance = xStorage.getAllowedLeftToList(msg.sender,address(this)).sub(_amount);
         xStorage.setAllowedLeftToList(address(this), totalAllowance);
         uint fsIndex = xStorage.getOrderCount(_tokenadd);
@@ -144,13 +146,13 @@ contract Exchange2{
         require(_amount <= listing_amount);
         uint totalPrice = _amount.mul(listing_amount);
         require(msg.value == totalPrice);
+
         ERC20_Interface token = ERC20_Interface(_asset);
         if(token.allowance(owner,address(this)) >= _amount){
             assert(token.transferFrom(owner,msg.sender, _amount));
             owner.transfer(totalPrice);
             listing_amount= listing_amount.sub(_amount);
             xStorage.setDdaListAssetInfoAmount(_asset,listing_amount);
-            
         }
     } 
 
