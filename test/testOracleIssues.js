@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-/*var Test_Oracle = artifacts.require("Test_Oracle");
+var Test_Oracle = artifacts.require("Test_Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -64,11 +64,9 @@ contract('Oracle Test', function(accounts) {
 	it("Missed Dates", async function(){
 		await oracle.StoreDocument(o_startdate + 86400,1000);
 	    await oracle.StoreDocument(o_enddate + 86400,1500);
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+		var receipt = await userContract.Initiate(o_startdate,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
-	  	await userContract.Initiate(swap_add,10000000000000000000,{value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
 	  	await short_token.transfer(accounts[2],10000,{from:accounts[1]});
 	  	await web3.eth.sendTransaction({from:accounts[2],to:accounts[1], value:web3.toWei(10, "ether")});
@@ -83,4 +81,4 @@ contract('Oracle Test', function(accounts) {
 		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
 	});
 });
-*/
+

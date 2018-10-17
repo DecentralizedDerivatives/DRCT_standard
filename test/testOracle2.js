@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-/*var Test_Oracle2 = artifacts.require("Test_Oracle2");
+var Test_Oracle2 = artifacts.require("Test_Oracle2");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -71,28 +71,16 @@ contract('Oracle Test', function(accounts) {
 	it("Test Oracle api alternating same date", async function(){
 	    await oracle.pushData(o_startdate, 4, 3,"0x12" );//use gdax called=false 
 	    _api = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api",_api); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange-called=true
 	    _api2 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api2",_api2); //print it
-	    
    	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api3 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api3",_api3); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api4 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api4",_api4); //print it
-
-	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
+		 await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api5 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api5",_api5); //print it
-
 	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api6 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api6",_api6); //print it
-	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
         assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");	    
 	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
@@ -103,37 +91,21 @@ contract('Oracle Test', function(accounts) {
 	})
 
 	it("Test Oracle api alternating date switch", async function(){
-		console.log(o_startdate);
 	    await oracle.pushData(o_startdate, 4, 3,"0x12" );//use gdax called=false 
 	    _api = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api",_api); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange-called=true
 	    _api2 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api2",_api2); //print it
- 
    	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api3 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api3",_api3); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x12");//resend query to second exchange
 	    _api4 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api4",_api4); //print it
 	    await oracle.callback(2, "0x12");//value returned is 2, set called to falsetest
-
-        console.log(o_enddate);
 	    await oracle.pushData(o_enddate, 4, 3,"0x13");//resend query to second exchange
 	    _api5 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api5",_api5); //print it
-
 	    await oracle.pushData(o_enddate, 4, 3,"0x13");//resend query to second exchange
 	    _api6 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("ap65",_api6); //print it
-
 	    await oracle.pushData(o_enddate, 4, 3,"0x13");//resend query to second exchange
 	    _api7 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api7",_api7); //print it
-	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
         assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
 	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
@@ -145,37 +117,21 @@ contract('Oracle Test', function(accounts) {
     })
 
     	it("Test Oracle api alternating date switch2", async function(){
-		console.log(o_startdate);
 	    await oracle.pushData(o_startdate, 4, 3,"0x525f470ac7906f254acbc4c4fe0d014a181847a2" );//use gdax called=false 
 	    _api = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api",_api); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x525f470ac7906f254acbc4c4fe0d014a181847a2");//resend query to second exchange-called=true
 	    _api2 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api2",_api2); //print it
- 
    	    await oracle.pushData(o_startdate, 4, 3,"0x525f470ac7906f254acbc4c4fe0d014a181847a2");//resend query to second exchange
 	    _api3 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api3",_api3); //print it
-	    
 	    await oracle.pushData(o_startdate, 4, 3,"0x525f470ac7906f254acbc4c4fe0d014a181847a2");//resend query to second exchange
 	    _api4 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api4",_api4); //print it
 	    await oracle.callback(2, "0x525f470ac7906f254acbc4c4fe0d014a181847a2");//value returned is 2, set called to falsetest
-
-        console.log(o_enddate);
 	    await oracle.pushData(o_enddate, 4, 3,"0x2e5d4d5279a24e5c56dc297631a4fb275107d99c");//resend query to second exchange
 	    _api5 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api5",_api5); //print it
-
 	    await oracle.pushData(o_enddate, 4, 3,"0x2e5d4d5279a24e5c56dc297631a4fb275107d99c");//resend query to second exchange
 	    _api6 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("ap65",_api6); //print it
-
 	    await oracle.pushData(o_enddate, 4, 3,"0x2e5d4d5279a24e5c56dc297631a4fb275107d99c");//resend query to second exchange
 	    _api7 = await oracle.getusedAPI();//pull what exchange was used
-	    console.log("api7",_api7); //print it
-	   
 	    assert.equal(_api,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
         assert.equal(_api2,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
 	    assert.equal(_api3,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
@@ -184,13 +140,5 @@ contract('Oracle Test', function(accounts) {
         assert.equal(_api6,"json(https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT).price","API=binance");
 		assert.equal(_api7,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
     })
-
-
-
-
-
-  	
-
 });
 
-*/

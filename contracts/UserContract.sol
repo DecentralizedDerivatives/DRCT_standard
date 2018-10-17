@@ -21,6 +21,8 @@ contract UserContract{
     Factory internal factory; 
     address public factory_address;
     address internal owner;
+    event StartContract(address _newswap, uint _amount);
+
 
     /*Functions*/
     constructor() public {
@@ -29,19 +31,22 @@ contract UserContract{
 
     /**
     *@dev Value must be sent with Initiate and enter the _amount(in wei) 
-    *@param _swapadd is the address of the deployed contract created from the Factory contract
-    *@param _amount is the amount of the base tokens(short or long) in the
-    *swap. For wrapped Ether, this is wei.
+    *@param _startDate is the startDate of the contract you want to deploy
+    *@param _amount is the amount of Ether on each side of the contract initially
     */
-    function Initiate(address _swapadd, uint _amount) payable public{
-        require(msg.value == _amount.mul(2));
+    function Initiate(uint _startDate, uint _amount) payable public{
+        uint _fee = factory.fee();
+        require(msg.value == _amount.mul(2) + _fee);
+        address _swapadd = factory.deployContract.value(_fee)(_startDate,msg.sender);
         swap = TokenToTokenSwap_Interface(_swapadd);
         address token_address = factory.token();
         baseToken = Wrapped_Ether(token_address);
         baseToken.createToken.value(_amount.mul(2))();
         baseToken.transfer(_swapadd,_amount.mul(2));
         swap.createSwap(_amount, msg.sender);
+        emit StartContract(_swapadd,_amount);
     }
+
 
     /**
     *@dev Set factory address 
