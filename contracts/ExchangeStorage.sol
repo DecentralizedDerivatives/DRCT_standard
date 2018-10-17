@@ -1,10 +1,13 @@
 pragma solidity ^0.4.24;
 
+ import "./libraries/SafeMath.sol";
+
 /**
 *Exchange storage
 
 */
 contract ExchangeStorage{ 
+    using SafeMath for uint256;
     /*Variables*/
 
     
@@ -260,4 +263,168 @@ contract ExchangeStorage{
      function isBlacklist(address _address) public view returns(bool) {
         return blacklist[_address];
     }
+   
+    /**
+    *@dev getOrder lists the price,amount, and maker of a specific token for a sale
+    *@param _orderId uint256 ID of order
+    *@return address of the party selling
+    *@return uint of the price of the sale (in wei)
+    *@return uint of the order amount of the sale
+    *@return address of the token
+    */
+    function getOrder(uint256 _orderId) public view returns(address,address,uint ,uint ){
+        Order storage _order  = orders[_orderId];
+        return (_order.maker, _order.asset, _order.price, _order.amount);
+    } 
+    
+    function getOrderMaker(uint256 _orderId) public view returns(address)  {
+        Order storage _order  = orders[_orderId];
+        return _order.maker;
+    }
+
+    function getOrderPrice(uint256 _orderId) public view returns(uint)  {
+        Order storage _order  = orders[_orderId];
+        return _order.price;
+    } 
+
+    function getOrderAmount(uint256 _orderId) public view returns(uint){
+        Order storage _order  = orders[_orderId];
+        return _order.amount;
+    }
+
+    function getOrderAsset(uint256 _orderId) public view returns(address){
+        Order storage _order  = orders[_orderId];
+        return _order.asset;
+    }
+ 
+
+    /**
+    *@dev getOrderCount allows parties to query how many orders are on the book
+    *@param _token address used to count the number of orders
+    *@return _uint of the number of orders in the orderbook
+    */
+     function getOrderCount(address _token) public constant returns(uint) {
+        return forSale[_token].length;
+    } 
+
+    /**
+    *@dev Gets number of open orderbooks
+    *@return _uint of the number of tokens with open orders
+    */
+     function getBookCount() public constant returns(uint) {
+        return openBooks.length;
+    }
+
+    /**
+    *@dev getOrders allows parties to get an array of all orderId's open for a given token
+    *@param _token address of the drct token
+    *@return _uint[] an array of the orders in the orderbook
+    */
+    function getOrders(address _token) public constant returns(uint[]) {
+        return forSale[_token];
+    } 
+
+    /**
+    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
+    *@param _user address 
+    *@return _uint[] an array of the orders in the orderbook for the user
+    */
+    function getUserOrders(address _user) public constant returns(uint[]) {
+        return userOrders[_user];
+    } 
+
+    /**
+    *@dev getter function to get all openDdaListAssets
+    */
+    function getopenDdaListAssets() view public returns (address[]){
+        return openDdaListAssets;
+    } 
+
+    /**
+    *@dev getter function to get addres of openDdaListAsset for specified index
+    */
+    function getOpenDdaListAddbyIndex(uint _index) view public returns (address)  {
+        return openDdaListAssets[_index];
+    }
+    /**
+    *@dev Gets the DDA List Asset information for the specifed 
+    *asset address
+    *@param _assetAddress for DDA list
+    *@return price, amount and true if isLong
+    */
+    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool){
+        ListAsset storage listing = listOfAssets[_assetAddress];
+        return (listing.price, listing.amount,listing.isLong);
+    } 
+
+    function getDdaListAssetInfoAmount(address _assetAddress) public view returns(uint) {
+        ListAsset storage listing = listOfAssets[_assetAddress];
+        return ( listing.amount);
+        
+    }
+
+    function getDdaListAssetInfoPrice(address _assetAddress) public view returns(uint) {
+        ListAsset storage listing = listOfAssets[_assetAddress];
+        return (listing.price);
+    }
+
+    /**
+    *@dev This function returns the _amount of tokens a _spender(exchange) can list
+    *@param _spender address
+    *@param _amount amount the spender is being approved for
+    *@return true if spender appproved successfully
+    */
+    function getAllowedLeftToList(address _owner, address _spender) public view returns (uint) {
+        return allowedLeft[_owner][_spender];
+        
+    }
+
+
+    /**
+    *@dev allows dev to get the order nonce
+    */
+    function getOrderNonce() public view returns(uint) {
+        return order_nonce;
+    }
+
+    /**
+    *@dev getter function to get all openDdaListAssets
+    */
+    function getOpenDdaListAssets() view public returns (address[]) {
+        return openDdaListAssets;
+    }
+    /**
+    *@dev getter function to get openDdaListAssets length/count
+    */
+    function getCountopenDdaListAssets() view public returns (uint) {
+        return openDdaListAssets.length;
+    }
+
+    /**
+    *@dev getter function to get index by address for openDdaListAssets
+    */
+    function getOpenDdaListIndex(address _ddaListAsset) view public returns (uint)  {
+        return openDdaListIndex[_ddaListAsset];
+    }
+
+    function getForSaleOrderId(address _tokenadd) public view returns(uint256[])  {
+        return forSale[_tokenadd];
+    }
+    function getForSaleIndex(uint _order_nonce) public view returns(uint)  {
+        return forSaleIndex[_order_nonce];
+    }
+
+    function getOpenBookIndex(address _order) public view returns(uint) {
+        return openBookIndex[_order];
+    }
+
+
+    function getUserOrderIndex(uint _order_nonce) public view returns(uint) {
+        return userOrderIndex[_order_nonce];
+    }
+
+
+
+
+
 }
