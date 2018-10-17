@@ -12,9 +12,9 @@ contract ExchangeStorage{
     //This is the base data structure for an order (the maker of the order and the price)
     struct Order {
         address maker;// the placer of the order
+        address asset;
         uint price;// The price in wei
         uint amount;
-        address asset;
     }
 
     struct ListAsset {
@@ -25,7 +25,7 @@ contract ExchangeStorage{
 
     //order_nonce;
     uint public order_nonce;
-    mapping(address => mapping (address => uint)) internal allowedLeft;
+    mapping(address => mapping (address => uint)) public allowedLeft;
     address public owner; //The owner of the market contract
     address public dexAddress;
     address[] public openDdaListAssets;
@@ -38,15 +38,15 @@ contract ExchangeStorage{
     //An mapping of a token address to the orderID's
     mapping(address =>  uint256[]) public forSale;
     //Index telling where a specific tokenId is in the forSale array
-    mapping(uint256 => uint256) internal forSaleIndex;
+    mapping(uint256 => uint256) public forSaleIndex;
     //mapping of address to position in openBooks
-    mapping (address => uint) internal openBookIndex;
+    mapping (address => uint) public openBookIndex;
     //mapping of user to their orders
     mapping(address => uint[]) public userOrders;
     //mapping from orderId to userOrder position
-    mapping(uint => uint) internal userOrderIndex;
+    mapping(uint => uint) public userOrderIndex;
     //A list of the blacklisted addresses
-    mapping(address => bool) internal blacklist;
+    mapping(address => bool) public blacklist;
     
 
     /*Modifiers*/
@@ -145,7 +145,7 @@ contract ExchangeStorage{
     *@param _isLong true if it is long
     *@return price, amount and true if isLong
     */
-    function setDdaListAssetInfoAll(ListAsset storage list, address _assetAddress, uint _price, uint _amount, bool _isLong) public onlyDex {
+    function setDdaListAssetInfoAll(address _assetAddress, uint _price, uint _amount, bool _isLong) public onlyDex {
         ListAsset storage listing = listOfAssets[_assetAddress];
         listing.price = _price;
         listing.amount= _amount;
@@ -210,11 +210,12 @@ contract ExchangeStorage{
     *@param _orderId is the uint256 ID of order
     *@param _order is the struct containing the details of the order
     */
-     function unLister(uint256 _orderId, Order _order) public onlyDex {
+     function unLister(uint256 _orderId) public onlyDex {
             uint256 tokenIndex;
             uint256 lastTokenIndex;
             address lastAdd;
             uint256  lastToken;
+            Order memory _order = orders[_orderId];
         if(forSale[_order.asset].length == 2){
             tokenIndex = openBookIndex[_order.asset];
             lastTokenIndex = openBooks.length.sub(1);
@@ -251,4 +252,12 @@ contract ExchangeStorage{
         userOrderIndex[_orderId] = 0;
     } 
 
+    /**
+    *@dev Allows parties to see if one is blacklisted
+    *@param _address the address of the party to blacklist
+    *@return bool true for is blacklisted
+    */
+     function isBlacklist(address _address) public view returns(bool) {
+        return blacklist[_address];
+    }
 }

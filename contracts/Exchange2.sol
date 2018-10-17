@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
  import "./libraries/SafeMath.sol";
  import "./interfaces/ERC20_Interface.sol";
- import "./interfaces/Exchange_Interface.sol";
+
 
 /**
 *Exchange creates an exchange for the swaps.
@@ -13,15 +13,17 @@ contract Exchange2{
     /*Variables*/
     address public owner; //The owner of the market contract
     address internal storage_address;
-    Exchange_Interface internal xStorage;
+    ExchangeStorage internal xStorage;
+    //Order orders;
+    //ListAsset listAssets;
 
     /*Structs*/
     //This is the base data structure for an order (the maker of the order and the price)
     struct Order {
         address maker;// the placer of the order
+        address asset;
         uint price;// The price in wei
         uint amount;
-        address asset;
     }
 
     struct ListAsset {
@@ -29,12 +31,8 @@ contract Exchange2{
         uint amount;
         bool isLong;  
     }
-/*     using ExchangeStorage for ExchangeStorage.Order;
-    ExchangeStorage.Order public Order; */
-
-    /* using ExchangeStorage for ExchangeStorage.ListAsset;
-    ExchangeStorage.ListAsset public ListAsset; */
-
+   
+    //mapping(address => bool) public blacklist;
 
     /*Events*/
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
@@ -62,7 +60,7 @@ contract Exchange2{
 
     function setDexStorageAddress(address _exchangeStorage) public onlyOwner {
         storage_address = _exchangeStorage;
-        xStorage = Exchange_Interface(_exchangeStorage);
+        xStorage = ExchangeStorage(_exchangeStorage);
     }
 
     function getDexStorageAddress() public constant returns(address) {
@@ -77,7 +75,7 @@ contract Exchange2{
     *@param _price uint256 price of all tokens in wei
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
-        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
+        require (isBlacklist(msg.sender)==false  && _price > 0); 
         ERC20_Interface token = ERC20_Interface(_tokenadd);
         //require(token.allowance(msg.sender,address(this)) >= _amount);
         require(token.allowance(msg.sender,storage_address) >= _amount);
@@ -129,7 +127,7 @@ contract Exchange2{
         xStorage.setDdaListAssetInfoAll(_asset, 0, 0, false); 
         indexToDelete = getOpenDdaListIndex(_asset);
         lastAcctIndex = getCountopenDdaListAssets().sub(1);
-        lastAdd = getOpenDdaListAssets[lastAcctIndex];
+        lastAdd = getOpenDdaListAddbyIndex(lastAcctIndex);
         xStorage.setOpenDdaListAssetByIndex(indexToDelete, lastAdd);
         xStorage.setOpenDdaListIndex(lastAdd, indexToDelete);
         xStorage.setOpenDdaArrayLength(); 
@@ -162,11 +160,13 @@ contract Exchange2{
     *@param _orderId is the uint256 ID of order
     */
      function unlist(uint256 _orderId) external{
-        require(forSaleIndex[_orderId] > 0);
-        Order memory _order = orders[_orderId];///how to set _order?????
-        require(msg.sender== getOrderMaker(_orderId) || msg.sender == owner);
-        xStorage.unLister(_orderId,_order);////how to set _order
-        emit OrderRemoved(msg.sender,_order.asset,_order.amount,_order.price);
+        require(getForSaleIndex(_orderId) > 0);
+        require(msg.sender == getOrderMaker(_orderId)  || msg.sender == owner);
+        xStorage.unLister(_orderId);////how to set _order
+        address _order_asset = getOrderAsset(_orderId);
+        uint _order_price = getOrderPrice(_orderId);
+        uint _order_amount = getOrderAmount(_orderId);
+        emit OrderRemoved(msg.sender, _order_asset,_order_amount,_order_price);
     } 
 
     /**
@@ -174,19 +174,21 @@ contract Exchange2{
     *@param _orderId is the uint256 ID of order
     */
     function buy(uint256 _orderId) external payable {
-        getOrder(_orderId);
-        Order memory _order = orders[_orderId];///how to set _order?????
-        require(_order.price != 0 && _order.maker != address(0) && _order.asset != address(0) && _order.amount != 0);
-        require(msg.value == _order.price);
+        address _order_maker = getOrderMaker(_orderId);
+        address _order_asset = getOrderAsset(_orderId);
+        uint _order_price = getOrderPrice(_orderId);
+        uint _order_amount = getOrderAmount(_orderId);
+        require(_order_price != 0 && _order_maker != address(0) && _order_asset != address(0) && _order_amount!= 0);
+        require(msg.value == _order_price);
         require(isBlacklist(msg.sender) == false);
-        address maker = getOrderMaker(_orderId);
-        ERC20_Interface token = ERC20_Interface(_order.asset);
-        if(token.allowance(_order.maker,address(this)) >= _order.amount){
-            assert(token.transferFrom(_order.maker,msg.sender, _order.amount));
-            maker.transfer(_order.price);
+        
+        ERC20_Interface token = ERC20_Interface(_order_asset);
+        if(token.allowance(_order_maker,address(this)) >= _order_amount){
+            assert(token.transferFrom(_order_maker,msg.sender, _order_amount));
+            _order_maker.transfer(_order_price);
         }
-        xStorage.unLister(_orderId,_order);
-        emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
+        xStorage.unLister(_orderId);
+        emit Sale(msg.sender,_order_asset,_order_amount,_order_price);
     }  
 
     /**
@@ -197,29 +199,41 @@ contract Exchange2{
     *@return uint of the order amount of the sale
     *@return address of the token
     */
-    function getOrder(uint256 _orderId) external view returns(address,uint,uint,address){
-        Order storage _order = orders[_orderId];///how to set _order?????
-        return (_order.maker,_order.price,_order.amount,_order.asset);
+    function getOrder(uint256 _orderId) public view returns(address _maker,address _asset,uint _price,uint _amount){
+        (_maker, _asset,_price,_amount) = xStorage.orders(_orderId);
+    } 
+    
+    function getOrderNoMaker(uint256 _orderId) public view returns(address _asset,uint _price,uint _amount){
+        address _maker;
+        (_maker,_asset,_price,_amount) = xStorage.orders(_orderId);
     } 
 
-    function getOrderMaker(uint256 _orderId) external view returns(address)  {
-        Order storage _order = orders[_orderId];
-        return (_order.maker);
+    function getOrderMaker(uint256 _orderId) public view returns(address _maker)  {
+        address _asset;
+        uint _price;
+        uint _amount;
+        (_maker, _asset,_price,_amount)  = xStorage.orders(_orderId);
     }
 
-    function getOrderPrice(uint256 _orderId) external view returns(uint)  {
-        Order storage _order = orders[_orderId];
-        return (_order.price);
+    function getOrderPrice(uint256 _orderId) public view returns(uint _price)  {
+        address _maker;
+        address _asset;
+        uint _amount;
+        (_maker, _asset,_price,_amount)  = xStorage.orders(_orderId);
     } 
 
-    function getOrderAmount(uint256 _orderId) external view returns(uint){
-        Order storage _order = orders[_orderId];
-        return (_order.amount);
+    function getOrderAmount(uint256 _orderId) public view returns(uint _amount){
+        address _maker;
+        address _asset;
+        uint _price;
+        (_maker, _asset,_price,_amount)  = xStorage.orders(_orderId);
     }
 
-    function getOrderAsset(uint256 _orderId) external view returns(address){
-        Order storage _order = orders[_orderId];
-        return (_order.asset);
+    function getOrderAsset(uint256 _orderId) public view returns(address _asset){
+        address _maker;
+        uint _price;
+        uint _amount;
+        (_maker, _asset,_price,_amount)  = xStorage.orders(_orderId);
     }
 
     /**
@@ -230,15 +244,13 @@ contract Exchange2{
         owner = _owner;
     } 
 
-
-
     /**
     *@dev Allows parties to see if one is blacklisted
     *@param _address the address of the party to blacklist
     *@return bool true for is blacklisted
     */
      function isBlacklist(address _address) public view returns(bool) {
-        return xStorage.blacklist[_address];
+        return xStorage.isBlacklist(_address);
     } 
 
     /**
@@ -247,7 +259,7 @@ contract Exchange2{
     *@return _uint of the number of orders in the orderbook
     */
      function getOrderCount(address _token) public constant returns(uint) {
-        return forSale[_token].length;
+        return xStorage.forSale[_token].length;
     } 
 
     /**
@@ -255,7 +267,7 @@ contract Exchange2{
     *@return _uint of the number of tokens with open orders
     */
      function getBookCount() public constant returns(uint) {
-        return openBooks.length;
+        return xStorage.openBooks.length;
     }
 
     /**
@@ -264,7 +276,7 @@ contract Exchange2{
     *@return _uint[] an array of the orders in the orderbook
     */
     function getOrders(address _token) public constant returns(uint[]) {
-        return forSale[_token];
+        return xStorage.forSale[_token];
     } 
 
     /**
@@ -273,33 +285,43 @@ contract Exchange2{
     *@return _uint[] an array of the orders in the orderbook for the user
     */
     function getUserOrders(address _user) public constant returns(uint[]) {
-        return userOrders[_user];
+        return xStorage.userOrders[_user];
     } 
 
     /**
     *@dev getter function to get all openDdaListAssets
     */
     function getopenDdaListAssets() view public returns (address[]){
-        return openDdaListAssets;
+        return xStorage.openDdaListAssets;
     } 
+
+    /**
+    *@dev getter function to get addres of openDdaListAsset for specified index
+    */
+    function getOpenDdaListAddbyIndex(uint _index) view public returns (address)  {
+        return xStorage.openDdaListAssets[_index];
+    }
     /**
     *@dev Gets the DDA List Asset information for the specifed 
     *asset address
     *@param _assetAddress for DDA list
     *@return price, amount and true if isLong
     */
-    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool){
-        return(listOfAssets[_assetAddress].price,listOfAssets[_assetAddress].amount,listOfAssets[_assetAddress].isLong);
+    function getDdaListAssetInfo(address _assetAddress) public view returns(uint _price, uint _amount, bool _isLong){
+        (_price, _amount, _isLong) = xStorage.listOfAssets[_assetAddress];
     } 
 
-    function getDdaListAssetInfoAmount(address _assetAddress) public returns(uint) {
-        ListAsset storage listing = listOfAssets[_assetAddress];
-        return listing.amount= _amount;
+    function getDdaListAssetInfoAmount(address _assetAddress) public returns(uint _amount) {
+        uint _price;
+        bool _isLong;
+        (_price, _amount, _isLong) = xStorage.listOfAssets[_assetAddress];
+        
     }
 
-    function getDdaListAssetInfoPrice(address _assetAddress) public returns(uint) {
-        ListAsset storage listing = listOfAssets[_assetAddress];
-        return listing.price;
+    function getDdaListAssetInfoPrice(address _assetAddress) public returns(uint _price) {
+        uint _amount;
+        bool _isLong;
+        (_price, _amount, _isLong) = xStorage.listOfAssets[_assetAddress];
     }
 
     /**
@@ -308,7 +330,7 @@ contract Exchange2{
     *@param _amount amount the spender is being approved for
     *@return true if spender appproved successfully
     */
-    function getAllowedLeftToList(address _owner, address _spender, uint _amount) public returns (uint) {
+    function getAllowedLeftToList(address _owner, address _spender) public returns (uint) {
         return xStorage.allowedLeft[_owner][_spender];
         
     }
@@ -316,108 +338,53 @@ contract Exchange2{
     /**
     *@dev allows dev to get the owner from the storage contract
     */
-    function getOwner() external view returns(address){
+    function getOwner() public view returns(address){
         return xStorage.owner;
     }
 
     /**
     *@dev allows dev to get the order nonce
     */
-    function getOrderNonce() external view returns(uint) {
+    function getOrderNonce() public view returns(uint) {
         return xStorage.order_nonce;
     }
 
     /**
     *@dev getter function to get all openDdaListAssets
     */
-    function getopenDdaListAssets() view public returns (address[]) {
+    function getOpenDdaListAssets() view public returns (address[]) {
         return xStorage.openDdaListAssets;
     }
     /**
-    *@dev getter function to get all openDdaListAssets
+    *@dev getter function to get openDdaListAssets length/count
     */
     function getCountopenDdaListAssets() view public returns (uint) {
         return xStorage.openDdaListAssets.length;
     }
 
     /**
-    *@dev getter function to get all openDdaListAssets
+    *@dev getter function to get index by address for openDdaListAssets
     */
     function getOpenDdaListIndex(address _ddaListAsset) view public returns (uint)  {
         return xStorage.openDdaListIndex[_ddaListAsset];
     }
 
-    /**
-    *@dev Gets the DDA List Asset information for the specifed 
-    *asset address
-    *@param _assetAddress for DDA list
-    *@return price, amount and true if isLong
-    */
-    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool) {
-        return(xStorage.listOfAssets[_assetAddress].price,xStorage.listOfAssets[_assetAddress].amount,xStorage.listOfAssets[_assetAddress].isLong);
-    }
-
-
-
-
-
-    /**
-    *@dev Gets number of open orderbooks
-    *@return _uint of the number of tokens with open orders
-    */
-    function getBookCount() public constant returns(uint) {
-        return openBooks.length;
-    }
-
-    /**
-    *@dev getOrderCount allows parties to query how many orders are on the book
-    *@param _token address used to count the number of orders
-    *@return _uint of the number of orders in the orderbook
-    */
-    function getOrderCount(address _token) public constant returns(uint)  {
-        return forSale[_token].length;
-    }
-
     function getForSaleOrderId(address _tokenadd) public view returns(uint256[])  {
-        return forSale[_tokenadd];
+        return xStorage.forSale[_tokenadd];
     }
     function getForSaleIndex(uint _order_nonce) public view returns(uint)  {
-        return forSaleIndex[_order_nonce];
-    }
-
-    /**
-    *@dev getOrders allows parties to get an array of all orderId's open for a given token
-    *@param _token address of the drct token
-    *@return _uint[] an array of the orders in the orderbook
-    */
-    function getOrders(address _token) public constant returns(uint[]) {
-        return forSale[_token];
+        return xStorage.forSaleIndex[_order_nonce];
     }
 
     function getOpenBookIndex(address _order) public view returns(uint) {
-        return openBookIndex[_order];
+        return xStorage.openBookIndex[_order];
     }
 
-    /**
-    *@dev getUserOrders allows parties to get an array of all orderId's open for a given user
-    *@param _user address 
-    *@return _uint[] an array of the orders in the orderbook for the user
-    */
-    function getUserOrders(address _user) public constant returns(uint[]) {
-        return userOrders[_user];
-    }
 
     function getUserOrderIndex(uint _order_nonce) public view returns(uint) {
-        return userOrderIndex[_order_nonce];
+        return xStorage.userOrderIndex[_order_nonce];
     }
 
-    /**
-    *@dev Allows parties to see if one is blacklisted
-    *@param _address the address of the party to blacklist
-    *@return bool true for is blacklisted
-    */
-    function isBlacklist(address _address) external view returns(bool) {
-        return blacklist[_address];
-    }
 
 }
+
