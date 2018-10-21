@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
  import "./libraries/SafeMath.sol";
- import "./interfaces/ERC20_Interface.sol";
  import "./ExchangeStorage.sol";
 
 
@@ -75,13 +74,9 @@ contract Exchange2{
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
         require (xStorage.isBlacklist(msg.sender)==false  && _price > 0);
-
-        ERC20_Interface token = ERC20_Interface(_tokenadd);
-        require(token.allowance(msg.sender,address(this)) >= _amount);
-        //require(token.allowance(msg.sender,storage_address) >= _amount);
-
-        uint totalAllowance = xStorage.getAllowedLeftToList(msg.sender,address(this)).sub(_amount);
-        xStorage.setAllowedLeftToList(address(this), totalAllowance);
+        xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
+        uint totalAllowance = xStorage.getAllowedLeftToList(msg.sender,storage_address).sub(_amount);
+        xStorage.setAllowedLeftToList(storage_address, totalAllowance);
         uint fsIndex = xStorage.getOrderCount(_tokenadd);
         if(fsIndex == 0 ){
             xStorage.setForSale(_tokenadd,0);
@@ -146,14 +141,7 @@ contract Exchange2{
         require(_amount <= listing_amount);
         uint totalPrice = _amount.mul(listing_amount);
         require(msg.value == totalPrice);
-
-        ERC20_Interface token = ERC20_Interface(_asset);
-        if(token.allowance(owner,address(this)) >= _amount){
-            assert(token.transferFrom(owner,msg.sender, _amount));
-            owner.transfer(totalPrice);
-            listing_amount= listing_amount.sub(_amount);
-            xStorage.setDdaListAssetInfoAmount(_asset,listing_amount);
-        }
+        xStorage.buyPerUnitTransfer(_asset, _amount, msg.sender, totalPrice); 
     } 
 
     /**
@@ -182,12 +170,7 @@ contract Exchange2{
         require(_order_price != 0 && _order_maker != address(0) && _order_asset != address(0) && _order_amount!= 0);
         require(msg.value == _order_price);
         require(xStorage.isBlacklist(msg.sender) == false);
-        
-        ERC20_Interface token = ERC20_Interface(_order_asset);
-        if(token.allowance(_order_maker,address(this)) >= _order_amount){
-            assert(token.transferFrom(_order_maker,msg.sender, _order_amount));
-            _order_maker.transfer(_order_price);
-        }
+        xStorage.buyTransfer(_orderId, msg.sender);
         xStorage.unLister(_orderId);
         emit Sale(msg.sender,_order_asset,_order_amount,_order_price);
     }  

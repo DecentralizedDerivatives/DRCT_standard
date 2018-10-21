@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
  import "./libraries/SafeMath.sol";
+  import "./interfaces/ERC20_Interface.sol";
 
 /**
 *Exchange storage
@@ -81,7 +82,7 @@ contract ExchangeStorage{
     *@dev allows the owner to change who the owner is
     *@param _owner is the address of the new owner
     */
-    function setOwner(address _owner) public onlyOwner() {
+    function setOwner(address _owner) public onlyOwner {
         owner = _owner;
     }
 
@@ -105,7 +106,7 @@ contract ExchangeStorage{
     *@param _amount amount the spender is being approved for
     *@return true if spender appproved successfully
     */
-    function setAllowedLeftToList(address _spender, uint _amount) public {
+    function setAllowedLeftToList(address _spender, uint _amount) public onlyDex {
         allowedLeft[msg.sender][_spender] = _amount;
 
     }
@@ -170,7 +171,7 @@ contract ExchangeStorage{
     }
 
     //use the nonce for orderId
-    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) public  {
+    function setOrder(uint256 _orderId, address _maker, uint256 _price,uint256 _amount, address _tokenadd) public onlyDex   {
         Order storage _order = orders[_orderId];
         _order.maker = _maker;
         _order.price = _price;
@@ -178,7 +179,7 @@ contract ExchangeStorage{
         _order.asset = _tokenadd;
     }
 
-    function setForSale(address _tokenadd, uint _order_nonce) public {
+    function setForSale(address _tokenadd, uint _order_nonce) public onlyDex {
         forSale[_tokenadd].push(_order_nonce);
     }
 
@@ -204,8 +205,34 @@ contract ExchangeStorage{
     *@param _address the address of the party to blacklist
     *@param _motion true or false depending on if blacklisting or not
     */
-    function blacklistParty(address _address, bool _motion) public onlyOwner() {
+    function blacklistParty(address _address, bool _motion) public onlyOwner {
         blacklist[_address] = _motion;
+    }
+
+    function listCheckAllowance(address _tokenadd,address _msgsender, uint _amount) public view onlyDex {
+        ERC20_Interface token = ERC20_Interface(_tokenadd);
+        require(token.allowance(_msgsender,address(this)) >= _amount);
+    }
+
+    function buyPerUnitTransfer(address _asset, uint _amount, address _msgsender, uint totalPrice) public onlyDex {
+        ListAsset storage listing = listOfAssets[_asset];
+        ERC20_Interface token = ERC20_Interface(_asset);
+        if(token.allowance(owner,address(this)) >= _amount){
+            assert(token.transferFrom(owner,_msgsender, _amount));
+            owner.transfer(totalPrice);
+            listing.amount= listing.amount.sub(_amount);
+        }
+    }
+
+    function buyTransfer(uint256 _orderId, address _msgsender) public onlyDex {
+        Order memory _order = orders[_orderId];
+        address maker = _order.maker;
+        ERC20_Interface token = ERC20_Interface(_order.asset);
+        if(token.allowance(_order.maker,address(this)) >= _order.amount){
+            assert(token.transferFrom(_order.maker,_msgsender, _order.amount));
+            maker.transfer(_order.price);
+        }
+        
     }
 
     /**
