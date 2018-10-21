@@ -38,9 +38,11 @@ module.exports =async function(callback) {
     
     let oracle = await Oracle.at(_oracleEth);
     await oracle.pushData();
+    console.log("Oracle Eth pushed");
 
     let oracle2 = await Oracle.at(_oracleBtc);
     await oracle2.pushData();
+    console.log("Oracle Btc pushed");
 
     for(i = 1; i <= count; i++){
         var factory_address = await masterDeployer.getFactorybyIndex(i);

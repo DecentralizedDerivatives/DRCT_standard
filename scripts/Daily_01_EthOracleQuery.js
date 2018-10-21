@@ -21,8 +21,8 @@ var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 
 //ETH oracle
-var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
-//var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
+//var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
+var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
 console.log("ETH Oracle: ", _oracleEth);
 
 module.exports =async function(callback) {

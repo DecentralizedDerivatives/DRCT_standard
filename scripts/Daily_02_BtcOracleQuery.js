@@ -19,8 +19,8 @@ var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 
 //BTC oracle
-var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //rinkeby
-//var  _oracleBtc= "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //mainnet
+//var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //rinkeby
+var  _oracleBtc= "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //mainnet
 console.log("BTC Oracle: ", _oracleBtc);
 
 module.exports =async function(callback) {
