@@ -36,7 +36,7 @@ contract Exchange2{
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
     event Sale(address _sender,address _token, uint256 _amount, uint256 _price);
     event OrderRemoved(address _sender,address _token, uint256 _amount, uint256 _price);
-
+    event test(uint allow, uint allowleft );
     /*Modifiers*/
     /**
     *@dev Access modifier for Owner functionality
@@ -73,10 +73,11 @@ contract Exchange2{
     *@param _price uint256 price of all tokens in wei
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
-        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0);
-        xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
-        uint totalAllowance = xStorage.getAllowedLeftToList(msg.sender,storage_address).sub(_amount);
-        xStorage.setAllowedLeftToList(storage_address, totalAllowance);
+        require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
+        uint allow = xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
+        uint allowleft = xStorage.setAllowedLeftToList(_tokenadd,msg.sender, _amount);
+        emit test(allow, allowleft);
+        require(xStorage.getAllowedLeftToList(msg.sender,storage_address)>= _amount);
         uint fsIndex = xStorage.getOrderCount(_tokenadd);
         if(fsIndex == 0 ){
             xStorage.setForSale(_tokenadd,0);
@@ -93,7 +94,7 @@ contract Exchange2{
         xStorage.setUserOrderIndex(msg.sender, _order_nonce);
         xStorage.setUserOrders(msg.sender, _order_nonce);
         _order_nonce += 1;
-        xStorage.setOrderNonce(_order_nonce); 
+        xStorage.setOrderNonce(_order_nonce);   
     }
 
     /**

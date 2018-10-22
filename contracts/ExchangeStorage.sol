@@ -106,8 +106,13 @@ contract ExchangeStorage{
     *@param _amount amount the spender is being approved for
     *@return true if spender appproved successfully
     */
-    function setAllowedLeftToList(address _spender, uint _amount) public onlyDex {
-        allowedLeft[msg.sender][_spender] = _amount;
+    function setAllowedLeftToList(address _tokenadd, address _owner,  uint _amount) public onlyDex returns(uint){
+        ERC20_Interface token = ERC20_Interface(_tokenadd);
+        uint total = allowedLeft[_owner][address(this)];
+        uint currAppr = token.allowance(_owner,address(this));
+        uint totalleft=currAppr.sub(total).sub(_amount);
+        allowedLeft[msg.sender][address(this)] = totalleft;
+        return allowedLeft[msg.sender][address(this)];
 
     }
     /**
@@ -209,9 +214,10 @@ contract ExchangeStorage{
         blacklist[_address] = _motion;
     }
 
-    function listCheckAllowance(address _tokenadd,address _msgsender, uint _amount) public view onlyDex {
+    function listCheckAllowance(address _tokenadd,address _msgsender, uint _amount) public view onlyDex returns(uint){
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        require(token.allowance(_msgsender,address(this)) >= _amount);
+        return token.allowance(_msgsender,address(this);
+        //require(token.allowance(_msgsender,address(this)) >= _amount);
     }
 
     function buyPerUnitTransfer(address _asset, uint _amount, address _msgsender, uint totalPrice) public onlyDex {
@@ -299,9 +305,9 @@ contract ExchangeStorage{
     *@return uint of the order amount of the sale
     *@return address of the token
     */
-    function getOrder(uint256 _orderId) public view returns(address,address,uint ,uint ){
+    function getOrder(uint256 _orderId) public view returns(address,uint ,uint,address ){
         Order storage _order  = orders[_orderId];
-        return (_order.maker, _order.asset, _order.price, _order.amount);
+        return (_order.maker,  _order.price, _order.amount,_order.asset);
     } 
     
     function getOrderMaker(uint256 _orderId) public view returns(address)  {

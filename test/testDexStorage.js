@@ -36,6 +36,7 @@ async function expectThrow(promise){
 contract('Exchange Storage Test', function(accounts) {
   let oracle;
   let exchange;
+  let exchange2;
   let exchangeStorage;
   let memberCoin;
   let factory;
@@ -54,7 +55,7 @@ contract('Exchange Storage Test', function(accounts) {
 	    memberCoin = await Membership.new();
 	    masterDeployer = await MasterDeployer.new();
 	    exchange = await Exchange.new();
-	    let exchange2 = await Exchange.new();
+	    exchange2 = await Exchange.new();
 	    exchangeStorage = await ExchangeStorage.new();
 	    await exchangeStorage.setDexAddress(exchange.address);
 	    await exchange.setDexStorageAddress(exchangeStorage.address);
@@ -90,7 +91,7 @@ contract('Exchange Storage Test', function(accounts) {
 	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchangeStorage.address,500,{from: accounts[1]});;
 	  	assert.equal(await short_token.allowance(accounts[1],exchangeStorage.address),500,"exchange should own tokens");
-/*	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
+	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	details = await exchangeStorage.getOrder(1);
 	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
 	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
@@ -98,20 +99,46 @@ contract('Exchange Storage Test', function(accounts) {
 	  	assert.equal(details[3], short_token.address, "Short token address should be order");
 	  	console.log("order count", await exchangeStorage.getOrderCount(short_token.address));
 	  	assert.equal(await exchangeStorage.getOrderCount(short_token.address),2, "Short Token should have an order");
-	*/})
+	})
 
-/*	it("Test List from two exchanges", async function(){
+	it("Test List from two exchanges", async function(){
 	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
-	  	await short_token.approve(exchangeStorage.address,500,{from: accounts[1]});;
+	  	await short_token.approve(exchangeStorage.address,500,{from: accounts[1]});
 	  	assert.equal(await short_token.allowance(accounts[1],exchangeStorage.address),500,"exchange should own tokens");
 	  	await exchange.list(short_token.address,300,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	details = await exchangeStorage.getOrder(1);
 	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
 	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
-	  	assert.equal(details[2], 300, "Amount listed should be 500");
+	  	assert.equal(details[2], 300, "Amount listed should be 300");
+	  	assert.equal(details[3], short_token.address, "Short token address should be order");
+	  	assert.equal(await exchangeStorage.getOrderCount(short_token.address),2, "Short Token should have an order");
+
+	    await exchangeStorage.setDexAddress(exchange2.address);
+	    await exchange2.setDexStorageAddress(exchangeStorage.address);
+	  	await exchange2.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
+	  	details = await exchangeStorage.getOrder(2);
+	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
+	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
+	  	assert.equal(details[2], 500, "Amount listed should be 200");
+	  	assert.equal(details[3], short_token.address, "Short token address should be order");
+	  	assert.equal(await exchangeStorage.getOrderCount(short_token.address),3, "Short Token should have an order");
+})
+/*test
+	it("Test List from two exchanges", async function(){
+	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._created;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	await short_token.approve(exchangeStorage.address,500,{from: accounts[1]});
+	  	assert.equal(await short_token.allowance(accounts[1],exchangeStorage.address),500,"exchange should own tokens");
+	  	await exchange.list(short_token.address,300,web3.toWei(10,'ether'),{from: accounts[1]});
+	  	details = await exchangeStorage.getOrder(1);
+	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
+	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
+	  	assert.equal(details[2], 300, "Amount listed should be 300");
 	  	assert.equal(details[3], short_token.address, "Short token address should be order");
 	  	assert.equal(await exchangeStorage.getOrderCount(short_token.address),2, "Short Token should have an order");
 
@@ -133,7 +160,6 @@ contract('Exchange Storage Test', function(accounts) {
 		await exchange2.list(short_token.address,200,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	assert.equal(await exchangeStorage.getOrderCount(short_token.address),4, "Short Token should have an order");
 	})
-
 	it("Test Buy", async function(){
 		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
 	  	swap_add = receipt.logs[0].args._created;
