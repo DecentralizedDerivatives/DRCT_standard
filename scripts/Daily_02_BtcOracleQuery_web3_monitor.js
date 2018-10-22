@@ -4,7 +4,7 @@ const fetch = require('node-fetch-polyfill');
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 /**
-*Check Eth Oraclize query callback and if failed, re-send.
+*Check Oraclize query callback and if failed, re-send.
 */
 
 function sleep_s(secs) {
@@ -43,15 +43,15 @@ var web3 = new Web3(new HDWalletProvider(mnemonic,"https://rinkeby.infura.io/"+ 
 var _date = Date.now()/1000- (Date.now()/1000)%86400;
 
 /**
-*@dev Update Eth oracle address if it has changed.
+*@dev Update BTC oracle address if it has changed.
 *_nowUTC is only used to display a human readable date on the console.
 */
 
-//ETH oracle
-var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
+//BTC oracle
+var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //rinkeby
 var accountFrom= '0xc69c64c226fea62234afe4f5832a051ebc860540'; //rinkeby
 
-//var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
+//var  _oracleBtc= "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //mainnet
 //var accountFrom = '0x074993DeE953F2706ae318e11622b3EE0b7850C3';//mainnet
 
 console.log(_nowUTC);
@@ -59,7 +59,7 @@ console.log("ETH Oracle: ", _oracleEth);
 
 module.exports =async function(callback) {
     try{
-        var oracle = await new web3.eth.Contract(oracleAbi,_oracleEth);
+        var oracle = await new web3.eth.Contract(oracleAbi,_oracleBtc);
         console.log("awaitOracle");
         sleep_s(30);
         var value =  await oracle.methods.retrieveData(_date).call();
@@ -68,11 +68,11 @@ module.exports =async function(callback) {
         sleep_s(30);
     }  catch(error) {
        console.error(error);
-       console.log("ETH oracle value not retreived");
+       console.log("BTC oracle value not retreived");
     }
     try{
         var value1= value/1000;
-        var link = "".concat('<https://rinkeby.etherscan.io/address/',_oracleEth,'>' );
+        var link = "".concat('<https://rinkeby.etherscan.io/address/',_oracleBtc,'>' );
         var api = await oracle.methods.getusedAPI().call();
         console.log("api",api);
         sleep_s(30);
@@ -95,8 +95,8 @@ module.exports =async function(callback) {
         await oracle.methods.pushData.send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
             .on('transactionHash', function(hash){
                 var link = "".concat('<https://rinkeby.etherscan.io/address/',hash,'>' );
-                var ownerlink = "".concat('<https://rinkeby.etherscan.io/address/',_oracleEth,'>' );
-                console.log("ETH oracle sent");
+                var ownerlink = "".concat('<https://rinkeby.etherscan.io/address/',_oracleBtc,'>' );
+                console.log("BTC oracle sent");
                 console.log("Hash link: ", link);
                 console.log("Contract link: ", ownerlink);
             })

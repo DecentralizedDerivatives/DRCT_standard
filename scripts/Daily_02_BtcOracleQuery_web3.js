@@ -42,7 +42,7 @@ var gas_Limit= 4700000;
 var web3 = new Web3(new HDWalletProvider(mnemonic,"https://rinkeby.infura.io/"+ accessToken));
 
 /**
-*@dev Update Eth oracle address if it has changed.
+*@dev Update BTC oracle address if it has changed.
 *_nowUTC is only used to display a human readable date on the console.
 */
 
