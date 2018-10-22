@@ -57,10 +57,9 @@ contract('Exchange Test', function(accounts) {
 	    short_token = await DRCT_Token.at(short_token_add);
    })
 	it("Test List", async function(){
-	  	var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});;
 	  	assert.equal(await short_token.allowance(accounts[1],exchange.address),500,"exchange should own tokens");
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
@@ -73,10 +72,9 @@ contract('Exchange Test', function(accounts) {
 	})
 	it("Test Buy", async function(){
 
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
@@ -86,10 +84,9 @@ contract('Exchange Test', function(accounts) {
 	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 2 ether");
 	});
 	it("Test Unlist", async function(){
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});;
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	await exchange.unlist(1,{from: accounts[1]});
@@ -121,10 +118,9 @@ contract('Exchange Test', function(accounts) {
 		assert( res4 = [0,0,false], "short info");
 	});
 	it("Test dda buy", async function(){
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[0]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[0]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[0]});
 		await exchange.listDda(long_token_add, 100, web3.toWei(1,'ether'), true,{from: accounts[0]});
 		await exchange.listDda(short_token_add, 100, web3.toWei(1,'ether'), false, {from: accounts[0]});
 		await short_token.approve(exchange.address,200,{from: accounts[0]});
@@ -140,10 +136,9 @@ contract('Exchange Test', function(accounts) {
 
 	
 	it("Test 100 Lists and Sales", async function(){
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 		await short_token.approve(exchange.address,500,{from: accounts[1]});
 	  	for(i=0;i<100;i++){
 		  	await exchange.list(short_token.address,5,web3.toWei(.05,'ether'),{from: accounts[1]});
@@ -159,10 +154,9 @@ contract('Exchange Test', function(accounts) {
 	  	assert.equal(balance1, balance1_2 - 5,"account 1 should get 5 ether");
 	});
 	it("Test Buy then Sell then Buy then List then Unlist", async function(){
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
@@ -220,10 +214,9 @@ contract('Exchange Test', function(accounts) {
 		await memberCoin.setMembershipType(accounts[1],1);
 		await memberCoin.setMembershipType(accounts[2],100);
 		await memberCoin.setMembershipType(accounts[3],200);
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
@@ -275,10 +268,9 @@ contract('Exchange Test', function(accounts) {
 	    long_token =await DRCT_Token.at(long_token_add);
 	    short_token = await DRCT_Token.at(short_token_add);
 		await memberCoin.setMembershipType(accounts[1],1);
-		var receipt = await factory.deployContract(o_startdate,{from: accounts[1]});
-	  	swap_add = receipt.logs[0].args._created;
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
 	  	swap = await TokenToTokenSwap.at(swap_add);
-	  	await userContract.Initiate(swap_add,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});
 	  	balance1 = await (web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether').toFixed(0));
 	  	await exchange.list(short_token.address,500,web3.toWei(5,'ether'),{from: accounts[1]});
