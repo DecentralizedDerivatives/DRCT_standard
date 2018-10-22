@@ -1,9 +1,18 @@
 pragma solidity ^0.4.24;
 
-//Swap Deployer functions - descriptions can be found in Deployer.sol
-interface Deployer_Interface {
-  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
+// File: contracts\interfaces\Factory_Interface.sol
+
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
+  function payToken(address _party, address _token_add) external;
+  function deployContract(uint _start_date) external payable returns (address);
+   function getBase() external view returns(address);
+  function getVariables() external view returns (address, uint, uint, address,uint);
+  function isWhitelisted(address _member) external view returns (bool);
 }
+
+// File: contracts\libraries\SafeMath.sol
 
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
@@ -36,16 +45,7 @@ library SafeMath {
   }
 }
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
-  function payToken(address _party, address _token_add) external;
-  function deployContract(uint _start_date) external payable returns (address);
-   function getBase() external view returns(address);
-  function getVariables() external view returns (address, uint, uint, address,uint);
-  function isWhitelisted(address _member) external view returns (bool);
-}
-
+// File: contracts\libraries\DRCTLibrary.sol
 
 /**
 *The DRCTLibrary contains the reference code used in the DRCT_Token (an ERC20 compliant token
@@ -389,6 +389,8 @@ library DRCTLibrary{
     }
 }
 
+// File: contracts\DRCT_Token.sol
+
 /**
 *The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
 *specified in the Factory contract.
@@ -529,10 +531,20 @@ contract DRCT_Token {
     }
 }
 
+// File: contracts\interfaces\Deployer_Interface.sol
 
+//Swap Deployer functions - descriptions can be found in Deployer.sol
+interface Deployer_Interface {
+  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
+}
 
+// File: contracts\interfaces\Membership_Interface.sol
 
+interface Membership_Interface {
+    function getMembershipType(address _member) external constant returns(uint);
+}
 
+// File: contracts\interfaces\Wrapped_Ether_Interface.sol
 
 //ERC20 function interface with create token and withdraw
 interface Wrapped_Ether_Interface {
@@ -547,11 +559,7 @@ interface Wrapped_Ether_Interface {
 
 }
 
-interface Membership_Interface {
-    function getMembershipType(address _member) external constant returns(uint);
-}
-
-
+// File: contracts\Factory.sol
 
 /**
 *The Factory contract sets the standardized variables and also deploys new contracts based on
@@ -585,7 +593,7 @@ contract Factory {
     address[] public contracts;
     uint[] public startDates;
     address public memberContract;
-    mapping(uint => bool) whitelistedTypes;
+    uint whitelistedTypes;
     mapping(address => uint) public created_contracts;
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
@@ -604,18 +612,21 @@ contract Factory {
 
     /*Functions*/
     /**
-    *@dev Constructor - Sets owner
+    *@dev Sets the member type/permissions for those whitelisted and owner
+    *@param _memberTypes is the list of member types
     */
-     constructor() public {
+     constructor(uint _memberTypes) public {
         owner = msg.sender;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
     *@dev constructor function for cloned factory
     */
-    function init(address _owner) public{
+    function init(address _owner, uint _memberTypes) public{
         require(owner == address(0));
         owner = _owner;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
@@ -626,16 +637,6 @@ contract Factory {
         memberContract = _memberContract;
     }
 
-    /**
-    *@dev Sets the member types/permissions for those whitelisted
-    *@param _memberTypes is the list of member types
-    */
-    function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
-    }
 
     /**
     *@dev Checks the membership type/permissions for whitelisted members
@@ -643,7 +644,7 @@ contract Factory {
     */
     function isWhitelisted(address _member) public view returns (bool){
         Membership_Interface Member = Membership_Interface(memberContract);
-        return whitelistedTypes[Member.getMembershipType(_member)];
+        return Member.getMembershipType(_member)>= whitelistedTypes;
     }
  
     /**

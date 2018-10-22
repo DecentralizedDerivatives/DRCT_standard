@@ -1,9 +1,70 @@
 pragma solidity ^0.4.24;
 
-//Swap Deployer functions - descriptions can be found in Deployer.sol
-interface Deployer_Interface {
-  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
+// File: contracts\CloneFactory.sol
+
+/**
+*This contracts helps clone factories and swaps through the Deployer.sol and MasterDeployer.sol.
+*The address of the targeted contract to clone has to be provided.
+*/
+contract CloneFactory {
+
+    /*Variables*/
+    address internal owner;
+    
+    /*Events*/
+    event CloneCreated(address indexed target, address clone);
+
+    /*Modifiers*/
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    /*Functions*/
+    constructor() public{
+        owner = msg.sender;
+    }    
+    
+    /**
+    *@dev Allows the owner to set a new owner address
+    *@param _owner the new owner address
+    */
+    function setOwner(address _owner) public onlyOwner(){
+        owner = _owner;
+    }
+
+    /**
+    *@dev Creates factory clone
+    *@param _target is the address being cloned
+    *@return address for clone
+    */
+    function createClone(address target) internal returns (address result) {
+        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
+        bytes20 targetBytes = bytes20(target);
+        for (uint i = 0; i < 20; i++) {
+            clone[26 + i] = targetBytes[i];
+        }
+        assembly {
+            let len := mload(clone)
+            let data := add(clone, 0x20)
+            result := create(0, data, len)
+        }
+    }
 }
+
+// File: contracts\interfaces\Factory_Interface.sol
+
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
+  function payToken(address _party, address _token_add) external;
+  function deployContract(uint _start_date) external payable returns (address);
+   function getBase() external view returns(address);
+  function getVariables() external view returns (address, uint, uint, address,uint);
+  function isWhitelisted(address _member) external view returns (bool);
+}
+
+// File: contracts\libraries\SafeMath.sol
 
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
@@ -36,16 +97,7 @@ library SafeMath {
   }
 }
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
-  function payToken(address _party, address _token_add) external;
-  function deployContract(uint _start_date) external payable returns (address);
-   function getBase() external view returns(address);
-  function getVariables() external view returns (address, uint, uint, address,uint);
-  function isWhitelisted(address _member) external view returns (bool);
-}
-
+// File: contracts\libraries\DRCTLibrary.sol
 
 /**
 *The DRCTLibrary contains the reference code used in the DRCT_Token (an ERC20 compliant token
@@ -389,6 +441,8 @@ library DRCTLibrary{
     }
 }
 
+// File: contracts\DRCT_Token.sol
+
 /**
 *The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
 *specified in the Factory contract.
@@ -529,10 +583,20 @@ contract DRCT_Token {
     }
 }
 
+// File: contracts\interfaces\Deployer_Interface.sol
 
+//Swap Deployer functions - descriptions can be found in Deployer.sol
+interface Deployer_Interface {
+  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
+}
 
+// File: contracts\interfaces\Membership_Interface.sol
 
+interface Membership_Interface {
+    function getMembershipType(address _member) external constant returns(uint);
+}
 
+// File: contracts\interfaces\Wrapped_Ether_Interface.sol
 
 //ERC20 function interface with create token and withdraw
 interface Wrapped_Ether_Interface {
@@ -547,11 +611,7 @@ interface Wrapped_Ether_Interface {
 
 }
 
-interface Membership_Interface {
-    function getMembershipType(address _member) external constant returns(uint);
-}
-
-
+// File: contracts\Factory.sol
 
 /**
 *The Factory contract sets the standardized variables and also deploys new contracts based on
@@ -585,7 +645,7 @@ contract Factory {
     address[] public contracts;
     uint[] public startDates;
     address public memberContract;
-    mapping(uint => bool) whitelistedTypes;
+    uint whitelistedTypes;
     mapping(address => uint) public created_contracts;
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
@@ -604,18 +664,21 @@ contract Factory {
 
     /*Functions*/
     /**
-    *@dev Constructor - Sets owner
+    *@dev Sets the member type/permissions for those whitelisted and owner
+    *@param _memberTypes is the list of member types
     */
-     constructor() public {
+     constructor(uint _memberTypes) public {
         owner = msg.sender;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
     *@dev constructor function for cloned factory
     */
-    function init(address _owner) public{
+    function init(address _owner, uint _memberTypes) public{
         require(owner == address(0));
         owner = _owner;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
@@ -626,16 +689,6 @@ contract Factory {
         memberContract = _memberContract;
     }
 
-    /**
-    *@dev Sets the member types/permissions for those whitelisted
-    *@param _memberTypes is the list of member types
-    */
-    function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
-    }
 
     /**
     *@dev Checks the membership type/permissions for whitelisted members
@@ -643,7 +696,7 @@ contract Factory {
     */
     function isWhitelisted(address _member) public view returns (bool){
         Membership_Interface Member = Membership_Interface(memberContract);
-        return whitelistedTypes[Member.getMembershipType(_member)];
+        return Member.getMembershipType(_member)>= whitelistedTypes;
     }
  
     /**
@@ -854,56 +907,7 @@ contract Factory {
     }
 }
 
-/**
-*This contracts helps clone factories and swaps through the Deployer.sol and MasterDeployer.sol.
-*The address of the targeted contract to clone has to be provided.
-*/
-contract CloneFactory {
-
-    /*Variables*/
-    address internal owner;
-    
-    /*Events*/
-    event CloneCreated(address indexed target, address clone);
-
-    /*Modifiers*/
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    /*Functions*/
-    constructor() public{
-        owner = msg.sender;
-    }    
-    
-    /**
-    *@dev Allows the owner to set a new owner address
-    *@param _owner the new owner address
-    */
-    function setOwner(address _owner) public onlyOwner(){
-        owner = _owner;
-    }
-
-    /**
-    *@dev Creates factory clone
-    *@param _target is the address being cloned
-    *@return address for clone
-    */
-    function createClone(address target) internal returns (address result) {
-        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
-        bytes20 targetBytes = bytes20(target);
-        for (uint i = 0; i < 20; i++) {
-            clone[26 + i] = targetBytes[i];
-        }
-        assembly {
-            let len := mload(clone)
-            let data := add(clone, 0x20)
-            result := create(0, data, len)
-        }
-    }
-}
-
+// File: contracts\MasterDeployer.sol
 
 /**
 *This contract deploys a factory contract and uses CloneFactory to clone the factory
@@ -915,71 +919,71 @@ contract MasterDeployer is CloneFactory{
     using SafeMath for uint256;
 
     /*Variables*/
-    address[] factory_contracts;
-    address private factory;
-    mapping(address => uint) public factory_index;
+	address[] factory_contracts;
+	address private factory;
+	mapping(address => uint) public factory_index;
 
     /*Events*/
-    event NewFactory(address _factory);
+	event NewFactory(address _factory);
 
     /*Functions*/
     /**
     *@dev Initiates the factory_contract array with address(0)
     */
-    constructor() public {
-        factory_contracts.push(address(0));
-    }
+	constructor() public {
+		factory_contracts.push(address(0));
+	}
 
     /**
     *@dev Set factory address to clone
     *@param _factory address to clone
-    */  
-    function setFactory(address _factory) public onlyOwner(){
-        factory = _factory;
-    }
+    */	
+	function setFactory(address _factory) public onlyOwner(){
+		factory = _factory;
+	}
 
     /**
     *@dev creates a new factory by cloning the factory specified in setFactory.
     *@return _new_fac which is the new factory address
     */
-    function deployFactory() public onlyOwner() returns(address){
-        address _new_fac = createClone(factory);
-        factory_index[_new_fac] = factory_contracts.length;
-        factory_contracts.push(_new_fac);
-        Factory(_new_fac).init(msg.sender);
-        emit NewFactory(_new_fac);
-        return _new_fac;
-    }
+	function deployFactory(uint _memberTypes) public onlyOwner() returns(address){
+		address _new_fac = createClone(factory);
+		factory_index[_new_fac] = factory_contracts.length;
+		factory_contracts.push(_new_fac);
+		Factory(_new_fac).init(msg.sender,_memberTypes);
+		emit NewFactory(_new_fac);
+		return _new_fac;
+	}
 
     /**
     *@dev Removes the factory specified
     *@param _factory address to remove
     */
-    function removeFactory(address _factory) public onlyOwner(){
-        require(_factory != address(0) && factory_index[_factory] != 0);
-        uint256 fIndex = factory_index[_factory];
+	function removeFactory(address _factory) public onlyOwner(){
+		require(_factory != address(0) && factory_index[_factory] != 0);
+		uint256 fIndex = factory_index[_factory];
         uint256 lastFactoryIndex = factory_contracts.length.sub(1);
         address lastFactory = factory_contracts[lastFactoryIndex];
         factory_contracts[fIndex] = lastFactory;
         factory_index[lastFactory] = fIndex;
         factory_contracts.length--;
         factory_index[_factory] = 0;
-    }
+	}
 
     /**
     *@dev Counts the number of factories
     *@returns the number of active factories
     */
-    function getFactoryCount() public constant returns(uint){
-        return factory_contracts.length - 1;
-    }
+	function getFactoryCount() public constant returns(uint){
+		return factory_contracts.length - 1;
+	}
 
     /**
     *@dev Returns the factory address for the specified index
     *@param _index for factory to look up in the factory_contracts array
     *@return factory address for the index specified
     */
-    function getFactorybyIndex(uint _index) public constant returns(address){
-        return factory_contracts[_index];
-    }
+	function getFactorybyIndex(uint _index) public constant returns(address){
+		return factory_contracts[_index];
+	}
 }

@@ -11,9 +11,11 @@ var Factory = artifacts.require("Factory");
 *factory associated with the master deployer(_master) specified.
 *_nowUTC is only used to display a human readable date on the console.
 */
-//var _master = "0xb9910c2269cb3953e4b4332ef6f782af97a4699f"; 
-var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //new
+//var _master = "0x95b6cf3f13e34448d7c9836cead56bdd04a5941b"; //rinkeby
+var _master = "0xe8327b94aba6fbc3a95f7ffaf8dd568e6cd36616"; //rinkeby new dud
 //var _master= "0x58f745e66fc8bb2307e8d73d7dafeda47030113c"; //mainnet
+//var _master= "0xcd8e11dad961dad43cc3de40df918fe808cbda74"; //maninnet new dud
+
 var _nowUTC  = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 console.log(_nowUTC);
 
@@ -36,9 +38,11 @@ module.exports =async function(callback) {
     
     let oracle = await Oracle.at(_oracleEth);
     await oracle.pushData();
+    console.log("Oracle Eth pushed");
 
     let oracle2 = await Oracle.at(_oracleBtc);
     await oracle2.pushData();
+    console.log("Oracle Btc pushed");
 
     for(i = 1; i <= count; i++){
         var factory_address = await masterDeployer.getFactorybyIndex(i);

@@ -141,4 +141,3 @@ contract('Oracle Test', function(accounts) {
 		assert.equal(_api7,"json(https://api.gdax.com/products/BTC-USD/ticker).price","API=gdax");
     })
 });
-

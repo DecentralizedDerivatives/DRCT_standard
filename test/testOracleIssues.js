@@ -81,4 +81,3 @@ contract('Oracle Test', function(accounts) {
 		assert(balance2 >= newbal2 + 5 && balance2 <= newbal2 + 6 ,"Balance2 should change correctly");
 	});
 });
-
