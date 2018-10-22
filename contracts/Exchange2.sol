@@ -75,7 +75,7 @@ contract Exchange2{
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
         require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
-        xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
+        xStorage.listCheckAllowance(_tokenadd,msg.sender);
         /* emit test(allow);
         uint allowleft = xStorage.setAllowedLeftToList(_tokenadd,msg.sender, _amount);
         emit test2(allowleft); */
