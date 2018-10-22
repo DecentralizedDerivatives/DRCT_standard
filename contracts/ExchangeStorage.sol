@@ -214,9 +214,9 @@ contract ExchangeStorage{
         blacklist[_address] = _motion;
     }
 
-    function listCheckAllowance(address _tokenadd,address _msgsender, uint _amount) public view onlyDex returns(uint){
+    function listCheckAllowance(address _tokenadd,address _msgsender) public view onlyDex returns(uint){
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        return token.allowance(_msgsender,address(this);
+        return token.allowance(_msgsender,address(this));
         //require(token.allowance(_msgsender,address(this)) >= _amount);
     }
 

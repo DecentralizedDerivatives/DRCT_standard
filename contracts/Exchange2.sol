@@ -36,7 +36,8 @@ contract Exchange2{
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
     event Sale(address _sender,address _token, uint256 _amount, uint256 _price);
     event OrderRemoved(address _sender,address _token, uint256 _amount, uint256 _price);
-    event test(uint allow, uint allowleft );
+    event test(uint allow );
+    event test2(uint allowleft );
     /*Modifiers*/
     /**
     *@dev Access modifier for Owner functionality
@@ -74,9 +75,10 @@ contract Exchange2{
     */
     function list(address _tokenadd, uint256 _amount, uint256 _price) external {
         require (xStorage.isBlacklist(msg.sender)==false  && _price > 0); 
-        uint allow = xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
+        xStorage.listCheckAllowance(_tokenadd,msg.sender, _amount);
+        /* emit test(allow);
         uint allowleft = xStorage.setAllowedLeftToList(_tokenadd,msg.sender, _amount);
-        emit test(allow, allowleft);
+        emit test2(allowleft); */
         require(xStorage.getAllowedLeftToList(msg.sender,storage_address)>= _amount);
         uint fsIndex = xStorage.getOrderCount(_tokenadd);
         if(fsIndex == 0 ){
