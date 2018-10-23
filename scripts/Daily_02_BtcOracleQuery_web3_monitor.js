@@ -4,7 +4,7 @@ const fetch = require('node-fetch-polyfill');
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 /**
-*Check Oraclize query callback and if failed, re-send.
+*Check Btc Oraclize query callback and if failed, re-send.
 */
 
 function sleep_s(secs) {
@@ -92,18 +92,18 @@ module.exports =async function(callback) {
         console.log("no gas price fetched");
     }
     try{
-        await oracle.methods.pushData.send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
+        await oracle.methods.pushData().send({from: accountFrom,gas: gas_Limit,gasPrice: gasP })
             .on('transactionHash', function(hash){
-                var link = "".concat('<https://rinkeby.etherscan.io/address/',hash,'>' );
+                var link = "".concat('<https://rinkeby.etherscan.io/tx/',hash,'>' );
                 var ownerlink = "".concat('<https://rinkeby.etherscan.io/address/',_oracleBtc,'>' );
                 console.log("BTC oracle sent");
                 console.log("Hash link: ", link);
                 console.log("Contract link: ", ownerlink);
             })
-            .on('receipt', function(receipt){
+/*            .on('receipt', function(receipt){
                 console.log("recStatus", receipt.status);
                 console.log("receipt", receipt);
-            })
+            })*/
             /*.on('confirmation', function(confirmationNumber, receipt){
                 console.log(confirmationNumber);
             })*/
