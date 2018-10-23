@@ -12,25 +12,7 @@ contract Exchange{
 
     /*Variables*/
     address public owner; //The owner of the market contract
-    address internal storage_address;
     ExchangeStorage internal xStorage;
-
-    /*Structs*/
-    //This is the base data structure for an order (the maker of the order and the price)
-    struct Order {
-        address maker;// the placer of the order
-        address asset;
-        uint price;// The price in wei
-        uint amount;
-    }
-
-    struct ListAsset {
-        uint price;
-        uint amount;
-        bool isLong;  
-    }
-   
-    //mapping(address => bool) public blacklist;
 
     /*Events*/
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
@@ -43,7 +25,7 @@ contract Exchange{
     *@dev Access modifier for Owner functionality
     */
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == xStorage.getOwner());
         _;
     }
 
@@ -52,19 +34,19 @@ contract Exchange{
     *@dev the constructor argument to set the owner and initialize the array.
     */
     constructor() public{
-        owner = msg.sender;
-        //openBooks.push(address(0));
-        //order_nonce = 1;
+        xStorage.setOwner(msg.sender);
+        xStorage.setOpenBooks(address(0));
+        xStorage.setOrderNonce(1);
     }
 
-    function setDexStorageAddress(address _exchangeStorage) public onlyOwner {
-        storage_address = _exchangeStorage;
-        xStorage = ExchangeStorage(_exchangeStorage);
+
+
+
+    function setOwner(address _owner) public onlyOwner{
+       xStorage.setOwner(_owner);
     }
 
-    function getDexStorageAddress() public constant returns(address) {
-        return storage_address;
-    }
+
 
 
     /**
@@ -112,6 +94,15 @@ contract Exchange{
     }  
 
     /**
+    *@notice This allows the owner to stop a malicious party from spamming the orderbook
+    *@dev Allows the owner to blacklist addresses from using this exchange
+    *@param _address the address of the party to blacklist
+    *@param _motion true or false depending on if blacklisting or not
+    */
+    function blacklistParty(address _address, bool _motion) public onlyOwner {
+        xStorage.blacklistParty(_address,_motion);
+    }
+    /**
     *@dev list allows a DDA to remove asset 
     *@param _asset address 
     */
@@ -141,7 +132,12 @@ contract Exchange{
         require(_amount <= listing_amount);
         uint totalPrice = _amount.mul(listing_amount);
         require(msg.value == totalPrice);
-        xStorage.buyPerUnitTransfer(_asset, _amount, msg.sender, totalPrice); 
+        ERC20_Interface token = ERC20_Interface(_asset);
+        if(token.allowance(owner,address(this)) >= _amount){
+            assert(token.transferFrom(owner,msg.sender, _amount));
+            owner.transfer(totalPrice);
+            xStorage.setDdaListAssetInfoAmount(_asset,listing_amount.sub(_amount));
+        }
     } 
 
     /**
@@ -170,24 +166,11 @@ contract Exchange{
         require(_order_price != 0 && _order_maker != address(0) && _order_asset != address(0) && _order_amount!= 0);
         require(msg.value == _order_price);
         require(xStorage.isBlacklist(msg.sender) == false);
-        xStorage.buyTransfer(_orderId, msg.sender);
+        ERC20_Interface token = ERC20_Interface(_order_asset);
+        assert(token.transferFrom(_order_maker,msg.sender, _order_amount));
+        _order_maker.transfer(_order_price);
         xStorage.unLister(_orderId);
         emit Sale(msg.sender,_order_asset,_order_amount,_order_price);
     }  
-
-    /**
-    *@dev allows the owner to change who the owner is
-    *@param _owner is the address of the new owner
-    */
-    function setOwner(address _owner) public onlyOwner() {
-        owner = _owner;
-    } 
-
-    /**
-    *@dev allows dev to get the owner from the contract
-    */
-    function getOwner() public view returns(address){
-        return owner;
-    }
 }
 
