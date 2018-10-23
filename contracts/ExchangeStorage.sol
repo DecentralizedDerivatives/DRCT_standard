@@ -29,7 +29,7 @@ contract ExchangeStorage{
 
     //order_nonce;
     uint public order_nonce;
-    mapping(address => mapping (address => uint)) public allowedLeft;
+    mapping(address => mapping (address => uint)) public totalListed;//user to tokenamounts
     address public owner; //The owner of the market contract
     address public dexAddress;
     address[] public openDdaListAssets;
@@ -106,14 +106,8 @@ contract ExchangeStorage{
     *@param _amount amount the spender is being approved for
     *@return true if spender appproved successfully
     */
-    function setAllowedLeftToList(address _tokenadd, address _owner,  uint _amount) public onlyDex returns(uint){
-        ERC20_Interface token = ERC20_Interface(_tokenadd);
-        uint total = allowedLeft[_owner][address(this)];
-        uint currAppr = token.allowance(_owner,address(this));
-        uint totalleft=currAppr.sub(total).sub(_amount);
-        allowedLeft[msg.sender][address(this)] = totalleft;
-        return allowedLeft[msg.sender][address(this)];
-
+    function setTotalListed(address _tokenadd, address _owner,  uint _amount) public onlyDex {
+        totalListed[_owner][_tokenadd] += _amount;
     }
     /**
     *@dev allows exchange contract to write the order nonce
@@ -214,11 +208,6 @@ contract ExchangeStorage{
         blacklist[_address] = _motion;
     }
 
-    function listCheckAllowance(address _tokenadd,address _msgsender) public view onlyDex returns(uint){
-        ERC20_Interface token = ERC20_Interface(_tokenadd);
-        return token.allowance(_msgsender,address(this));
-        //require(token.allowance(_msgsender,address(this)) >= _amount);
-    }
 
     function buyPerUnitTransfer(address _asset, uint _amount, address _msgsender, uint totalPrice) public onlyDex {
         ListAsset storage listing = listOfAssets[_asset];
@@ -234,11 +223,8 @@ contract ExchangeStorage{
         Order memory _order = orders[_orderId];
         address maker = _order.maker;
         ERC20_Interface token = ERC20_Interface(_order.asset);
-        if(token.allowance(_order.maker,address(this)) >= _order.amount){
-            assert(token.transferFrom(_order.maker,_msgsender, _order.amount));
-            maker.transfer(_order.price);
-        }
-        
+        assert(token.transferFrom(_order.maker,_msgsender, _order.amount));
+        maker.transfer(_order.price);
     }
 
     /**
@@ -252,6 +238,7 @@ contract ExchangeStorage{
             address lastAdd;
             uint256  lastToken;
             Order memory _order = orders[_orderId];
+        totalListed[_order.maker][_order.asset] -= _order.amount;
         if(forSale[_order.asset].length == 2){
             tokenIndex = openBookIndex[_order.asset];
             lastTokenIndex = openBooks.length.sub(1);
@@ -401,14 +388,8 @@ contract ExchangeStorage{
         return (listing.price);
     }
 
-    /**
-    *@dev This function returns the _amount of tokens a _spender(exchange) can list
-    *@param _spender address
-    *@param _amount amount the spender is being approved for
-    *@return true if spender appproved successfully
-    */
-    function getAllowedLeftToList(address _owner, address _spender) public view returns (uint) {
-        return allowedLeft[_owner][_spender];
+    function getTotalListed(address _owner, address _tokenadd) public view returns (uint) {
+        return totalListed[_owner][_tokenadd];
         
     }
 
