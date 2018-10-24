@@ -66,7 +66,7 @@ contract ExchangeStorage{
     *@dev allows exchange contract to write the order nonce
     */
     function setOrderNonce(uint _order_nonce) public{
-        order_nonce=_order_nonce;
+        order_nonce = _order_nonce;
     }
         /**
     *@dev allows exchange contract to write the order nonce
@@ -304,7 +304,7 @@ contract ExchangeStorage{
     /**
     *@dev getter function to get all openDdaListAssets
     */
-    function getopenDdaListAssets() view public returns (address[]){
+    function getOpenDdaListAssets() view public returns (address[]){
         return openDdaListAssets;
     } 
 
@@ -341,7 +341,6 @@ contract ExchangeStorage{
         
     }
 
-
     /**
     *@dev allows dev to get the order nonce
     */
@@ -349,12 +348,6 @@ contract ExchangeStorage{
         return order_nonce;
     }
 
-    /**
-    *@dev getter function to get all openDdaListAssets
-    */
-    function getOpenDdaListAssets() view public returns (address[]) {
-        return openDdaListAssets;
-    }
     /**
     *@dev getter function to get openDdaListAssets length/count
     */
@@ -384,9 +377,5 @@ contract ExchangeStorage{
     function getUserOrderIndex(uint _order_nonce) public view returns(uint) {
         return userOrderIndex[_order_nonce];
     }
-
-
-
-
 
 }
