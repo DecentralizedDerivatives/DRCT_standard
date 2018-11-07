@@ -36,7 +36,7 @@ var accountFrom= '0xc69c64c226fea62234afe4f5832a051ebc860540';
         console.log(result);
 }));
 console.log(accountFrom);*/
-var gas_Price= 4000000000;
+//var gas_Price= 4000000000;
 var gas_Limit= 4700000;
 
 var Factory = artifacts.require("Factory");
