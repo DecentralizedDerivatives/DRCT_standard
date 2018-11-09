@@ -3,33 +3,14 @@
 
 Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT tokens provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency without minumum thresholds and with no intermediaries.
 
-<style>
-.column-left{
-  float: left;
-  width: 70%;
-  text-align: left;
-}
+![Create DRCT Tokens](./public/CreatingContract.png) 
 
-.column-right{
-  float: right;
-  width: 30%;
-  text-align: right;
-}
-</style>
-
-<div class = "columnt-left">
-
-![Create DRCT Tokens](./public/CreatingContract.png)
-
-</div >
-
-<div class = "columnt-right">
-DRCT contracts start with a "creator" and are given a rate/duration/start date combination. Ether is locked as collateral in the smart contract by the creator. 
+DRCT contracts start with a "creator" and are given a rate/duration/start date ombination. Ether is locked as collateral in the smart contract by the creator. 
 
 Short and Long Tokens are issued to the creator and represent the payouts of the contract. 
 
 These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. 
-</div>
+|
 
 
 
