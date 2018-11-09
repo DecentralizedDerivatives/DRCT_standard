@@ -1,12 +1,11 @@
 
 # Dynamic Rate Cash Transaction Tokens
 
+Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT tokens provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency. In a nutshell, DRCT Tokens contracts allow users to short or long cryptocurrencies without minumum thresholds and with no intermediaries.
 
-![Derivative](./public/derivative.png)
+All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
 
-
-
-Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates.
+![Create DRCT Tokens](./public/CreatingContract.png)
 
 <details><summary>Table of Contents</summary>
 
@@ -53,14 +52,6 @@ Any contributions are welcome!
 ## Documentation <a name="Documentation"> </a> 
 
 ### Overview of Contracts for Dynamic Rate Cash Transaction Tokens
-
-**Contracts Process Flow**
-
-![Contracts Flow](./public/DRCT_Standard_contracts_flow.png)
-
-**General Process Flow**
-
-![Contracts Flow](./public/DRCT_Standard_process_flow.png)
 
 ### Contracts Description <a name="Contracts-Description"> </a>
  * MasterDeployer.sol - Kicks off the factory creation by calling the CloneFactory.sol to clone a specified factory and keep track of active factories.
