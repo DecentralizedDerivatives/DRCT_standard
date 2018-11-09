@@ -1,21 +1,9 @@
 
 # Dynamic Rate Cash Transaction Tokens
 
-Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT tokens provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency without minumum thresholds and with no intermediaries.
+Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT token contracts are a risk management tool for cryptocurrency users that allow to long and/or short cryptocurrencies. 
 
-![Create DRCT Tokens](./public/CreatingContract.png) 
-
-DRCT contracts start with a "creator" and are given a rate/duration/start date ombination. Ether is locked as collateral in the smart contract by the creator. 
-
-Short and Long Tokens are issued to the creator and represent the payouts of the contract. 
-
-These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. 
-|
-
-
-
-
-All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
+DRCT contracts provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency without minimum thresholds and with no intermediaries.
 
 <details><summary>Table of Contents</summary>
 
@@ -31,6 +19,12 @@ All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized
     * [Conclusion](#Conclusion)
     * [Updates](#Updates)
 </details>
+
+![Create DRCT Tokens](./public/CreatingContract.png) 
+
+DRCT contracts start with a "creator" and are given a rate/duration/start date combination. Ether is locked as collateral in the smart contract by the creator.  Short and Long Tokens are issued to the creator and represent the payouts of the contract. These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. On the end date of the contract, the tokens are paid out from the collateral (to whoever is holding them at that point in time) based on the change in the underlying rate. 
+
+All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
 
 
 ### Instructions for quick start with Truffle Deployment <a name="Quick-Deployment"> </a>  
@@ -52,9 +46,9 @@ Clone the repo, cd into it, and then:
 You're ready to create DRCT tokens and contracts!
 
 #### How to Contribute<a name="how2contribute"> </a>  
-Join our slack, shoot us an email or contact us: [<img src="./public/slack.png" width="24" height="24">](https://deriveth.slack.com/)
-[<img src="./public/telegram.png" width="24" height="24">](https://t.me/ddaorg)
-[<img src="./public/discord.png" width="24" height="24">](https://discordapp.com/invite/xtsdpbS)
+Join our slack, shoot us an email or contact us: [<img src="/DecentralizedDerivatives/MineableOracle/tree/master/public/slack.png" width="24" height="24">](https://deriveth.slack.com/)
+[<img src="https://github.com/DecentralizedDerivatives/MineableOracle/tree/master/public/telegram.png" width="24" height="24">](https://t.me/daxiachat)
+[<img src="https://github.com/DecentralizedDerivatives/MineableOracle/tree/master/public/discord.png" width="24" height="24">](https://discordapp.com/invite/xtsdpbS)
 
 
 Any contributions are welcome!
@@ -66,7 +60,7 @@ Any contributions are welcome!
 ### Contracts Description <a name="Contracts-Description"> </a>
  * MasterDeployer.sol - Kicks off the factory creation by calling the CloneFactory.sol to clone a specified factory and keep track of active factories.
  * Factory.sol - The factory contract is the base of the system.  It sets the standardized variables used in the swap contract and is called to create new swap contracts and create new DRCT tokens for the user. 
- * UserContract.sol - If the user is using DDA's DApp, the Factory will read in the variables entered here and variables available through the Factory contract to properly register the swap contract.
+ * UserContract.sol - If the user is using Daxia's DApp, the Factory will read in the variables entered here and variables available through the Factory contract to properly register the swap contract.
  * Wrapped_Ether.sol - Is called by the Factory to convert Ether into an ERC20 token to create the base token that used in the swap. 
  * Deployer.sol - Is called by the Factory to deploy the new swap by calling the TokenToTokenSwap.sol and the CloneFactory.sol(allows the cloning of a contract by specifying the address).
  * CloneFactory.sol-Is used by the Factory.sol via the MasterDeployer.sol to clone deployed factories by specifying their address and it is also used via the Deployer.sol to clone deployed swap contracts by specifying their address. 
@@ -77,11 +71,11 @@ Any contributions are welcome!
  * Oracle.sol - Provides the reference rates for the contract.  Our oracle contract uses daily UNIX timestamp values as keys for specific values.
  * Test_Oracle.sol - Allows the operator to store custom values for testing functionallity.
  * Exchange.sol - Facilitates the direct sale of DRCT Tokens by allowing the users to buy and place DRCT tokens up for sale at a specified price.  
- * Membership.sol - Allows users to become a member of the DDA Cooperative. 
+ * Membership.sol - Allows users to become a member of the Daxia Cooperative. 
 
 ### Scripts Description <a name="Scripts-Description"> </a>
 
-The Truffle Migrations.js and 2_further_deployments.js under the migrations folder and Migrate_2.js scripts can be used to migrate all DDA contracts to a test net or the mainnet via ‘truffle migrate’. Currently, Migrate_1.js is being developed to create the linkage between the factory and DRCTLibrary without truffle.
+The Truffle Migrations.js and 2_further_deployments.js under the migrations folder and Migrate_2.js scripts can be used to migrate all Daxia contracts to a test net or the mainnet via ‘truffle migrate’. Currently, Migrate_1.js is being developed to create the linkage between the factory and DRCTLibrary without truffle.
  * Migrate_1.js - This script is under construction. We are currently working on linking the DRCTLibrary.sol and Factory.sol manually via the Migrate_1.js script so that users don't have to use Truffle migrations for the linkage.  
  * Migrate_2.js - Can be ran immediately after 'truffle migrate' and it will deploy several contracts and sets up two factories along with their short and long token addresses for the date specified. It deploys:
    * Wrapped_Ether.sol 
@@ -102,7 +96,7 @@ The admin, daily and monthly scripts help deploy portions of the initial migrati
  * Admin_6_deploy_and_update_oracle.js – Allows the owner to deploy a new oracle and update an existing factory with that new oracle in the event the factory’s oracle becomes deprecated (the API becomes unusable) and another oracle is already deployed. 
  * Admin_7_contract_setup.js – Allows the owner to deploy DRCT tokens for given start date
  * Admin_8_new_swap_contract.js – Deploys a new swap contract.
- * Admin_9_funding_oracles.js – Funds the oracle contracts. DDA contracts currently use the Oraclize service to get Bitcoin and Ethereum prices. The oracle contracts have to be funded so these can pay the Oraclize fees.
+ * Admin_9_funding_oracles.js – Funds the oracle contracts. Daxia contracts currently use the Oraclize service to get Bitcoin and Ethereum prices. The oracle contracts have to be funded so these can pay the Oraclize fees.
  * Daily_1_OracleQuery_db.js – Submits the Oraclize queries to get USD prices for Bitcoin and Ethereum.
  * Daily_2_oracle_check_db.js – Displays the prices reported by the Oraclize queries.
  * Daily_3_forcepay.js – Pays out the swap to the current short and long token holders.
@@ -112,9 +106,9 @@ The admin, daily and monthly scripts help deploy portions of the initial migrati
 
 ## Operator Setup <a name="operator-setup"> </a>  
 
-Documentation is noted for acting as the operator (DDA's role) and also entering into contract (a user).  Specific contract details are laid out for ease of use regardless of dev environment. 
+Documentation is noted for acting as the operator (Daxia's role) and also entering into contract (a user).  Specific contract details are laid out for ease of use regardless of dev environment. 
 
- If you wish to simply enter a contract without a deep dive into the underlying solidity, you can use our DApp at http://dapp.ddacoop.org/ and follow the instuctions in the "How To" pop up (metamask is required). 
+ If you wish to simply enter a contract without a deep dive into the underlying solidity, you can use our DApp at http://dapp.daxia.org/ and follow the instuctions in the "How To" pop up (metamask is required). 
 
 ***
 For ease of use, an 'Everything' flat file has been created containing all contracts, libraries and interfaces in the DRCT_standard library. 
@@ -131,7 +125,7 @@ If one is accessing the contracts via the DApp or by way of an already deployed 
 
         create Oracle();
 
-DDA will grab values for contract dates, however parties can also initiate the contract call (and must do so on private instances of the oracle). This function stores the daily value of the API in the Oracle.
+Daxia will grab values for contract dates, however parties can also initiate the contract call (and must do so on private instances of the oracle). This function stores the daily value of the API in the Oracle.
 
         oracle.PushData();
 
@@ -152,7 +146,7 @@ A DRCT contract is structured as trading one token for another at some future da
      
 The factory contract is the base of the system.  It holds the standardized variables and is called to create new contracts and create new DRCT tokens for the user.  
 
-    create Factory();
+    create Factory(0);//the constructor argument includes _memberTypes. Enter "0".
 
 **Step 4: Operator - Create Deployer and DRCT_Token**
 
@@ -222,8 +216,32 @@ If the contract is not tokenized, parties may exit the contract (assuming both a
 
 
 ## Overview <a name="overview"> </a> 
+True adoption of cryptocurrencies will only occur when price volatility can be harnessed. Derivatives are products that say I’ll give you X in the future based on the change in Y. They can allow users to device risk mitigation strategies for highly volatile assets.
+
+A functioning risk transfer market is the backbone of an advanced market economy. Whether it’s businesses needing to hedge currency risk or parties seeking exposure to a certain asset, a derivatives market is imperative for longer term planning and risk mitigation for a financial system. 
+
+DRCT token contracts provide a decentralized option (pun intended) for derivatives that bear no counterparty risk (fully collateralized) and are not exchange specific (it produces ERC20 compliant tokens that can be traded on a centralized or decentralized exchange). 
+
+### How are contracts created
+<a href= https://blog.goodaudience.com/attack-of-the-clones-how-dda-contracts-are-so-cheap-to-deploy-f3cee9c7566> Link to Attack of the clones: How dda contracts are so cheap to deploy </a>
+
+### What is the source of the underlying rate
+oracle
+### Payout
+
+![DRCT](./public/DRCT.png) 
 
 ## Example Usage Scenarios <a name="usage-scenarios"> </a>
+#### Stable Coins
+If you hold ETH and are shorting ETH, and this combined position is a token, you have a stable coin. It’s as simple as that. The only downfall is: what is the cost? DDA’s products have full collateralization, a sometimes-costly endeavor, and require contracts to be rolled from one expiration to another. A tokenized short position in an ETH/USD DDA contract can act as a transparent and easy-to-understand stable coin.
+
+#### Prediction Markets
+A prediction market is in many ways another word for a derivatives exchange mixed with a gambling website. The underlying products are almost always derivatives; the only difference is that the reference rate can be on politics, or sports, or another non-price at which point the nomenclature ‘prediction market’ slides easier off the tongue than casino. At their core, they are solving the same problems as derivatives markets and a functioning, truly custom derivatives product can incorporate all the functionality of a prediction market without the unnecessary regulatory sidestepping.
+
+#### Cross Border/ Chain risk
+A burgeoning technology is that of cross chain transfers. The system will rise to a whole new level when these abilities are seamless, borderless and trustless; however, for the meantime, cross chain transfer of risk will serve a large portion of the end users’ needs. Whether a party on the Ethereum wants Bitcoin exposure without the transaction fees and centralization of the exchanges, or a party desires to hedge price risk on an exchange in a jurisdiction which they are not approved to do business; derivatives allow parties to hedge risk or gain exposure in the native token of Ethereum. Having this ability will not only create incentives for openness across borders but will also allow for speculators to move exposure to a chain with simpler and more liquid decentralized exchanges.
+
+Stable coins, prediction markets, and cross border (or chain) price risk are issues and solutions that do not exist, and are not needed, in societies that have an efficient derivatives market. The launching of bitcoin futures (or other crypto futures) and the push towards a regulated market will provide liquidity for the network, however does not address the fundamental need for the network which is a truly open, portable and unstoppable application available to all users.
 
 ## Conclusion <a name="conclusion"> </a>
 
