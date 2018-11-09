@@ -1,5 +1,19 @@
 pragma solidity ^0.4.24;
 
+// File: contracts\interfaces\ERC20_Interface.sol
+
+//ERC20 function interface
+interface ERC20_Interface {
+  function totalSupply() external constant returns (uint);
+  function balanceOf(address _owner) external constant returns (uint);
+  function transfer(address _to, uint _amount) external returns (bool);
+  function transferFrom(address _from, address _to, uint _amount) external returns (bool);
+  function approve(address _spender, uint _amount) external returns (bool);
+  function allowance(address _owner, address _spender) external constant returns (uint);
+}
+
+// File: contracts\libraries\SafeMath.sol
+
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -31,16 +45,7 @@ library SafeMath {
   }
 }
 
-//ERC20 function interface
-interface ERC20_Interface {
-  function totalSupply() external constant returns (uint);
-  function balanceOf(address _owner) external constant returns (uint);
-  function transfer(address _to, uint _amount) external returns (bool);
-  function transferFrom(address _from, address _to, uint _amount) external returns (bool);
-  function approve(address _spender, uint _amount) external returns (bool);
-  function allowance(address _owner, address _spender) external constant returns (uint);
-}
-
+// File: contracts\Exchange.sol
 
 /**
 *Exchange creates an exchange for the swaps.
@@ -49,7 +54,7 @@ contract Exchange{
     using SafeMath for uint256;
 
     /*Variables*/
-    address public owner; //The owner of the market contract
+
     
     /*Structs*/
     //This is the base data structure for an order (the maker of the order and the price)
@@ -63,8 +68,16 @@ contract Exchange{
     struct ListAsset {
         uint price;
         uint amount;
+        bool isLong;  
     }
 
+    //order_nonce;
+    uint internal order_nonce;
+    address public owner; //The owner of the market contract
+    address[] public openDdaListAssets;
+    //Index telling where a specific tokenId is in the forSale array
+    address[] public openBooks;
+    mapping (address => uint) public openDdaListIndex;
     mapping(address => ListAsset) public listOfAssets;
     //Maps an OrderID to the list of orders
     mapping(uint256 => Order) public orders;
@@ -72,8 +85,7 @@ contract Exchange{
     mapping(address =>  uint256[]) public forSale;
     //Index telling where a specific tokenId is in the forSale array
     mapping(uint256 => uint256) internal forSaleIndex;
-    //Index telling where a specific tokenId is in the forSale array
-    address[] public openBooks;
+    
     //mapping of address to position in openBooks
     mapping (address => uint) internal openBookIndex;
     //mapping of user to their orders
@@ -82,8 +94,7 @@ contract Exchange{
     mapping(uint => uint) internal userOrderIndex;
     //A list of the blacklisted addresses
     mapping(address => bool) internal blacklist;
-    //order_nonce;
-    uint internal order_nonce;
+    
 
     /*Events*/
     event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
@@ -142,17 +153,44 @@ contract Exchange{
     }
 
     /**
-    *@dev list allows a party to list an order on the orderbook
-    *@param _asset address of the drct tokens
-    *@param _amount number of DRCT tokens
+    *@dev list allows DDA to list an order 
+    *@param _asset address 
+    *@param _amount of asset
     *@param _price uint256 price per unit in wei
+    *@param _isLong true if it is long
     */
     //Then you would have a mapping from an asset to its price/ quantity when you list it.
-    function listDda(address _asset, uint256 _amount, uint256 _price) public onlyOwner() {
+    function listDda(address _asset, uint256 _amount, uint256 _price, bool _isLong) public onlyOwner() {
         require(blacklist[msg.sender] == false);
         ListAsset storage listing = listOfAssets[_asset];
         listing.price = _price;
         listing.amount= _amount;
+        listing.isLong= _isLong;
+        openDdaListIndex[_asset] = openDdaListAssets.length;
+        openDdaListAssets.push(_asset);
+        
+    }
+
+    /**
+    *@dev list allows a DDA to remove asset 
+    *@param _asset address 
+    */
+    function unlistDda(address _asset) public onlyOwner() {
+        require(blacklist[msg.sender] == false);
+        uint256 indexToDelete;
+        uint256 lastAcctIndex;
+        address lastAdd;
+        ListAsset storage listing = listOfAssets[_asset];
+        listing.price = 0;
+        listing.amount= 0;
+        listing.isLong= false;
+        indexToDelete = openDdaListIndex[_asset];
+        lastAcctIndex = openDdaListAssets.length.sub(1);
+        lastAdd = openDdaListAssets[lastAcctIndex];
+        openDdaListAssets[indexToDelete]=lastAdd;
+        openDdaListIndex[lastAdd]= indexToDelete;
+        openDdaListAssets.length--;
+        openDdaListIndex[_asset] = 0;
     }
 
     /**
@@ -164,8 +202,14 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         ListAsset storage listing = listOfAssets[_asset];
         require(_amount <= listing.amount);
-        require(msg.value == _amount.mul(listing.price));
-        listing.amount= listing.amount.sub(_amount);
+        uint totalPrice = _amount.mul(listing.price);
+        require(msg.value == totalPrice);
+        ERC20_Interface token = ERC20_Interface(_asset);
+        if(token.allowance(owner,address(this)) >= _amount){
+            assert(token.transferFrom(owner,msg.sender, _amount));
+            owner.transfer(totalPrice);
+            listing.amount= listing.amount.sub(_amount);
+        }
     }
 
     /**
@@ -274,6 +318,21 @@ contract Exchange{
         return userOrders[_user];
     }
 
+    /**
+    *@dev getter function to get all openDdaListAssets
+    */
+    function getopenDdaListAssets() view public returns (address[]){
+        return openDdaListAssets;
+    }
+    /**
+    *@dev Gets the DDA List Asset information for the specifed 
+    *asset address
+    *@param _assetAddress for DDA list
+    *@return price, amount and true if isLong
+    */
+    function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool){
+        return(listOfAssets[_assetAddress].price,listOfAssets[_assetAddress].amount,listOfAssets[_assetAddress].isLong);
+    }
     /**
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order

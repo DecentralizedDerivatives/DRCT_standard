@@ -47,11 +47,11 @@ var web3 = new Web3(new HDWalletProvider(mnemonic,"https://rinkeby.infura.io/"+ 
 */
 
 //ETH oracle
-var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
-var accountFrom= '0xc69c64c226fea62234afe4f5832a051ebc860540'; //rinkeby
+//var _oracleEth = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//rinkeby
+//var accountFrom= '0xc69c64c226fea62234afe4f5832a051ebc860540'; //rinkeby
 
-//var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
-//var accountFrom = '0x074993DeE953F2706ae318e11622b3EE0b7850C3';//mainnet
+var _oracleEth = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//mainnet
+var accountFrom = '0x074993DeE953F2706ae318e11622b3EE0b7850C3';//mainnet
 
 console.log(_nowUTC);
 console.log("ETH Oracle: ", _oracleEth);

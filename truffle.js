@@ -90,7 +90,7 @@ module.exports = {
       gasPrice: 17e9
     },
 
-/*    mainnet: {
+    mainnet: {
       network_id: "1",
       provider: function () {
         var wallet = new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/' + accessToken)
@@ -101,10 +101,10 @@ module.exports = {
       },
       network_id: 1,
       gas: 4700000,
-      gasPrice: 3000000000
-    },*/
+      gasPrice: 4000000000
+    },
 
-    mainnet: {
+/*    mainnet: {
       network_id: "1",
       provider: function () {
         var wallet = new HDWalletProvider(mnemonic, 'https://gladly-fond-horse.quiknode.io/8faab5bf-73f6-4f72-a8df-bceb75f0f671/8K5s-t4qrXAHuiIZMLRjNQ==/')
@@ -116,7 +116,7 @@ module.exports = {
       network_id: 1,
       gas: 4700000,
       gasPrice: 3000000000
-    },
+    },*/
     rinkeby: {
       network_id: "4",
       provider: function () {

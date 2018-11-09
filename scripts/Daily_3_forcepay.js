@@ -56,7 +56,7 @@ module.exports =async function(callback) {
                 if(endDate <= _date){     
                     let state = await swap.currentState();
                     sleep_s(20);
-                    while(state == 1){
+                    while (state == 1){
                         console.log('Paying Swap: ',swap_address);
                         console.log(await swap.showPrivateVars.call());
                         sleep_s(20);

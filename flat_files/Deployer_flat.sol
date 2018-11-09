@@ -1,11 +1,58 @@
 pragma solidity ^0.4.24;
 
-//Swap Oracle functions - descriptions can be found in Oracle.sol
-interface Oracle_Interface{
-  function getQuery(uint _date) external view returns(bool);
-  function retrieveData(uint _date) external view returns (uint);
-  function pushData() external payable;
+// File: contracts\CloneFactory.sol
+
+/**
+*This contracts helps clone factories and swaps through the Deployer.sol and MasterDeployer.sol.
+*The address of the targeted contract to clone has to be provided.
+*/
+contract CloneFactory {
+
+    /*Variables*/
+    address internal owner;
+    
+    /*Events*/
+    event CloneCreated(address indexed target, address clone);
+
+    /*Modifiers*/
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    /*Functions*/
+    constructor() public{
+        owner = msg.sender;
+    }    
+    
+    /**
+    *@dev Allows the owner to set a new owner address
+    *@param _owner the new owner address
+    */
+    function setOwner(address _owner) public onlyOwner(){
+        owner = _owner;
+    }
+
+    /**
+    *@dev Creates factory clone
+    *@param _target is the address being cloned
+    *@return address for clone
+    */
+    function createClone(address target) internal returns (address result) {
+        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
+        bytes20 targetBytes = bytes20(target);
+        for (uint i = 0; i < 20; i++) {
+            clone[26 + i] = targetBytes[i];
+        }
+        assembly {
+            let len := mload(clone)
+            let data := add(clone, 0x20)
+            result := create(0, data, len)
+        }
+    }
 }
+
+// File: contracts\interfaces\DRCT_Token_Interface.sol
 
 //DRCT_Token functions - descriptions can be found in DRCT_Token.sol
 interface DRCT_Token_Interface {
@@ -18,16 +65,7 @@ interface DRCT_Token_Interface {
   function partyCount(address _swap) external constant returns(uint);
 }
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
-  function payToken(address _party, address _token_add) external;
-  function deployContract(uint _start_date) external payable returns (address);
-   function getBase() external view returns(address);
-  function getVariables() external view returns (address, uint, uint, address,uint);
-  function isWhitelisted(address _member) external view returns (bool);
-}
-
+// File: contracts\interfaces\ERC20_Interface.sol
 
 //ERC20 function interface
 interface ERC20_Interface {
@@ -39,6 +77,28 @@ interface ERC20_Interface {
   function allowance(address _owner, address _spender) external constant returns (uint);
 }
 
+// File: contracts\interfaces\Factory_Interface.sol
+
+//Swap factory functions - descriptions can be found in Factory.sol
+interface Factory_Interface {
+  function createToken(uint _supply, address _party, uint _start_date) external returns (address,address, uint);
+  function payToken(address _party, address _token_add) external;
+  function deployContract(uint _start_date) external payable returns (address);
+   function getBase() external view returns(address);
+  function getVariables() external view returns (address, uint, uint, address,uint);
+  function isWhitelisted(address _member) external view returns (bool);
+}
+
+// File: contracts\interfaces\Oracle_Interface.sol
+
+//Swap Oracle functions - descriptions can be found in Oracle.sol
+interface Oracle_Interface{
+  function getQuery(uint _date) external view returns(bool);
+  function retrieveData(uint _date) external view returns (uint);
+  function pushData() external payable;
+}
+
+// File: contracts\libraries\SafeMath.sol
 
 //Slightly modified SafeMath library - includes a min function
 library SafeMath {
@@ -71,7 +131,7 @@ library SafeMath {
   }
 }
 
-
+// File: contracts\libraries\TokenLibrary.sol
 
 /**
 *The TokenLibrary contains the reference code used to create the specific DRCT base contract 
@@ -190,7 +250,7 @@ library TokenLibrary{
         uint _today = now - (now % 86400);
         uint i = 0;
         if(_today >= self.contract_details[0]){
-            while(i < (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
+            while(i <= (_today- self.contract_details[0])/86400 && self.contract_details[4] == 0){
                 if(oracle.getQuery(self.contract_details[0]+i*86400)){
                     self.contract_details[4] = oracle.retrieveData(self.contract_details[0]+i*86400);
                 }
@@ -199,7 +259,7 @@ library TokenLibrary{
         }
         i = 0;
         if(_today >= self.contract_details[1]){
-            while(i < (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
+            while(i <= (_today- self.contract_details[1])/86400 && self.contract_details[5] == 0){
                 if(oracle.getQuery(self.contract_details[1]+i*86400)){
                     self.contract_details[5] = oracle.retrieveData(self.contract_details[1]+i*86400);
                 }
@@ -318,6 +378,7 @@ library TokenLibrary{
     
 }
 
+// File: contracts\TokenToTokenSwap.sol
 
 /**
 *This contract is the specific DRCT base contract that holds the funds of the contract and
@@ -395,56 +456,7 @@ contract TokenToTokenSwap {
 
 }
 
-/**
-*This contracts helps clone factories and swaps through the Deployer.sol and MasterDeployer.sol.
-*The address of the targeted contract to clone has to be provided.
-*/
-contract CloneFactory {
-
-    /*Variables*/
-    address internal owner;
-    
-    /*Events*/
-    event CloneCreated(address indexed target, address clone);
-
-    /*Modifiers*/
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    /*Functions*/
-    constructor() public{
-        owner = msg.sender;
-    }    
-    
-    /**
-    *@dev Allows the owner to set a new owner address
-    *@param _owner the new owner address
-    */
-    function setOwner(address _owner) public onlyOwner(){
-        owner = _owner;
-    }
-
-    /**
-    *@dev Creates factory clone
-    *@param _target is the address being cloned
-    *@return address for clone
-    */
-    function createClone(address target) internal returns (address result) {
-        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
-        bytes20 targetBytes = bytes20(target);
-        for (uint i = 0; i < 20; i++) {
-            clone[26 + i] = targetBytes[i];
-        }
-        assembly {
-            let len := mload(clone)
-            let data := add(clone, 0x20)
-            result := create(0, data, len)
-        }
-    }
-}
-
+// File: contracts\Deployer.sol
 
 /**
 *Swap Deployer Contract - purpose is to save gas for deployment of Factory contract.
