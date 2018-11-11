@@ -10,7 +10,7 @@ DRCT contracts provide more flexibility in terms of rate sensitivity and trading
 1. [Instructions for quick start with Truffle Deployment](#Quick-Deployment)
 
 2. [Overview](#overview)
-    * [How Does it work?](#how-it-works)
+    * [How Does it work?](#how-it-work)
     * [Example Usage Scenarios](#usage-scenarios)
     * [Conclusion](#Conclusion)
     * [Updates](#Updates)
@@ -64,37 +64,42 @@ A functioning risk transfer market is the backbone of an advanced market economy
 
 DRCT contracts provide a decentralized option (pun intended) for derivatives that bear no counterparty risk (fully collateralized) are not exchange specific (it produces ERC20 compliant tokens that can be traded on a centralized or decentralized exchange) and bring efficiency to the traditional system. Currently, if two parties want to hedge or transfer risk, that seemingly simple transaction looks like this:
 
-![DRCT](./public/DerivativesOldModel.png)
+![Derivatives old model](./public/DerivativesOldModel.png)
 
 The DRCT contracts allow for this new and more efficient model:
 
-![DRCT](./public/DerivativesNewModel.png)
+![Derivatives new model](./public/DerivativesNewModel.png)
 
 
-### Creating contracts
+### How Does it work? <a name="how-it-work"> </a> 
 
 If you wish to simply enter a contract without a deep dive into the underlying solidity, you can use our DApp at http://dapp.daxia.org/ and follow the instuctions in the "How To" section (metamask is required).
 
-But if you want a dive in:
+Let's dive in:
 
-Before users can create DRCT contracts, the operator has to deploy the factory dud. The factory dud is deployed once and subsequent factories are cloned from it to minimize costs (for more information on cloning contracts see our article <a href= https://blog.goodaudience.com/attack-of-the-clones-how-dda-contracts-are-so-cheap-to-deploy-f3cee9c7566> Attack of the clones-- How dda contracts are so cheap to deploy </a>). Once the factory dud is deployed the opeartor can deploy a factory and set the standardized variables (token ratio, time duration in days, and multiplier) for the factory. The factory contract is the base of the system.  It holds the standardized variables and is called to create new contracts and create new DRCT tokens for the users. The source for the underlying reference rate is also specified at the factory level and all contracts and tokens created from it will be tied to that source. 
+Before users can create DRCT contracts, the operator has to deploy the factory dud. The factory dud is deployed once and subsequent factories are cloned from it to minimize costs (for more information on cloning contracts see our article <a href= https://blog.goodaudience.com/attack-of-the-clones-how-dda-contracts-are-so-cheap-to-deploy-f3cee9c7566>Attack Of The Clones — How DDA Contracts Are So Cheap To Deploy</a>). Once the factory dud is deployed the opeartor can deploy a factory and set the standardized variables (token ratio, time duration in days, and multiplier) for the factory. The factory contract is the base of the system.  It holds the standardized variables and is called to create new contracts and create new DRCT tokens for the users. The source for the underlying reference rate is also specified at the factory level and all contracts and tokens created from it will be tied to that source. 
 
-Ethereum smart contracts cannot access off-chain data. If a smart contract relies on off-chain (e.g. internet) data to evaluate or execute a function, the operator either has to manually feed the data to the contract, incentivize users to do it, or rely on a centralized party to provide the data (Oraclize.it is generally the standard). DRCT contracts use Oraclize.it to get off-chain data. The operator will have to deploy an oracle specifiying the source and set the oracle address for the factory. Daxia specifies two API's for Oraclize.it to get reference rate data from, gdax and binance. If gdax fails, the oracle will alternate between gdax and binance every 60 minutes until the underlying reference rate is obtained.    
+Ethereum smart contracts cannot access off-chain data. If a smart contract relies on off-chain (e.g. internet) data to evaluate or execute a function, as the DRCT contracts do, the operator either has to manually feed the data to the contract, incentivize users to do it, or rely on a centralized party to provide the data (Oraclize.it is generally the standard). Currently, DRCT contracts use Oraclize.it to get off-chain data. The operator will have to deploy an oracle specifiying the source and set the oracle address for the factory. Daxia specifies two API's for Oraclize.it to get reference rate data from, gdax and binance. If gdax fails, the oracle will alternate between gdax and binance every 60 minutes until the underlying reference rate is obtained. We recognize the risk of the oracle or API's failing and we are mitigating that risk by having a backup API. However, Daxia is exploring other options and has developed a decentralized and more robust oracle, <a href= https://github.com/DecentralizedDerivatives/MineableOracle> Proof of Work Oracle(POWO)</a> that would be governed through a DAO. 
 
 The standarized variables:
-* Ratio -- The token ratio's simplify the number of DRCT tokens per base token. Currently our base token has to be ERC20 compliant and we are working on allowing the use of DAI. For example, Ether has to be "wrapped" because it is not ERC20 compliant. One Ether gets you 1e18 wrapped Ether(ERC20 compliant) tokens.  To simplify this, we create a token ratio of 1e15 which means that for every one Ether worth of wrapped Ether, the party gets 1000 DRCT tokens. 
+* Ratio -- The token ratio's simplify the number of DRCT tokens per base token. Currently our base token is designed to be ERC20 compliant. For example, Ether has to be "wrapped" because it is not ERC20 compliant. One Ether gets you 1e18 wrapped Ether(ERC20 compliant) tokens.  To simplify this, we create a token ratio of 1e15 which means that for every one Ether worth of wrapped Ether, the party gets 1000 DRCT tokens. 
+
+![Ratio](./public/Ratio1.png)
+![Ratio for DRCT](./public/Ratio2.png)
 
 * Duration -- The duration is the number of days the contract lasts (from the start date onward).
 
 * Multiplier -- The multiplier is the number by which the reference rate is multiplied by to determine the payout.  Note that this also limits the contract in terms of potential upside/downside because the contracts pay up to only the collateralized amount. A multiplier of 10 means that if the underlying rate moves by 5%, the contract pays out based on a 50% (10 X 5%) change in the reference rate.  Since contracts are capped at a 100% move in either direction, a multiplier of 10 will be capped at moves of 10%.
 
-* Underlying reference rate oracle --  the source of the underlying reference rate is an important. In the traditional system, this has been a source of contention tha has led to years of litigation over the "reference rate" source or valuation before settling a derivative product. Being open and agreeing on the source before hand is another great efficiency introduced by DRCT contracts.  
+![Multiplier](./public/Multiplier.png)
+
+* Underlying reference rate oracle -- In the traditional system, this has been a source of contention that has led to years of litigation over the "reference rate" source or valuation before settleling a derivative product. Being open about and agreeing on the source before hand is another great efficiency introduced by DRCT contracts.  
 
 Once the factory is deployed, the operator can create new tokens via the deployTokenContract in the factory and users can create contracts and collateralize it and sell the position they don't want through the bulletin. All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
 
 
-### Payout
-Risk Profiles
+
+### Risk Profiles
 
 With the 0x protocol and the liquidity at most exchanges, the token currency risk can be abstracted from the return of the underlying reference rate. If the underlying tokens do have liquidity issues, there could be concerns about being delivered some tokens and the DRCT token may depreciate in value as delivery approaches. 
 ![DRCT](./public/DRCT.png) 
@@ -102,6 +107,7 @@ With the 0x protocol and the liquidity at most exchanges, the token currency ris
 To assure that the token payouts don’t cap out due to an underlying move in the token rate, parties should use tokens with a stable rate. For instance, tokenized Ether and tokenized Wei may be appropriate tokens for the underlying tokens as they will likely have tight arbitrage mechanisms keeping their values similar.
 
 ## Example Usage Scenarios <a name="usage-scenarios"> </a>
+
 #### Stable Coins
 If you hold ETH and are shorting ETH, and this combined position is a token, you have a stable coin. It’s as simple as that. The only downfall is: what is the cost? Daxia’s products have full collateralization, a sometimes-costly endeavor, and require contracts to be rolled from one expiration to another. A tokenized short position in an ETH/USD Daxia contract can act as a transparent and easy-to-understand stable coin.
 
@@ -111,10 +117,9 @@ A prediction market is in many ways another word for a derivatives exchange mixe
 #### Cross Border/ Chain risk
 A burgeoning technology is that of cross chain transfers. The system will rise to a whole new level when these abilities are seamless, borderless and trustless; however, for the meantime, cross chain transfer of risk will serve a large portion of the end users’ needs. Whether a party on the Ethereum wants Bitcoin exposure without the transaction fees and centralization of the exchanges, or a party desires to hedge price risk on an exchange in a jurisdiction which they are not approved to do business; derivatives allow parties to hedge risk or gain exposure in the native token of Ethereum. Having this ability will not only create incentives for openness across borders but will also allow for speculators to move exposure to a chain with simpler and more liquid decentralized exchanges.
 
-Stable coins, prediction markets, and cross border (or chain) price risk are issues and solutions that do not exist, and are not needed, in societies that have an efficient derivatives market. The launching of bitcoin futures (or other crypto futures) and the push towards a regulated market will provide liquidity for the network, however does not address the fundamental need for the network which is a truly open, portable and unstoppable application available to all users.
-
 ## Conclusion <a name="conclusion"> </a>
 
+Stable coins, prediction markets, and cross border (or chain) price risk are issues and solutions that do not exist, and are not needed, in societies that have an efficient derivatives market. The launching of bitcoin futures (or other crypto futures) and the push towards a regulated market will provide liquidity for the network, however does not address the fundamental need for the network which is a truly open, portable and unstoppable application available to all users.
 
 ## Documentation <a name="Documentation"> </a> 
 
