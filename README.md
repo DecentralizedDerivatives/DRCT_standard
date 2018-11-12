@@ -14,8 +14,10 @@ Additionally, DRCT tokens allow users to long or short assets that are non-nativ
 2. [Overview](#overview)
     * [How Does it work?](#how-it-works)
     * [Example Usage Scenarios](#usage-scenarios)
+    * [Standarized variables](#standarized-variables)
+    * [Information necessary to trade](#info-for-trading)
+    * [Risk Profiles](#risk-profiles)
     * [Conclusion](#Conclusion)
-    * [Updates](#Updates)
 
 3. [Documentation](#Documentation)
     * [Contracts Description](#Contracts-Description)
@@ -87,7 +89,7 @@ Ethereum smart contracts cannot access off-chain data. If a smart contract relie
 
 The Oracle contract specified APIs' are the pieces of information that allow DRCT users' to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token. 
 
-The standardized variables:
+#### The standardized variables <a name="standarized-variables"> </a>
 * Ratio -- The token ratio's simplify the number of DRCT tokens per base token. Currently our base token is designed to be ERC20 compliant. Ether has to be "wrapped" because it is not ERC20 compliant. One Ether gets you 1e18 wrapped Ether(ERC20 compliant) tokens.  To simplify this, we create a token ratio of 1e15 which means that for every one Ether worth of wrapped Ether, the party gets 1000 DRCT tokens. In the factory.setVariables function the token ratio specifies the denominator. The numerator is 1e18 since the wrapped Ether is ERC20 compliant. However, this token ratio could be customized if different ERC20 tokens are used to collateralize the short and long side.
 
 ```Solidity
@@ -108,17 +110,17 @@ factory.setVariables(1000000000000000,7,1,0); //token ratio, duration (days), mu
 <img src="./public/Multiplier.png" width="200" height="50">
 </p>
 
-* Underlying reference rate oracle -- In the traditional system, this has been a source of contention that has led to years of litigation over the "reference rate" source or valuation before settlement a derivative product. Being open about and agreeing on the source beforehand is another great efficiency introduced by DRCT contracts.  
+* Underlying reference rate oracle -- In the traditional system, this has been a source of contention that has led to years of litigation over the "reference rate" source or valuation before settlement a derivative product. Being open about and agreeing on the source beforehand is an efficiency introduced by DRCT contracts.  
 
 Once the factory is deployed, the operator can create new tokens via the factory.deployTokenContract function and users can create and collateralize contracts, receive DRCT tokens in the addresses specified for the long and short tokens in the Factory contract and can sell the unwanted tokens/position through the bulletin or any exchange. All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
 
-### Information necessary to trade:
+### Information necessary to trade <a name="info-for-trading"> </a>
 
 Unlike most Ethereum tokens, these tokens have an expiration date. Upon the call/end date of the master contract (the creator DRCT contract), all trading in the token is suspended. The DRCT tokens are then delivered the token specified by the contract. This delivery gas cost is paid for by Daxia and requires zero input from the user. Daxia begins requesting the prices from the oracle at 12:15AM UTC time to determine the payouts and delivers the token payouts after successful callback (receiving the price) from the oracle. However, the oracle function (oracle.pushData()) and the delivery functions (TokenToToken.ForcePay(numtopay)) can be ran by any user as soon as the expiration date/end date is reached. The payout function will deliver the tokens/payout only after a price has been received for the end date.  
 
 If a party wishes to maintain exposure to the underlying reference rate, they must enter into another contract with a further delivery date.
 
-### Risk Profiles
+### Risk Profiles <a name="risk-profiles"> </a>
 
 With the 0x protocol and the liquidity at most exchanges, the token currency risk can be abstracted from the return of the underlying reference rate. If the underlying tokens have liquidity issues, there could be concerns about delivery of those tokens and the DRCT token may depreciate as delivery approaches. The underlying tokens could be any ERC20 token and DA1 and DA2 could be two different tokens, hence the TokRate below captures that. Since currently the DApp only allows for Ether/Wrapped Ether to be used as collateral the TokRate = 1. However, through the smart contracts, it would be possible to use any ERC20 token. Daxia's DApp is setup to take Ether right now, but we are exploring and developing infrastructure to allow for the use of DAI in our contracts and through the DApp. 
 
