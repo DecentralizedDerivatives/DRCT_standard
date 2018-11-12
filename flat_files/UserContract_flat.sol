@@ -1,16 +1,6 @@
 pragma solidity ^0.4.24;
 
-
-//Swap interface- descriptions can be found in TokenToTokenSwap.sol
-interface TokenToTokenSwap_Interface {
-  function createSwap(uint _amount, address _senderAdd) external;
-}
-
-//Swap Deployer functions - descriptions can be found in Deployer.sol
-interface Deployer_Interface {
-  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
-}
-
+// File: contracts\interfaces\Factory_Interface.sol
 
 //Swap factory functions - descriptions can be found in Factory.sol
 interface Factory_Interface {
@@ -22,6 +12,40 @@ interface Factory_Interface {
   function isWhitelisted(address _member) external view returns (bool);
 }
 
+// File: contracts\libraries\SafeMath.sol
+
+//Slightly modified SafeMath library - includes a min function
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function min(uint a, uint b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+// File: contracts\libraries\DRCTLibrary.sol
 
 /**
 *The DRCTLibrary contains the reference code used in the DRCT_Token (an ERC20 compliant token
@@ -365,6 +389,8 @@ library DRCTLibrary{
     }
 }
 
+// File: contracts\DRCT_Token.sol
+
 /**
 *The DRCT_Token is an ERC20 compliant token representing the payout of the swap contract
 *specified in the Factory contract.
@@ -378,6 +404,8 @@ contract DRCT_Token {
 
     /*Variables*/
     DRCTLibrary.TokenStorage public drct;
+    string public constant name = "DRCT Token";
+    string public constant symbol = "DRCT";
 
     /*Functions*/
     /**
@@ -505,10 +533,20 @@ contract DRCT_Token {
     }
 }
 
+// File: contracts\interfaces\Deployer_Interface.sol
 
+//Swap Deployer functions - descriptions can be found in Deployer.sol
+interface Deployer_Interface {
+  function newContract(address _party, address user_contract, uint _start_date) external payable returns (address);
+}
 
+// File: contracts\interfaces\Membership_Interface.sol
 
+interface Membership_Interface {
+    function getMembershipType(address _member) external constant returns(uint);
+}
 
+// File: contracts\interfaces\Wrapped_Ether_Interface.sol
 
 //ERC20 function interface with create token and withdraw
 interface Wrapped_Ether_Interface {
@@ -523,11 +561,7 @@ interface Wrapped_Ether_Interface {
 
 }
 
-interface Membership_Interface {
-    function getMembershipType(address _member) external constant returns(uint);
-}
-
-
+// File: contracts\Factory.sol
 
 /**
 *The Factory contract sets the standardized variables and also deploys new contracts based on
@@ -561,7 +595,7 @@ contract Factory {
     address[] public contracts;
     uint[] public startDates;
     address public memberContract;
-    mapping(uint => bool) whitelistedTypes;
+    uint whitelistedTypes;
     mapping(address => uint) public created_contracts;
     mapping(address => uint) public token_dates;
     mapping(uint => address) public long_tokens;
@@ -580,18 +614,21 @@ contract Factory {
 
     /*Functions*/
     /**
-    *@dev Constructor - Sets owner
+    *@dev Sets the member type/permissions for those whitelisted and owner
+    *@param _memberTypes is the list of member types
     */
-     constructor() public {
+     constructor(uint _memberTypes) public {
         owner = msg.sender;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
     *@dev constructor function for cloned factory
     */
-    function init(address _owner) public{
+    function init(address _owner, uint _memberTypes) public{
         require(owner == address(0));
         owner = _owner;
+        whitelistedTypes=_memberTypes;
     }
 
     /**
@@ -602,16 +639,6 @@ contract Factory {
         memberContract = _memberContract;
     }
 
-    /**
-    *@dev Sets the member types/permissions for those whitelisted
-    *@param _memberTypes is the list of member types
-    */
-    function setWhitelistedMemberTypes(uint[] _memberTypes) public onlyOwner(){
-        whitelistedTypes[0] = false;
-        for(uint i = 0; i<_memberTypes.length;i++){
-            whitelistedTypes[_memberTypes[i]] = true;
-        }
-    }
 
     /**
     *@dev Checks the membership type/permissions for whitelisted members
@@ -619,7 +646,7 @@ contract Factory {
     */
     function isWhitelisted(address _member) public view returns (bool){
         Membership_Interface Member = Membership_Interface(memberContract);
-        return whitelistedTypes[Member.getMembershipType(_member)];
+        return Member.getMembershipType(_member)>= whitelistedTypes;
     }
  
     /**
@@ -700,16 +727,17 @@ contract Factory {
     /**
     *@dev Allows a user to deploy a new swap contract, if they pay the fee
     *@param _start_date the contract start date 
+    *@pararm _user your address if calling it directly.  Allows you to create on behalf of someone
     *@return new_contract address for he newly created swap address and calls 
     *event 'ContractCreation'
     */
-    function deployContract(uint _start_date) public payable returns (address) {
-        require(msg.value >= fee && isWhitelisted(msg.sender));
+    function deployContract(uint _start_date,address _user) public payable returns (address) {
+        require(msg.value >= fee && isWhitelisted(_user));
         require(_start_date % 86400 == 0);
-        address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
+        address new_contract = deployer.newContract(_user, user_contract, _start_date);
         contracts.push(new_contract);
         created_contracts[new_contract] = _start_date;
-        emit ContractCreation(msg.sender,new_contract);
+        emit ContractCreation(_user,new_contract);
         return new_contract;
     }
 
@@ -830,6 +858,7 @@ contract Factory {
     }
 }
 
+// File: contracts\Wrapped_Ether.sol
 
 /**
 *This is the basic wrapped Ether contract. 
@@ -949,37 +978,14 @@ contract Wrapped_Ether {
     }
 }
 
+// File: contracts\interfaces\TokenToTokenSwap_Interface.sol
 
-//Slightly modified SafeMath library - includes a min function
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function min(uint a, uint b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
+//Swap interface- descriptions can be found in TokenToTokenSwap.sol
+interface TokenToTokenSwap_Interface {
+  function createSwap(uint _amount, address _senderAdd) external;
 }
+
+// File: contracts\UserContract.sol
 
 /**
 *The User Contract enables the entering of a deployed swap along with the wrapping of Ether.  This
@@ -996,6 +1002,8 @@ contract UserContract{
     Factory internal factory; 
     address public factory_address;
     address internal owner;
+    event StartContract(address _newswap, uint _amount);
+
 
     /*Functions*/
     constructor() public {
@@ -1004,19 +1012,22 @@ contract UserContract{
 
     /**
     *@dev Value must be sent with Initiate and enter the _amount(in wei) 
-    *@param _swapadd is the address of the deployed contract created from the Factory contract
-    *@param _amount is the amount of the base tokens(short or long) in the
-    *swap. For wrapped Ether, this is wei.
+    *@param _startDate is the startDate of the contract you want to deploy
+    *@param _amount is the amount of Ether on each side of the contract initially
     */
-    function Initiate(address _swapadd, uint _amount) payable public{
-        require(msg.value == _amount.mul(2));
+    function Initiate(uint _startDate, uint _amount) payable public{
+        uint _fee = factory.fee();
+        require(msg.value == _amount.mul(2) + _fee);
+        address _swapadd = factory.deployContract.value(_fee)(_startDate,msg.sender);
         swap = TokenToTokenSwap_Interface(_swapadd);
         address token_address = factory.token();
         baseToken = Wrapped_Ether(token_address);
         baseToken.createToken.value(_amount.mul(2))();
         baseToken.transfer(_swapadd,_amount.mul(2));
         swap.createSwap(_amount, msg.sender);
+        emit StartContract(_swapadd,_amount);
     }
+
 
     /**
     *@dev Set factory address 

@@ -18,6 +18,8 @@ var MasterDeployer = artifacts.require("MasterDeployer");
 *4_Admin_setup.js
 */
 
+var _master = "0xcd8e11dad961dad43cc3de40df918fe808cbda74"; //MAINNET
+//var _master = "0xe8327b94aba6fbc3a95f7ffaf8dd568e6cd36616"; //rinkeby
 
 module.exports =async function(callback) {
     let oracle;
@@ -31,7 +33,7 @@ module.exports =async function(callback) {
        factoryDud = await Factory.new(0);
         console.log("dud_factory:  ",factoryDud.address)
           sleep_s(10);
-        masterDeployer = await MasterDeployer.new();
+        masterDeployer = await MasterDeployer.at(_master);
         console.log("masterDeployer: ", masterDeployer.address);
           sleep_s(10);
         await masterDeployer.setFactory(factoryDud.address);

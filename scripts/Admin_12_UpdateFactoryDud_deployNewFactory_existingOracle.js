@@ -22,20 +22,20 @@ var Deployer = artifacts.require("Deployer");
 *@dev Update the addresses below. get these addresses from the log after running 
 *4_Admin_setup.js
 */
-var swapFee = 500; //.05%
+var swapFee = 0; //500 is .05%
 
-var type = "BTC/USD";
+/*var type = "BTC/USD";
 var  duration = 7;
 var multiplier = 1;
 //var _oracle = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //btc rinkeby
 var _oracle = "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //MAINNET btc mainnet
-
-/*var type = "ETC/USD";
+*/
+var type = "ETC/USD";
 var  duration = 7;
 var multiplier = 5;
 //var _oracle = "0xd1864d6e55c0fb2b64035cfbc5a5c2f07e9cff89";//eth rinkeby
 var _oracle = "0xc479e26a7237c1839f44a09843699597ef23e2c3";//MAINNET eth mainnet
-*/
+
 /*var _member = "0x620b6b6ac75ad9234eb6c533688ddd8a5948650e";//rinkeby 0x50d9bf95bf09d6ea9812da2763eac32d21ca31d5
 var _wrapped = "0x6248cb8a316fc8f1488ce56f6ea517151923531a";//rinkeby
 var _master = "0xe8327b94aba6fbc3a95f7ffaf8dd568e6cd36616"; //rinkeby
@@ -44,7 +44,7 @@ var _master = "0xe8327b94aba6fbc3a95f7ffaf8dd568e6cd36616"; //rinkeby
 var _member = "0xd33615c5ea5d703f06d237f6c56ff2400b564c77";//MAINNET
 var _wrapped = "0xf2740c75f221788cf78c716b953a7f1c769d49b9";//MAINNET
 var _master = "0xcd8e11dad961dad43cc3de40df918fe808cbda74"; //MAINNET
-//var _factoryDud = "0xa58d1ea78cd1b610d5dc08c57b1f9fea185061cd"; //MAINNET
+//var _factoryDud = "0x731579Ebb304f70384700D635e20A282a2a54b43"; //MAINNET
 
 
 module.exports =async function(callback) {
@@ -66,6 +66,7 @@ module.exports =async function(callback) {
       let res = await masterDeployer.deployFactory(0);
       sleep_s(10);
       res = res.logs[0].args._factory;
+      //let res = '';
       factory = await Factory.at(res);
       console.log('Factory : ',factory.address);
       sleep_s(40);
@@ -92,13 +93,14 @@ module.exports =async function(callback) {
       console.log("set user contract");
       sleep_s(10);
 
-      deployer = await Deployer.new(factory.address);
+     deployer = await Deployer.new(factory.address);
       console.log('Deployer: ',deployer.address);
       sleep_s(60);
       //deployer = await Deployer.at("");
-      await factory.setDeployer(deployer.address);
+     await factory.setDeployer(deployer.address);
       console.log("set deployer");
       sleep_s(10);
+
       await factory.setOracleAddress(_oracle);
       console.log('Oracle: ',_oracle);
       sleep_s(10);

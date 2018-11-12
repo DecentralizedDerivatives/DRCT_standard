@@ -30,25 +30,36 @@ var o_startdate = d;
 var hdate = _date;*/
 
 
-var o_startdate = 1540512000;
-var hdate = "10/26/2018";
+/*var o_startdate = 1541721600;
+var hdate = "11/09/2018";*/
+
+/*var o_startdate = 1542326400;
+var hdate = "11/16/2018";*/
+
+var o_startdate = 1542931200;
+var hdate = "11/23/2018";
 
 //var type = "ETH/USD";
 //var factory_address= "0xa6fc8ed0d94a33de24eda0c226546ffa3737358a";//7day 5x rinkeby
 //var factory_address= "0x29327a6718b00596abceb2da720f83725af8a7ba";//1 day 5x rinkeby
 //var factory_address = "0xf55e6ce774cec3817467aed5f5a5769f006658d0"; //Whitelist change 5x rinkeby
+//var factory_address = "0xc982c3cc2dd1b519dbc585014ef046e4c13957a9"; //7day 1click rinkeby
 
 //var factory_address = "0x8207cea5aa1a9047b6607611c2b5b3f04df7b0d3"; //7day 5x mainnet
 //var factory_address = "0x8ff7e9f04fed4a6d7184962c6c44d2e701c2fb8a"; //Whitelist change 5x mainnet
+//var factory_address = "0xac0b99c95af702efd52ade8112fa7941f3643897"; //7day 1click mainnet
+
 
 var type = "BTC/USD";
 //var factory_address = "0x804870d9b8184e12444405e1ee114757b97897b8"; //7day 1xrinkeby
 //var factory_address = "0x9ff0c23d9aba6cdde2c75b1b8c85c23e7d305aac"; //1day 1x rinkeby
 //var factory_address = "0x523b08e7afaf851874aa469cc79ad365547f41a7"; //1day 100x rinkeby
-var factory_address = "0x92217550aba5912ba7eb70978871daf7d6bcc16d"; //Whitelist change 1x rinkeby
+//var factory_address = "0x92217550aba5912ba7eb70978871daf7d6bcc16d"; //Whitelist change 1x rinkeby
+//var factory_address = "0x0e38211666fa195888cd358f7aadcb10e2315b9b"; //7day 1click rinkeby
 
 //var factory_address = "0x58ae23fd188a23a4f1224c3072fc7db40fca8d9c"; //7day 1x mainnet
 //var factory_address = "0xce971acf8b9b0ce67a8018c4af2094b02c22da43"; //Whitelist change 1x mainnet
+var factory_address = "0x9bcf387637c128d319320a9be43daea349f29028"; //7day 1click mainnet
 
 
 console.log(hdate, type, factory_address, o_startdate);

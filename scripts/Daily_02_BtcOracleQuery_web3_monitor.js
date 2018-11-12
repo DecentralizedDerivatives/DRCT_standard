@@ -48,11 +48,11 @@ var _date = Date.now()/1000- (Date.now()/1000)%86400;
 */
 
 //BTC oracle
-var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //rinkeby
+/*var _oracleBtc = "0x98cb5fc6ce37b4c4dceab510a56af254c551b705"; //rinkeby
 var accountFrom= '0xc69c64c226fea62234afe4f5832a051ebc860540'; //rinkeby
-
-//var  _oracleBtc= "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //mainnet
-//var accountFrom = '0x074993DeE953F2706ae318e11622b3EE0b7850C3';//mainnet
+*/
+var  _oracleBtc= "0x98d3c4adb5c171012d3f1fde32ed8dca488a2b34"; //mainnet
+var accountFrom = '0x074993DeE953F2706ae318e11622b3EE0b7850C3';//mainnet
 
 console.log(_nowUTC);
 console.log("ETH Oracle: ", _oracleEth);
