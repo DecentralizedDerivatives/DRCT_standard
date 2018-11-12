@@ -13,10 +13,10 @@ Additionally, DRCT tokens allow users to long or short assets that are non-nativ
 
 2. [Overview](#overview)
     * [How Does it work?](#how-it-works)
-    * [Example Usage Scenarios](#usage-scenarios)
     * [Standarized variables](#standarized-variables)
     * [Information necessary to trade](#info-for-trading)
     * [Risk Profiles](#risk-profiles)
+    * [Example Usage Scenarios](#usage-scenarios)
     * [Conclusion](#Conclusion)
 
 3. [Documentation](#Documentation)
