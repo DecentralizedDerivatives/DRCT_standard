@@ -128,6 +128,8 @@ To assure that the token payouts don’t cap out due to an underlying move in th
 
 ## Example Usage Scenarios <a name="usage-scenarios"> </a>
 
+An efficient derivatives market can provide a stable coin, cross border/chain hedge and risk exposure and act as a prediction market. 
+
 #### Stable Coins
 If you hold ETH and are shorting ETH, and this combined position is a token, you have a stable coin. It’s as simple as that. The only downfall is: what is the cost? Daxia’s products have full collateralization, a sometimes-costly endeavor, and require contracts to be rolled from one expiration to another. A tokenized short position in an ETH/USD Daxia contract can act as a transparent and easy-to-understand stable coin.
 
@@ -139,7 +141,9 @@ A burgeoning technology is that of cross chain transfers. The system will rise t
 
 ## Conclusion <a name="conclusion"> </a>
 
-Stable coins, prediction markets, and cross border (or chain) price risk are issues and solutions that do not exist, and are not needed, in societies that have an efficient derivatives market. The launching of bitcoin futures (or other crypto futures) and the push towards a regulated market will provide liquidity for the network, however does not address the fundamental need for the network which is a truly open, portable and unstoppable application available to all users.
+Wide adoption of cryptocurrencies will only occur when price volatility can be harnessed and/or tamed. Businesses and individuals need derivatives to be part of their risk mitigation strategy. They should be focused on their business operations and daily life, not price volatility. 
+
+The launching of bitcoin futures (or other crypto futures) and the push towards a regulated market will provide liquidity for the network, however does not address the fundamental need for the network which is a truly open, portable and unstoppable application available to all users. Businesses and individuals should not have to come up with a minimum of 5 Bitcoin to be able to short it. Wide adoption starts with trully accessable risk manangment tools for everyone. 
 
 ## Documentation <a name="Documentation"> </a> 
 
