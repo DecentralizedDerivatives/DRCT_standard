@@ -65,6 +65,7 @@ contract('Exchange Test', function(accounts) {
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
 	  	listed = await exchange.getTotalListed(accounts[1], short_token.address);
 	  	console.log("listed", listed);
+	  	assert.equal(listed, 500);
 	  	details = await exchange.getOrder(1);
 	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
 	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
