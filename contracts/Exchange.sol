@@ -297,6 +297,16 @@ contract Exchange{
     function getDdaListAssetInfo(address _assetAddress) public view returns(uint, uint, bool){
         return(listOfAssets[_assetAddress].price,listOfAssets[_assetAddress].amount,listOfAssets[_assetAddress].isLong);
     }
+
+    /**
+    *@param _owner address
+    *@param _asset address
+    *@return Returns the total listed the owner has listed for the specified asset
+    */
+    function getTotalListed(address _owner, address _asset) public view returns (uint) {
+       return totalListed[_owner][_asset]; 
+    }
+
     /**
     *@dev An internal function to update mappings when an order is removed from the book
     *@param _orderId is the uint256 ID of order
