@@ -55,7 +55,7 @@ contract Exchange{
 
     /*Events*/
     event ListDDA(address _token, uint256 _amount, uint256 _price,bool _isLong);
-    event BuyDDA(address _token, uint256 _amount, uint256 _price);
+    event BuyDDA(address _token,address _sender, uint256 _amount, uint256 _price);
     event UnlistDDA(address _token);
     event OrderPlaced(uint _orderID, address _sender,address _token, uint256 _amount, uint256 _price);
     event Sale(uint _orderID,address _sender,address _token, uint256 _amount, uint256 _price);
@@ -173,7 +173,7 @@ contract Exchange{
             owner.transfer(totalPrice);
             listing.amount= listing.amount.sub(_amount);
         }
-        emit BuyDDA(_asset,_amount,totalPrice);
+        emit BuyDDA(_asset,msg.sender,_amount,totalPrice);
     }
 
     /**
