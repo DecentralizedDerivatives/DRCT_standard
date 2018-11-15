@@ -296,4 +296,14 @@ contract('Throw Tests', function(accounts) {
 			await factory.deployContract(o_startdate,accounts[1],{from: accounts[1]});
 	  		//await expectThrow(factory.deployContract(o_startdate,{from: accounts[1]}));
 		});
+			it("Test Multiple List", async function(){
+	  	var receipt = await userContract.Initiate(o_startdate,1000000000000000000,{value: web3.toWei(2,'ether'), from: accounts[1]});
+	  	swap_add = receipt.logs[0].args._newswap;
+	  	swap = await TokenToTokenSwap.at(swap_add);
+	  	await short_token.approve(exchange.address,500,{from: accounts[1]});;
+	  	assert.equal(await short_token.allowance(accounts[1],exchange.address),500,"exchange should own tokens");
+	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
+	  	await expectThrow(exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]}));
+
+	})
 });

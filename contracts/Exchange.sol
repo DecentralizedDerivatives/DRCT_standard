@@ -34,6 +34,7 @@ contract Exchange{
     //Index telling where a specific tokenId is in the forSale array
     address[] public openBooks;
     mapping (address => uint) public openDdaListIndex;
+    mapping(address => mapping (address => uint)) public totalListed;//user to tokenamounts
     mapping(address => ListAsset) public listOfAssets;
     //Maps an OrderID to the list of orders
     mapping(uint256 => Order) public orders;
@@ -53,9 +54,12 @@ contract Exchange{
     
 
     /*Events*/
-    event OrderPlaced(address _sender,address _token, uint256 _amount, uint256 _price);
-    event Sale(address _sender,address _token, uint256 _amount, uint256 _price);
-    event OrderRemoved(address _sender,address _token, uint256 _amount, uint256 _price);
+    event ListDDA(address _token, uint256 _amount, uint256 _price,bool _isLong);
+    event BuyDDA(address _token, uint256 _amount, uint256 _price);
+    event UnlistDDA(address _token);
+    event OrderPlaced(uint _orderID, address _sender,address _token, uint256 _amount, uint256 _price);
+    event Sale(uint _orderID,address _sender,address _token, uint256 _amount, uint256 _price);
+    event OrderRemoved(uint _orderID,address _sender,address _token, uint256 _amount, uint256 _price);
 
     /*Modifiers*/
     /**
@@ -86,7 +90,7 @@ contract Exchange{
         require(blacklist[msg.sender] == false);
         require(_price > 0);
         ERC20_Interface token = ERC20_Interface(_tokenadd);
-        require(token.allowance(msg.sender,address(this)) >= _amount);
+        require(totalListed[msg.sender][_tokenadd] + _amount <= token.allowance(msg.sender,address(this)));
         if(forSale[_tokenadd].length == 0){
             forSale[_tokenadd].push(0);
             }
@@ -98,13 +102,14 @@ contract Exchange{
             price: _price,
             amount:_amount
         });
-        emit OrderPlaced(msg.sender,_tokenadd,_amount,_price);
+        emit OrderPlaced(order_nonce,msg.sender,_tokenadd,_amount,_price);
         if(openBookIndex[_tokenadd] == 0 ){    
             openBookIndex[_tokenadd] = openBooks.length;
             openBooks.push(_tokenadd);
         }
         userOrderIndex[order_nonce] = userOrders[msg.sender].length;
         userOrders[msg.sender].push(order_nonce);
+        totalListed[msg.sender][_tokenadd] += _amount;
         order_nonce += 1;
     }
 
@@ -124,6 +129,7 @@ contract Exchange{
         listing.isLong= _isLong;
         openDdaListIndex[_asset] = openDdaListAssets.length;
         openDdaListAssets.push(_asset);
+        emit ListDDA(_asset,_amount,_price,_isLong);
         
     }
 
@@ -147,6 +153,7 @@ contract Exchange{
         openDdaListIndex[lastAdd]= indexToDelete;
         openDdaListAssets.length--;
         openDdaListIndex[_asset] = 0;
+        emit UnlistDDA(_asset);
     }
 
     /**
@@ -166,6 +173,7 @@ contract Exchange{
             owner.transfer(totalPrice);
             listing.amount= listing.amount.sub(_amount);
         }
+        emit BuyDDA(_asset,_amount,totalPrice);
     }
 
     /**
@@ -177,7 +185,7 @@ contract Exchange{
         Order memory _order = orders[_orderId];
         require(msg.sender== _order.maker || msg.sender == owner);
         unLister(_orderId,_order);
-        emit OrderRemoved(msg.sender,_order.asset,_order.amount,_order.price);
+        emit OrderRemoved(_orderId,msg.sender,_order.asset,_order.amount,_order.price);
     }
 
     /**
@@ -196,7 +204,7 @@ contract Exchange{
             maker.transfer(_order.price);
         }
         unLister(_orderId,_order);
-        emit Sale(msg.sender,_order.asset,_order.amount,_order.price);
+        emit Sale(_orderId,msg.sender,_order.asset,_order.amount,_order.price);
     }
 
     /**
@@ -299,6 +307,7 @@ contract Exchange{
             uint256 lastTokenIndex;
             address lastAdd;
             uint256  lastToken;
+        totalListed[_order.maker][_order.asset] -= _order.amount;
         if(forSale[_order.asset].length == 2){
             tokenIndex = openBookIndex[_order.asset];
             lastTokenIndex = openBooks.length.sub(1);
