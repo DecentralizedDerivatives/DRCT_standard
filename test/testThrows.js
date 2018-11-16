@@ -1,6 +1,6 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
 var Test_Oracle = artifacts.require("Test_Oracle");
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
+var Wrapped_Ether = artifacts.require("WETH9");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
@@ -258,8 +258,8 @@ contract('Throw Tests', function(accounts) {
 			var receipt = await factory.deployContract(o_startdate,accounts[1],{from: accounts[2]});
 		  	swap_add = receipt.logs[0].args._created;
 		  	swap = await TokenToTokenSwap.at(swap_add);
-		  	await base.createToken({value: web3.toWei(2,'ether'), from: accounts[2]});
-		  	await base.createToken({value: web3.toWei(2,'ether'), from: accounts[2]});
+		  	await base.deposit({value: web3.toWei(2,'ether'), from: accounts[2]});
+		  	await base.deposit({value: web3.toWei(2,'ether'), from: accounts[2]});
 		  	await base.transfer(swap_add,2000000000000000000,{from: accounts[2]});
 		  	await expectThrow(swap.createSwap(1000000000000000000,accounts[2],{from: accounts[2]}));
 		});
