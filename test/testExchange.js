@@ -1,5 +1,5 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
-/*var Test_Oracle = artifacts.require("Test_Oracle");
+var Test_Oracle = artifacts.require("Test_Oracle");
 var Wrapped_Ether = artifacts.require("Wrapped_Ether");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
@@ -63,6 +63,9 @@ contract('Exchange Test', function(accounts) {
 	  	await short_token.approve(exchange.address,500,{from: accounts[1]});;
 	  	assert.equal(await short_token.allowance(accounts[1],exchange.address),500,"exchange should own tokens");
 	  	await exchange.list(short_token.address,500,web3.toWei(10,'ether'),{from: accounts[1]});
+	  	listed = await exchange.getTotalListed(accounts[1], short_token.address);
+	  	console.log("listed", listed);
+	  	assert.equal(listed, 500);
 	  	details = await exchange.getOrder(1);
 	  	assert.equal(details[0],accounts[1], "Address 1 should be maker");
 	  	assert.equal(details[1], web3.toWei(10,'ether'),"Price should be 10 Ether");
@@ -279,4 +282,3 @@ contract('Exchange Test', function(accounts) {
 	});
 });
 
-*/

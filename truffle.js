@@ -90,10 +90,24 @@ module.exports = {
       gasPrice: 17e9
     },
 
-    mainnet: {
+/*    mainnet: {
       network_id: "1",
       provider: function () {
         var wallet = new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/' + accessToken)
+        var nonceTracker = new NonceTrackerSubprovider()
+        wallet.engine._providers.unshift(nonceTracker)
+        nonceTracker.setEngine(wallet.engine)
+        return wallet
+      },
+      network_id: 1,
+      gas: 4700000,
+      gasPrice: 4000000000
+    },*/
+
+        mainnet: {
+      network_id: "1",
+      provider: function () {
+        var wallet = new HDWalletProvider(mnemonic, 'https://eth-mainnet.alchemyapi.io/jsonrpc/'+ accessToken)
         var nonceTracker = new NonceTrackerSubprovider()
         wallet.engine._providers.unshift(nonceTracker)
         nonceTracker.setEngine(wallet.engine)
