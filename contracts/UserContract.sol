@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/TokenToTokenSwap_Interface.sol";
 import "./Factory.sol";
-import "./Wrapped_Ether.sol";
+import "./WETH9.sol";
 import "./libraries/SafeMath.sol";
 
 /**
@@ -17,7 +17,7 @@ contract UserContract{
 
     /*Variables*/
     TokenToTokenSwap_Interface internal swap;
-    Wrapped_Ether internal baseToken;
+    WETH9 internal baseToken;
     Factory internal factory; 
     address public factory_address;
     address internal owner;
@@ -40,8 +40,8 @@ contract UserContract{
         address _swapadd = factory.deployContract.value(_fee)(_startDate,msg.sender);
         swap = TokenToTokenSwap_Interface(_swapadd);
         address token_address = factory.token();
-        baseToken = Wrapped_Ether(token_address);
-        baseToken.createToken.value(_amount.mul(2))();
+        baseToken = WETH9(token_address);
+        baseToken.deposit.value(_amount.mul(2))();
         baseToken.transfer(_swapadd,_amount.mul(2));
         swap.createSwap(_amount, msg.sender);
         emit StartContract(_swapadd,_amount);

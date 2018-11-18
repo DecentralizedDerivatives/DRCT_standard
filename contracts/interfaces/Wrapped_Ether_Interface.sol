@@ -9,6 +9,6 @@ interface Wrapped_Ether_Interface {
   function approve(address _spender, uint _amount) external returns (bool);
   function allowance(address _owner, address _spender) external constant returns (uint);
   function withdraw(uint _value) external;
-  function createToken() external;
+  function deposit() external;
 
 }

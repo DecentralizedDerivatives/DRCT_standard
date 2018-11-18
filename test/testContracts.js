@@ -1,6 +1,6 @@
 /*this contract tests the typical workflow from the dApp (user contract, cash out)*/
 var Test_Oracle = artifacts.require("Test_Oracle");
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
+var Wrapped_Ether = artifacts.require("WETH9");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
@@ -162,7 +162,7 @@ contract('Base Tests', function(accounts) {
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
-	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	await base.deposit({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
 	  	await swap.createSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
@@ -192,7 +192,7 @@ contract('Base Tests', function(accounts) {
 	  	swap_add = receipt.logs[0].args._created;
 	  	swap = await TokenToTokenSwap.at(swap_add);
 	  	assert.equal(await swap.currentState(),0,"Current State should be 0");
-	  	await base.createToken({value: web3.toWei(20,'ether'), from: accounts[1]});
+	  	await base.deposit({value: web3.toWei(20,'ether'), from: accounts[1]});
 	  	await base.transfer(swap_add,20000000000000000000,{from: accounts[1]});
 	  	await swap.createSwap(10000000000000000000,accounts[1],{from: accounts[1]});
 	  	assert.equal(await swap.currentState(),1,"Current State should be 1");
