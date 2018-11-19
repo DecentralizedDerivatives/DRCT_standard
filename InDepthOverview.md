@@ -1,6 +1,6 @@
 <p align="center">
   <a href='https://www.daxia.us/'>
-    <img src= './public/DarkText_IconColor.png' alt='Daxia.us' />
+    <img src= './public/DarkText_IconColor.png' width="300" height="100" alt='Daxia.us' />
   </a>
 </p>
 
@@ -24,8 +24,8 @@
 ## Table of Contents
 
 * Dynamic Rate Cash Transaction Tokens
+  * [Background](#background) 
   * [Overview](#overview)
-  * [Motivation](#background)
   * [How Does it work?](#how-it-works)
   * [Standarized variables](#standarized-variables)
   * [Information necessary to trade](#info-for-trading)
@@ -44,19 +44,6 @@
 
 # Dynamic Rate Cash Transaction Tokens
 
-## Overview <a name="overview"> </a> 
-Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT token contracts are a risk management tool for cryptocurrency users that allow to long and/or short cryptocurrencies. Being long is a position where, if the price goes up, you make money and if it goes down, you lose money. The traditional way of being long an asset would be to simply own it. Being short is a position where if the price goes down you make money and if it goes up you lose money. If you own an asset and short it, your held asset loses value but your short position makes you money, helping you mitigate the price volatility risk. 
-
-DRCT contracts can provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency without minimum thresholds and with no intermediaries.
-
-Additionally, DRCT tokens allow users to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token.  
-
-![Create DRCT Tokens](./public/CreatingContract.png) 
-
-DRCT contracts start with a "creator" and are given a rate/duration/start date combination. Ether is locked as collateral in the smart contract by the creator.  Short and Long Tokens are issued to the creator and represent the payouts of the contract. These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. On the end date of the contract, the tokens are paid out from the collateral (to whoever is holding them at that point in time) based on the change in the underlying rate. 
-
-All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
-
 ## Background <a name="background"> </a> 
 True adoption of cryptocurrencies will only occur when price volatility can be harnessed. Derivatives are products that say I’ll give you X in the future based on the change in Y. They can allow users to device risk mitigation strategies for highly volatile assets.
 
@@ -64,12 +51,31 @@ A functioning risk transfer market is the backbone of an advanced market economy
 
 DRCT contracts provide a decentralized option for derivatives that bear no counterparty risk (fully collateralized), are not exchange specific (it produces ERC20 compliant tokens that can be traded on a centralized or decentralized exchange) and bring efficiency to the traditional system. Currently, if two parties want to hedge or transfer risk, that seemingly simple transaction looks like this:
 
-![Derivatives old model](./public/DerivativesOldModel.png)
+<p align="center">
+<img src="./public/DerivativesOldModel.png" width="400" height="250" alt="Old derivatives model with several intermediaries">
+</p>
+
 
 The DRCT contracts allow for this new and more efficient model:
 
-![Derivatives new model](./public/DerivativesNewModel.png)
+<p align="center">
+<img src="./public/DerivativesNewModel.png" width="400" height="250" alt="New derivatives model with one contract">
+</p>
 
+## Overview <a name="overview"> </a> 
+Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT token contracts are a risk management tool for cryptocurrency users that allow to long and/or short cryptocurrencies. Being long is a position where, if the price goes up, you make money and if it goes down, you lose money. The traditional way of being long an asset would be to simply own it. Being short is a position where if the price goes down you make money and if it goes up you lose money. If you own an asset and short it, your held asset loses value but your short position makes you money, helping you mitigate the price volatility risk. 
+
+DRCT contracts can provide more flexibility in terms of rate sensitivity and trading mechanisms than traditional OTC derivatives and allow for custom hedging and trading strategies not provided by traditional investments in cryptocurrency without minimum thresholds and with no intermediaries.
+
+Additionally, DRCT tokens allow users to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token.  
+
+<p align="center">
+<img src="./public/CreatingContract.png" width="300" height="400" alt="Picture of contract creating short and long tokens">
+</p>
+
+DRCT contracts start with a "creator" and are given a rate/duration/start date combination. Ether is locked as collateral in the smart contract by the creator.  Short and Long Tokens are issued to the creator and represent the payouts of the contract. These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. On the end date of the contract, the tokens are paid out from the collateral (to whoever is holding them at that point in time) based on the change in the underlying rate. 
+
+All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 
 
 ### How Does it work? <a name="how-it-works"> </a> 
 
@@ -120,8 +126,11 @@ If a party wishes to maintain exposure to the underlying reference rate, they mu
 
 With the 0x protocol and the liquidity at most exchanges, the token currency risk can be abstracted from the return of the underlying reference rate. If the underlying tokens have liquidity issues, there could be concerns about delivery of those tokens and the DRCT token may depreciate as delivery approaches. The underlying tokens could be any ERC20 token and DA1 and DA2 could be two different tokens, hence the TokRate below captures that. Since currently the DApp only allows for Ether/Wrapped Ether to be used as collateral the TokRate = 1. However, through the smart contracts, it would be possible to use any ERC20 token. Daxia's DApp is setup to take Ether right now, but we are exploring and developing infrastructure to allow for the use of DAI in our contracts and through the DApp. 
 
-![DRCT](./public/DRCT.png) 
+<p align="center">
 
+<img src="./public/DRCT.png">
+
+</p>
 To assure that the token payouts don’t cap out due to an underlying move in the token rate, parties should use tokens with a stable rate or underlying token pairs with very tight arbitrage. 
 
 ## Example Usage Scenarios <a name="usage-scenarios"> </a>
