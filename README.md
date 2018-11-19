@@ -1,6 +1,6 @@
 <p align="center">
   <a href='https://www.daxia.us/'>
-    <img src= './public/DarkText_IconColor.png' alt='Daxia.us' />
+    <img src= './public/DarkText_IconColor.png' width="300" height="100" alt='Daxia.us' />
   </a>
 </p>
 
@@ -69,8 +69,9 @@ DRCT contracts can provide more flexibility in terms of rate sensitivity and tra
 
 Additionally, DRCT tokens allow users to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token.  
 
-![Create DRCT Tokens](./public/CreatingContract.png) 
-
+<p align="center">
+<img src="./public/CreatingContract.png" width="300" height="400" alt="Picture of contract creating short and long tokens">
+</p>
 DRCT contracts start with a "creator" and are given a rate/duration/start date combination. Ether is locked as collateral in the smart contract by the creator.  Short and Long Tokens are issued to the creator and represent the payouts of the contract. These tokens can be posted for sale on the Daxia Bulletin or with partner exchanges. On the end date of the contract, the tokens are paid out from the collateral (to whoever is holding them at that point in time) based on the change in the underlying rate. 
 
 All DRCT tokens ascribe to ERC20 specifications and can trade on any centralized or decentralized exchange. 

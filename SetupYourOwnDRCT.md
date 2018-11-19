@@ -1,6 +1,6 @@
 <p align="center">
   <a href='https://www.daxia.us/'>
-    <img src= './public/DarkText_IconColor.png' alt='Daxia.us' />
+    <img src= './public/DarkText_IconColor.png' width="300" height="100" alt='Daxia.us' />
   </a>
 </p>
 
