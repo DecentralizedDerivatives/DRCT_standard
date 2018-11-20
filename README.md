@@ -46,6 +46,10 @@ Follow the steps below to launch the Factory, Oracle and dependency contracts us
 
 Clone the repo, cd into it, and then:
 
+    $ git clone https://github.com/DecentralizedDerivatives/DRCT_standard
+
+    $ cd DRCT_standard
+
     $ npm install
 
     $ truffle compile
@@ -61,6 +65,18 @@ Clone the repo, cd into it, and then:
 You're ready to create DRCT tokens and contracts!
 
 Step by step instructions on setting up your own DRCT contracts without truffle are available here: [Detailed documentation for self setup](./SetupYourOwnDRCT.md)
+
+To test use:
+
+    $ truffle compile
+
+    $ truffle develop
+
+    $ migrate
+
+    $ test
+
+Truffle will automatically run all the test scripts under the test folder. 
 
 ## Overview <a name="overview"> </a> 
 Dynamic Rate Cash Transaction (DRCT) Tokens are standardized contracts for trading risk and hedging exposure to underlying reference rates. DRCT token contracts are a risk management tool for cryptocurrency users that allow to long and/or short cryptocurrencies. Being long is a position where, if the price goes up, you make money and if it goes down, you lose money. The traditional way of being long an asset would be to simply own it. Being short is a position where if the price goes down you make money and if it goes up you lose money. If you own an asset and short it, your held asset loses value but your short position makes you money, helping you mitigate the price volatility risk. 

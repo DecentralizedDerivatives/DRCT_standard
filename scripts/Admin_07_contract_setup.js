@@ -6,7 +6,7 @@ function sleep_s(secs) {
   secs = (+new Date) + secs * 1000;
   while ((+new Date) < secs);
 }
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
+var Wrapped_Ether = artifacts.require("WETH9");
 var Factory = artifacts.require("Factory");
 var UserContract= artifacts.require("UserContract");
 var Deployer = artifacts.require("Deployer");
