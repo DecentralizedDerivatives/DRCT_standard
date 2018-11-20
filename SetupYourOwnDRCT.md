@@ -40,6 +40,7 @@ Documentation to setup the DRCT standard as the operator.
       * [Step 10: Operator - Contract completion](#ContractEnd)
       * [Step 11: Operator - Redeem your wrapped Ether](#operatorWETH)
       * [Step 11: User - Redeem your wrapped Ether](#userWETH)
+   * [Testing](#testing)
    * [Contracts Description](#Contracts-Description)
    * [Scripts Description](#Scripts-Description)
 * [Useful Links](#UsefulLinks)
@@ -255,6 +256,19 @@ The payout is capped by the collateral and the multiplier. The payout ratio logi
 **Step 11: User - Redeem your wrapped Ether** <a name="userWETH"> </a>
 
      WrappedEther.withdraw(uint amount); //amount to withdraw  
+
+### Testing <a name="testing"> </a>
+To test using truffle run:
+
+    $ truffle compile
+
+    $ truffle develop
+
+    $ migrate
+
+    $ test
+
+Truffle will automatically run all the test scripts under the test folder. 
 
 ### Contracts Description <a name="Contracts-Description"> </a>
  * MasterDeployer.sol - Kicks off the factory creation by calling the CloneFactory.sol to clone a specified factory and keep track of active factories.
