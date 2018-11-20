@@ -46,6 +46,10 @@ Follow the steps below to launch the Factory, Oracle and dependency contracts us
 
 Clone the repo, cd into it, and then:
 
+    $ git clone https://github.com/DecentralizedDerivatives/DRCT_standard
+
+    $ cd DRCT_standard
+
     $ npm install
 
     $ truffle compile

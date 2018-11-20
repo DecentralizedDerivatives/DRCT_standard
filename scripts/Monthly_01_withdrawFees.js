@@ -9,7 +9,7 @@ function sleep_s(secs) {
 
 var MasterDeployer = artifacts.require("MasterDeployer");
 var Factory = artifacts.require("Factory");
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
+var Wrapped_Ether = artifacts.require("WETH9");
 
 /**
 *@dev Update the master deployer address (_master). This will loop through each

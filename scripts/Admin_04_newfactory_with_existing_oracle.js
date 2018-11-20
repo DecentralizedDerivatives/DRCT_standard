@@ -7,7 +7,7 @@ function sleep_s(secs) {
 }
 
 var Oracle = artifacts.require("Oracle");
-var Wrapped_Ether = artifacts.require("Wrapped_Ether");
+var Wrapped_Ether = artifacts.require("WETH9");
 var Factory = artifacts.require("Factory");
 var MasterDeployer = artifacts.require("MasterDeployer");
 var UserContract= artifacts.require("UserContract");
