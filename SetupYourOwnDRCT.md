@@ -55,13 +55,11 @@ Documentation to setup the DRCT standard as the operator.
 
 There are four main contracts used to create DRCT contracts: the Factory.sol, TokenToTokenSwap.sol, Oracle.sol and the standard wrapped ether contract deployed by RadarRelay.
 
-* Factory.sol - Allows users to create contracts (by setting the standardized variables as desired) and short and long tokens for the user. It uses several other contracts to minimze deployment costs and streamline the process for the user: DRCTLibrary.sol, UserContract.sol, MasterDeployer.sol, DRCT_Token.sol and CloneFactory.sol. 
+* Factory.sol - Allows users to create contracts (by setting the standardized variables as desired) and short and long tokens for the user. It uses several other contracts to minimize deployment costs and streamline the process for the user: DRCTLibrary.sol, UserContract.sol, MasterDeployer.sol, DRCT_Token.sol and CloneFactory.sol. 
 
 * TokenToTokenSwap.sol - Sets up the smart contract that allows trading one token for another at the specified future date, based upon the change in the underlying reference rate. It uses the TokenLibrary.sol to store in the functions' logic and variables used. it  uses the Deployer.sol, CloneFactory and UserContract.sol to minimize costs and streamline the process for the user.
 
-* Oracle.sol - The Oracle contract is set up to request a value form Oraclize.it and save only one value per day. At deployemnt two APIs' are specified (Gdax and Binance) for Oraclize to fetch the underlying rate. The API's are the pieces of information that allow DRCT users' to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token.
-
-Daxia specifies two API's for Oraclize.it to get reference rate data from, Gdax and Binance. If the Gdax API is unavailable/fails, the oracle will alternate between Gdax and Binance every 60 minutes until the underlying reference rate is obtained. We recognize the risk of the oracle or API's failing and we are mitigating that risk by having a backup API. However, Daxia is exploring other options and has developed a decentralized and more robust oracle, <a href= https://github.com/DecentralizedDerivatives/MineableOracle> Proof of Work Oracle(POWO)</a>.
+* Oracle.sol - The Oracle contract is set up to request a value form Oraclize.it and save only one value per day. At deployment two APIs' are specified (Gdax and Binance) for Oraclize to fetch the underlying rate. The API's are the pieces of information that allow DRCT users' to long or short assets that are non-native to Ethereum (like Bitcoin, Monero, Stellar, etc...) with Ether or any other ERC20 token. Daxia specifies two API's for Oraclize.it to get reference rate data from, Gdax and Binance. If the Gdax API is unavailable/fails, the oracle will alternate between Gdax and Binance every 60 minutes until the underlying reference rate is obtained. We recognize the risk of the oracle or API's failing and we are mitigating that risk by having a backup API. However, Daxia is exploring other options and has developed a decentralized and more robust oracle, <a href= https://github.com/DecentralizedDerivatives/MineableOracle> Proof of Work Oracle(POWO)</a>.
 
 * WETH9.sol - is the standard used for wrapped ether in the space. WETH9 mainnet address is [0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2)
 and the code is verified on Etherscan.
@@ -70,7 +68,7 @@ and the code is verified on Etherscan.
 
 The documentation below is noted for acting as the operator (Daxia's role) and also entering into contract (a user).  Specific contract details are laid out for ease of use regardless of dev environment. 
 
- If you wish to simply enter a contract without a deep dive into the underlying solidity, you can use our DApp at http://dapp.daxia.org/ and follow the instuctions in the "How To" section (metamask is required). 
+ If you wish to simply enter a contract without a deep dive into the underlying solidity, you can use our DApp at http://dapp.daxia.org/ and follow the instructions in the "How To" section (metamask is required). 
 
 ***
 For ease of use, an 'Everything' flat file has been created containing all contracts, libraries and interfaces in the DRCT_standard library. 
@@ -182,7 +180,7 @@ Factory variables:
 <img src="./public/Multiplier.png" width="200" height="50">
 </p>
 
-* SwapFee -- Allows the operator to specify a fee.  The swapFee allows the opearator to charge a fee when a contract is created by the user. 
+* SwapFee -- Allows the operator to specify a fee.  The swapFee allows the operator to charge a fee when a contract is created by the user. 
 
 **Step 7: Operator - Create DRCT Tokens**  <a name="createTokens"> </a>
 
